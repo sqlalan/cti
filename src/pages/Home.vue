@@ -55,7 +55,7 @@ import MatrixRain from '../components/MatrixRain.vue'
     </ol>
   </section>
 
-  <section class="mx-auto max-w-4xl px-8 py-24" id="sobre">
+  <section class="mx-auto max-w-4xl px-8 py-24 text-center" id="sobre">
     <h2 class="text-3xl font-bold leading-snug text-[#262F3E]">
       A Synthetix é uma empresa de tecnologia focada em dados, análises e
       inteligência para negócios.
@@ -185,7 +185,41 @@ import MatrixRain from '../components/MatrixRain.vue'
     </div>
   </section>
 
-  <footer class="bg-[#11365B] p-6 text-center text-sm text-[#D9E0E6]">
-    © 2026 — Synthetix. Dados que conectam. Inteligência que transforma.
+  <footer class="bg-[#11365B] px-6 py-10 text-center text-sm text-[#D9E0E6]">
+    <ul class="flex justify-center gap-3">
+      <li>
+        <a
+          class="flex h-11 w-11 items-center justify-center rounded text-[#D9E0E6] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          href="https://instagram.com/synthetix"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Synthetix no Instagram"
+        >
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1.1" fill="currentColor" stroke="none" /></svg>
+        </a>
+      </li>
+      <li>
+        <a
+          class="flex h-11 w-11 items-center justify-center rounded text-[#D9E0E6] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          href="https://facebook.com/synthetix"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Synthetix no Facebook"
+        >
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /></svg>
+        </a>
+      </li>
+      <li>
+        <a
+          class="flex h-11 items-center gap-2 rounded px-3 text-[#D9E0E6] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          href="mailto:contato@synthetix.com.br"
+        >
+          <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-10 6L2 7" /></svg>
+          contato@synthetix.com.br
+        </a>
+      </li>
+    </ul>
+
+    <p class="mt-6">© 2026 — Synthetix. Dados que conectam. Inteligência que transforma.</p>
   </footer>
 </template>
