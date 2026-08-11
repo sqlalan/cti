@@ -1,3 +1,7 @@
+<script setup>
+import MatrixRain from '../components/MatrixRain.vue'
+</script>
+
 <template>
   <header class="flex flex-wrap items-center justify-between gap-4 border-b border-[#D9E0E6] bg-white px-8 py-4">
     <RouterLink class="shrink-0" to="/">
@@ -14,18 +18,24 @@
     </div>
   </header>
 
-  <section class="bg-[#11365B] px-8 py-28 text-center">
-    <h1 class="mx-auto max-w-3xl text-4xl font-bold leading-tight text-white sm:text-5xl">
-      Dados que conectam.<br />Inteligência que transforma.
-    </h1>
-    <p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-[#D9E0E6]">
-      A Synthetix conecta dados, análises e inteligência em uma única
-      plataforma para ajudar empresas a compreenderem seus resultados,
-      identificarem oportunidades e tomarem decisões com mais segurança.
-    </p>
-    <div class="mt-10 flex flex-wrap justify-center gap-4">
-      <a class="inline-flex items-center justify-center rounded bg-white px-6 py-3 text-sm font-semibold text-[#194675] transition-colors hover:bg-[#D9E0E6] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" href="#plataforma">Conhecer a plataforma</a>
-      <a class="inline-flex items-center justify-center rounded border border-white/60 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" href="#contato">Falar com um especialista</a>
+  <section class="relative overflow-hidden bg-[#11365B] px-8 py-28 text-center">
+    <MatrixRain class="pointer-events-none absolute inset-0" />
+    <div class="pointer-events-none absolute inset-0 bg-[#11365B]/35"></div>
+    <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_68%_60%_at_50%_50%,#11365B_34%,rgba(17,54,91,0.65)_66%,rgba(17,54,91,0)_100%)]"></div>
+
+    <div class="relative">
+      <h1 class="mx-auto max-w-3xl text-4xl font-bold leading-tight text-white sm:text-5xl">
+        Dados que conectam.<br />Inteligência que transforma.
+      </h1>
+      <p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-[#D9E0E6]">
+        A Synthetix conecta dados, análises e inteligência em uma única
+        plataforma para ajudar empresas a compreenderem seus resultados,
+        identificarem oportunidades e tomarem decisões com mais segurança.
+      </p>
+      <div class="mt-10 flex flex-wrap justify-center gap-4">
+        <a class="inline-flex items-center justify-center rounded bg-white px-6 py-3 text-sm font-semibold text-[#194675] transition-colors hover:bg-[#D9E0E6] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" href="#plataforma">Conhecer a plataforma</a>
+        <a class="inline-flex items-center justify-center rounded border border-white/60 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" href="#contato">Falar com um especialista</a>
+      </div>
     </div>
   </section>
 
