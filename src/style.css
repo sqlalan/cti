@@ -1,1 +1,86 @@
 @import "tailwindcss";
+
+/* ---------------------------------------------------------------
+   Identidade visual — corporativo / tecnológico / clean
+   Tokens declarados em @theme viram utilities do Tailwind
+   (bg-primary, text-secondary, border-border...) e também
+   ficam disponíveis como var(--color-*) em CSS puro.
+   --------------------------------------------------------------- */
+@theme {
+  /* Azuis */
+  --color-primary: #194675;
+  --color-primary-hover: #3f77c4;
+  --color-primary-dark: #11365b;
+
+  /* Superfícies */
+  --color-background: #ffffff;
+  --color-background-dark: #11365b;
+  --color-surface: #f5f7fa;
+  --color-field: #e0e3e6;
+
+  /* Texto */
+  --color-text: #262f3e;
+  --color-text-secondary: #5f5f68;
+  --color-text-light: #8c99a6;
+
+  /* Bordas */
+  --color-border: #d9e0e6;
+  --color-border-light: #eaecef;
+
+  /* Status */
+  --color-success: #7db91d;
+  --color-warning: #d7af49;
+  --color-danger: #d9534f;
+  --color-info: #3f77c4;
+
+  /* Destaques por categoria — números, ícones e áreas de negócio.
+     Contraste baixo sobre branco: usar em preenchimento de ícone,
+     números grandes e barras. Não usar em texto corrido pequeno. */
+  --color-accent-stats: #d7af49;
+  --color-accent-network: #7db91d;
+  --color-accent-cloud: #7b3fd1;
+  --color-accent-security: #f18a21;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a {
+    color: var(--color-primary);
+  }
+
+  a:hover {
+    color: var(--color-primary-hover);
+  }
+}
+
+@layer components {
+  .btn-primary,
+  .btn-secondary,
+  .btn-tertiary {
+    @apply inline-flex items-center justify-center gap-2 rounded px-6 py-2
+      text-sm font-semibold transition-colors duration-150
+      focus-visible:outline-2 focus-visible:outline-offset-2
+      focus-visible:outline-primary-hover;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary-dark;
+  }
+
+  .btn-secondary {
+    @apply border border-primary bg-white text-primary hover:bg-surface;
+  }
+
+  .btn-tertiary {
+    @apply bg-surface text-primary hover:bg-field;
+  }
+}
