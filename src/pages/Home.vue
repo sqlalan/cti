@@ -190,7 +190,7 @@ import MatrixRain from '../components/MatrixRain.vue'
       <li>
         <a
           class="flex h-11 w-11 items-center justify-center rounded text-[#D9E0E6] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-          href="https://instagram.com/synthetix"
+          href="https://instagram.com"
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Synthetix no Instagram"
