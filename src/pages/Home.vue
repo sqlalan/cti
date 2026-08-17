@@ -4,18 +4,16 @@ import MatrixRain from '../components/MatrixRain.vue'
 
 <template>
   <header class="flex flex-wrap items-center justify-between gap-4 border-b border-[#D9E0E6] bg-white px-8 py-4">
-    <RouterLink class="shrink-0" to="/">
+    <RouterLink class="order-1 shrink-0" to="/">
       <img class="h-10 w-auto" src="../assets/logo.png" alt="Synthetix" width="421" height="120" />
     </RouterLink>
-    <div class="flex flex-wrap items-center gap-6">
-      <nav class="flex flex-wrap gap-8 text-sm font-medium text-[#5F5F68]">
-        <a class="hover:text-[#3F77C4]" href="#plataforma">Plataforma</a>
-        <a class="hover:text-[#3F77C4]" href="#sobre">Sobre</a>
-        <a class="hover:text-[#3F77C4]" href="#proposito">Propósito</a>
-        <a class="hover:text-[#3F77C4]" href="#contato">Contato</a>
-      </nav>
-      <RouterLink class="inline-flex items-center justify-center rounded bg-[#194675] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#11365B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3F77C4]" to="/login">Entrar</RouterLink>
-    </div>
+    <RouterLink class="order-2 inline-flex shrink-0 items-center justify-center rounded bg-[#194675] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#11365B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3F77C4] md:order-3" to="/login">Entrar</RouterLink>
+    <nav class="order-3 flex w-full flex-wrap justify-center gap-x-6 gap-y-2 text-sm font-medium text-[#5F5F68] md:order-2 md:ml-auto md:mr-2 md:w-auto md:justify-end md:gap-x-8 md:gap-y-0">
+      <a class="hover:text-[#3F77C4]" href="#plataforma">Plataforma</a>
+      <a class="hover:text-[#3F77C4]" href="#sobre">Sobre</a>
+      <a class="hover:text-[#3F77C4]" href="#proposito">Propósito</a>
+      <a class="hover:text-[#3F77C4]" href="#contato">Contato</a>
+    </nav>
   </header>
 
   <section class="relative overflow-hidden bg-[#11365B] px-8 py-28 text-center">
