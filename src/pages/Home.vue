@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import Card3D from '../components/Card3D.vue'
 import MatrixRain from '../components/MatrixRain.vue'
 
 const menuAberto = ref(false)
@@ -128,78 +129,66 @@ const menuAberto = ref(false)
       Uma plataforma para enxergar o seu negócio por completo.
     </h2>
     <div class="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      <div class="group [perspective:1000px]">
-        <article class="h-full rounded border border-[#D9E0E6] bg-white dark:border-[#25384E] dark:bg-[#132132] p-6 shadow-[0_1px_3px_rgba(38,47,62,0.07)] [transform-style:preserve-3d] transition-[transform,box-shadow,border-color] duration-300 ease-out group-hover:[transform:rotateX(4deg)_rotateY(-4deg)_translateZ(14px)] group-hover:border-[#3F77C4]/40 group-hover:shadow-[0_20px_35px_-20px_rgba(25,70,117,0.45)] motion-reduce:transition-none motion-reduce:group-hover:[transform:none]">
-          <span class="flex h-11 w-11 items-center justify-center rounded bg-[#3F77C4]/10 text-[#194675] dark:text-[#7FB0E8]">
-            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18" /><path d="M7 21V11" /><path d="M12 21V5" /><path d="M17 21v-7" /></svg>
-          </span>
-          <h3 class="mt-5 text-lg font-semibold text-[#262F3E] dark:text-[#E8EDF2]">Dashboards inteligentes</h3>
-          <p class="mt-2 text-sm leading-relaxed text-[#5F5F68] dark:text-[#9FB0C2]">
-            Visualize os principais indicadores em um único ambiente.
-          </p>
-        </article>
-      </div>
+      <Card3D :atraso="0">
+        <span class="flex h-11 w-11 items-center justify-center rounded bg-[#3F77C4]/10 text-[#194675] dark:text-[#7FB0E8]">
+          <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18" /><path d="M7 21V11" /><path d="M12 21V5" /><path d="M17 21v-7" /></svg>
+        </span>
+        <h3 class="mt-5 text-lg font-semibold text-[#262F3E] dark:text-[#E8EDF2]">Dashboards inteligentes</h3>
+        <p class="mt-2 text-sm leading-relaxed text-[#5F5F68] dark:text-[#9FB0C2]">
+          Visualize os principais indicadores em um único ambiente.
+        </p>
+      </Card3D>
 
-      <div class="group [perspective:1000px]">
-        <article class="h-full rounded border border-[#D9E0E6] bg-white dark:border-[#25384E] dark:bg-[#132132] p-6 shadow-[0_1px_3px_rgba(38,47,62,0.07)] [transform-style:preserve-3d] transition-[transform,box-shadow,border-color] duration-300 ease-out group-hover:[transform:rotateX(4deg)_rotateY(-4deg)_translateZ(14px)] group-hover:border-[#3F77C4]/40 group-hover:shadow-[0_20px_35px_-20px_rgba(25,70,117,0.45)] motion-reduce:transition-none motion-reduce:group-hover:[transform:none]">
-          <span class="flex h-11 w-11 items-center justify-center rounded bg-[#7B3FD1]/10 text-[#194675] dark:text-[#7FB0E8]">
-            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 17 6-6 4 4 8-8" /><path d="M15 7h6v6" /></svg>
-          </span>
-          <h3 class="mt-5 text-lg font-semibold text-[#262F3E] dark:text-[#E8EDF2]">Análises avançadas</h3>
-          <p class="mt-2 text-sm leading-relaxed text-[#5F5F68] dark:text-[#9FB0C2]">
-            Explore tendências, comparações, comportamentos e resultados.
-          </p>
-        </article>
-      </div>
+      <Card3D :atraso="1500">
+        <span class="flex h-11 w-11 items-center justify-center rounded bg-[#7B3FD1]/10 text-[#194675] dark:text-[#7FB0E8]">
+          <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 17 6-6 4 4 8-8" /><path d="M15 7h6v6" /></svg>
+        </span>
+        <h3 class="mt-5 text-lg font-semibold text-[#262F3E] dark:text-[#E8EDF2]">Análises avançadas</h3>
+        <p class="mt-2 text-sm leading-relaxed text-[#5F5F68] dark:text-[#9FB0C2]">
+          Explore tendências, comparações, comportamentos e resultados.
+        </p>
+      </Card3D>
 
-      <div class="group [perspective:1000px]">
-        <article class="h-full rounded border border-[#D9E0E6] bg-white dark:border-[#25384E] dark:bg-[#132132] p-6 shadow-[0_1px_3px_rgba(38,47,62,0.07)] [transform-style:preserve-3d] transition-[transform,box-shadow,border-color] duration-300 ease-out group-hover:[transform:rotateX(4deg)_rotateY(-4deg)_translateZ(14px)] group-hover:border-[#3F77C4]/40 group-hover:shadow-[0_20px_35px_-20px_rgba(25,70,117,0.45)] motion-reduce:transition-none motion-reduce:group-hover:[transform:none]">
-          <span class="flex h-11 w-11 items-center justify-center rounded bg-[#7DB91D]/10 text-[#194675] dark:text-[#7FB0E8]">
-            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12" /><path d="m7 10 5 5 5-5" /><path d="M3 17v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2" /></svg>
-          </span>
-          <h3 class="mt-5 text-lg font-semibold text-[#262F3E] dark:text-[#E8EDF2]">Integração e importação de dados</h3>
-          <p class="mt-2 text-sm leading-relaxed text-[#5F5F68] dark:text-[#9FB0C2]">
-            Centralize, organize e acompanhe informações importantes da operação.
-          </p>
-        </article>
-      </div>
+      <Card3D :atraso="3000">
+        <span class="flex h-11 w-11 items-center justify-center rounded bg-[#7DB91D]/10 text-[#194675] dark:text-[#7FB0E8]">
+          <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12" /><path d="m7 10 5 5 5-5" /><path d="M3 17v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2" /></svg>
+        </span>
+        <h3 class="mt-5 text-lg font-semibold text-[#262F3E] dark:text-[#E8EDF2]">Integração e importação de dados</h3>
+        <p class="mt-2 text-sm leading-relaxed text-[#5F5F68] dark:text-[#9FB0C2]">
+          Centralize, organize e acompanhe informações importantes da operação.
+        </p>
+      </Card3D>
 
-      <div class="group [perspective:1000px]">
-        <article class="h-full rounded border border-[#D9E0E6] bg-white dark:border-[#25384E] dark:bg-[#132132] p-6 shadow-[0_1px_3px_rgba(38,47,62,0.07)] [transform-style:preserve-3d] transition-[transform,box-shadow,border-color] duration-300 ease-out group-hover:[transform:rotateX(4deg)_rotateY(-4deg)_translateZ(14px)] group-hover:border-[#3F77C4]/40 group-hover:shadow-[0_20px_35px_-20px_rgba(25,70,117,0.45)] motion-reduce:transition-none motion-reduce:group-hover:[transform:none]">
-          <span class="flex h-11 w-11 items-center justify-center rounded bg-[#D7AF49]/15 text-[#194675] dark:text-[#7FB0E8]">
-            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6" /><path d="M10 21h4" /><path d="M12 3a6 6 0 0 0-4 10.5c.7.8 1 1.5 1 2.5h6c0-1 .3-1.7 1-2.5A6 6 0 0 0 12 3Z" /></svg>
-          </span>
-          <h3 class="mt-5 text-lg font-semibold text-[#262F3E] dark:text-[#E8EDF2]">Insights</h3>
-          <p class="mt-2 text-sm leading-relaxed text-[#5F5F68] dark:text-[#9FB0C2]">
-            Identifique padrões, oportunidades e pontos que merecem atenção.
-          </p>
-        </article>
-      </div>
+      <Card3D :atraso="4500">
+        <span class="flex h-11 w-11 items-center justify-center rounded bg-[#D7AF49]/15 text-[#194675] dark:text-[#7FB0E8]">
+          <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6" /><path d="M10 21h4" /><path d="M12 3a6 6 0 0 0-4 10.5c.7.8 1 1.5 1 2.5h6c0-1 .3-1.7 1-2.5A6 6 0 0 0 12 3Z" /></svg>
+        </span>
+        <h3 class="mt-5 text-lg font-semibold text-[#262F3E] dark:text-[#E8EDF2]">Insights</h3>
+        <p class="mt-2 text-sm leading-relaxed text-[#5F5F68] dark:text-[#9FB0C2]">
+          Identifique padrões, oportunidades e pontos que merecem atenção.
+        </p>
+      </Card3D>
 
-      <div class="group [perspective:1000px]">
-        <article class="h-full rounded border border-[#D9E0E6] bg-white dark:border-[#25384E] dark:bg-[#132132] p-6 shadow-[0_1px_3px_rgba(38,47,62,0.07)] [transform-style:preserve-3d] transition-[transform,box-shadow,border-color] duration-300 ease-out group-hover:[transform:rotateX(4deg)_rotateY(-4deg)_translateZ(14px)] group-hover:border-[#3F77C4]/40 group-hover:shadow-[0_20px_35px_-20px_rgba(25,70,117,0.45)] motion-reduce:transition-none motion-reduce:group-hover:[transform:none]">
-          <span class="flex h-11 w-11 items-center justify-center rounded bg-[#3F77C4]/10 text-[#194675] dark:text-[#7FB0E8]">
-            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z" /><path d="M14 3v5h5" /><path d="M9 13h6" /><path d="M9 17h4" /></svg>
-          </span>
-          <h3 class="mt-5 text-lg font-semibold text-[#262F3E] dark:text-[#E8EDF2]">Relatórios</h3>
-          <p class="mt-2 text-sm leading-relaxed text-[#5F5F68] dark:text-[#9FB0C2]">
-            Transforme análises em relatórios claros para acompanhamento e
-            tomada de decisão.
-          </p>
-        </article>
-      </div>
+      <Card3D :atraso="6000">
+        <span class="flex h-11 w-11 items-center justify-center rounded bg-[#3F77C4]/10 text-[#194675] dark:text-[#7FB0E8]">
+          <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z" /><path d="M14 3v5h5" /><path d="M9 13h6" /><path d="M9 17h4" /></svg>
+        </span>
+        <h3 class="mt-5 text-lg font-semibold text-[#262F3E] dark:text-[#E8EDF2]">Relatórios</h3>
+        <p class="mt-2 text-sm leading-relaxed text-[#5F5F68] dark:text-[#9FB0C2]">
+          Transforme análises em relatórios claros para acompanhamento e
+          tomada de decisão.
+        </p>
+      </Card3D>
 
-      <div class="group [perspective:1000px]">
-        <article class="h-full rounded border border-[#D9E0E6] bg-white dark:border-[#25384E] dark:bg-[#132132] p-6 shadow-[0_1px_3px_rgba(38,47,62,0.07)] [transform-style:preserve-3d] transition-[transform,box-shadow,border-color] duration-300 ease-out group-hover:[transform:rotateX(4deg)_rotateY(-4deg)_translateZ(14px)] group-hover:border-[#3F77C4]/40 group-hover:shadow-[0_20px_35px_-20px_rgba(25,70,117,0.45)] motion-reduce:transition-none motion-reduce:group-hover:[transform:none]">
-          <span class="flex h-11 w-11 items-center justify-center rounded bg-[#F18A21]/10 text-[#194675] dark:text-[#7FB0E8]">
-            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" /><circle cx="12" cy="11" r="1.5" /><path d="M12 12.5V15" /></svg>
-          </span>
-          <h3 class="mt-5 text-lg font-semibold text-[#262F3E] dark:text-[#E8EDF2]">Segurança</h3>
-          <p class="mt-2 text-sm leading-relaxed text-[#5F5F68] dark:text-[#9FB0C2]">
-            Controle de acesso e proteção das informações em todas as etapas.
-          </p>
-        </article>
-      </div>
+      <Card3D :atraso="7500">
+        <span class="flex h-11 w-11 items-center justify-center rounded bg-[#F18A21]/10 text-[#194675] dark:text-[#7FB0E8]">
+          <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" /><circle cx="12" cy="11" r="1.5" /><path d="M12 12.5V15" /></svg>
+        </span>
+        <h3 class="mt-5 text-lg font-semibold text-[#262F3E] dark:text-[#E8EDF2]">Segurança</h3>
+        <p class="mt-2 text-sm leading-relaxed text-[#5F5F68] dark:text-[#9FB0C2]">
+          Controle de acesso e proteção das informações em todas as etapas.
+        </p>
+      </Card3D>
     </div>
   </section>
 
