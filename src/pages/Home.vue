@@ -9,7 +9,8 @@ const menuAberto = ref(false)
   <header class="sticky top-0 z-20 border-b border-[#D9E0E6] bg-white dark:border-[#25384E] dark:bg-[#132132]">
     <div class="flex items-center justify-between gap-4 px-8 py-4">
       <RouterLink class="shrink-0" to="/" @click="menuAberto = false">
-        <img class="h-10 w-auto" src="../assets/logo.png" alt="Synthetix" width="421" height="120" />
+        <img class="h-10 w-auto dark:hidden" src="../assets/logo-claro.png" alt="Synthetix" width="421" height="120" />
+        <img class="hidden h-10 w-auto dark:block" src="../assets/logo-escuro.png" alt="" aria-hidden="true" width="421" height="120" />
       </RouterLink>
 
       <nav class="hidden text-sm font-medium text-[#5F5F68] dark:text-[#9FB0C2] md:ml-auto md:mr-2 md:flex md:flex-wrap md:justify-end md:gap-x-8">
