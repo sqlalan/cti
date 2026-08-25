@@ -30,9 +30,9 @@ function entrar() {
       <p class="text-sm text-[#8C99A6]">© 2026 — Synthetix</p>
     </section>
 
-    <section class="relative flex items-center justify-center bg-white px-6 py-16">
+    <section class="relative flex items-center justify-center bg-white px-6 dark:bg-[#0B1622] py-16">
       <RouterLink
-        class="absolute right-6 top-6 inline-flex items-center gap-2 rounded text-sm font-semibold text-[#194675] transition-colors hover:text-[#3F77C4] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#3F77C4]"
+        class="absolute right-6 top-6 inline-flex items-center gap-2 rounded text-sm font-semibold text-[#194675] dark:text-[#7FB0E8] transition-colors hover:text-[#3F77C4] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#3F77C4]"
         to="/"
       >
         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5" /><path d="m12 19-7-7 7-7" /></svg>
@@ -40,17 +40,17 @@ function entrar() {
       </RouterLink>
 
       <div class="w-full max-w-sm">
-        <RouterLink class="text-xl font-bold text-[#194675] lg:hidden" to="/">Synthetix</RouterLink>
+        <RouterLink class="text-xl font-bold text-[#194675] dark:text-[#7FB0E8] lg:hidden" to="/">Synthetix</RouterLink>
 
-        <h1 class="mt-8 text-2xl font-bold text-[#262F3E] lg:mt-0">Acessar a plataforma</h1>
-        <p class="mt-2 text-sm text-[#5F5F68]">
+        <h1 class="mt-8 text-2xl font-bold text-[#262F3E] dark:text-[#E8EDF2] lg:mt-0">Acessar a plataforma</h1>
+        <p class="mt-2 text-sm text-[#5F5F68] dark:text-[#9FB0C2]">
           Entre com as credenciais fornecidas pela sua empresa.
         </p>
 
         <form class="mt-8" @submit.prevent="entrar">
-          <label class="block text-sm font-medium text-[#262F3E]" for="email">E-mail</label>
+          <label class="block text-sm font-medium text-[#262F3E] dark:text-[#E8EDF2]" for="email">E-mail</label>
           <input
-            class="mt-2 w-full rounded border border-[#D9E0E6] bg-white px-4 py-2.5 text-sm text-[#262F3E] placeholder:text-[#8C99A6] focus:border-[#3F77C4] focus:outline-2 focus:outline-offset-0 focus:outline-[#3F77C4]"
+            class="mt-2 w-full rounded border border-[#D9E0E6] bg-white dark:border-[#25384E] dark:bg-[#0F1B29] px-4 py-2.5 text-sm text-[#262F3E] dark:text-[#E8EDF2] placeholder:text-[#8C99A6] dark:placeholder:text-[#6C7D90] focus:border-[#3F77C4] focus:outline-2 focus:outline-offset-0 focus:outline-[#3F77C4]"
             id="email"
             v-model="email"
             type="email"
@@ -59,10 +59,10 @@ function entrar() {
             required
           />
 
-          <label class="mt-5 block text-sm font-medium text-[#262F3E]" for="senha">Senha</label>
+          <label class="mt-5 block text-sm font-medium text-[#262F3E] dark:text-[#E8EDF2]" for="senha">Senha</label>
           <div class="relative mt-2">
             <input
-              class="w-full rounded border border-[#D9E0E6] bg-white py-2.5 pl-4 pr-24 text-sm text-[#262F3E] placeholder:text-[#8C99A6] focus:border-[#3F77C4] focus:outline-2 focus:outline-offset-0 focus:outline-[#3F77C4]"
+              class="w-full rounded border border-[#D9E0E6] bg-white dark:border-[#25384E] dark:bg-[#0F1B29] py-2.5 pl-4 pr-24 text-sm text-[#262F3E] dark:text-[#E8EDF2] placeholder:text-[#8C99A6] dark:placeholder:text-[#6C7D90] focus:border-[#3F77C4] focus:outline-2 focus:outline-offset-0 focus:outline-[#3F77C4]"
               id="senha"
               v-model="senha"
               :type="mostrarSenha ? 'text' : 'password'"
@@ -71,7 +71,7 @@ function entrar() {
               required
             />
             <button
-              class="absolute inset-y-0 right-0 px-4 text-xs font-semibold text-[#194675] hover:text-[#3F77C4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3F77C4]"
+              class="absolute inset-y-0 right-0 px-4 text-xs font-semibold text-[#194675] dark:text-[#7FB0E8] hover:text-[#3F77C4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3F77C4]"
               type="button"
               @click="mostrarSenha = !mostrarSenha"
             >
@@ -80,21 +80,21 @@ function entrar() {
           </div>
 
           <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
-            <label class="flex items-center gap-2 text-sm text-[#5F5F68]">
+            <label class="flex items-center gap-2 text-sm text-[#5F5F68] dark:text-[#9FB0C2]">
               <input
-                class="h-4 w-4 rounded border-[#D9E0E6] accent-[#194675]"
+                class="h-4 w-4 rounded border-[#D9E0E6] accent-[#194675] dark:border-[#25384E]"
                 v-model="lembrar"
                 type="checkbox"
               />
               Manter conectado
             </label>
-            <a class="text-sm font-medium text-[#194675] hover:text-[#3F77C4]" href="#">
+            <a class="text-sm font-medium text-[#194675] dark:text-[#7FB0E8] hover:text-[#3F77C4]" href="#">
               Esqueci minha senha
             </a>
           </div>
 
           <p
-            class="mt-6 rounded border border-[#D7AF49] bg-[#D7AF49]/10 px-4 py-3 text-sm text-[#262F3E]"
+            class="mt-6 rounded border border-[#D7AF49] bg-[#D7AF49]/10 dark:bg-[#D7AF49]/15 px-4 py-3 text-sm text-[#262F3E] dark:text-[#E8EDF2]"
             v-if="aviso"
             role="alert"
           >
@@ -109,9 +109,9 @@ function entrar() {
           </button>
         </form>
 
-        <p class="mt-8 text-center text-sm text-[#5F5F68]">
+        <p class="mt-8 text-center text-sm text-[#5F5F68] dark:text-[#9FB0C2]">
           Ainda não tem acesso?
-          <RouterLink class="font-medium text-[#194675] hover:text-[#3F77C4]" to="/#contato">
+          <RouterLink class="font-medium text-[#194675] dark:text-[#7FB0E8] hover:text-[#3F77C4]" to="/#contato">
             Fale com nosso time
           </RouterLink>
         </p>
