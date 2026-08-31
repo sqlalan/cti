@@ -1,10 +1,22 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import AppLayout from '../layouts/AppLayout.vue'
 import Home from '../pages/Home.vue'
 import Login from '../pages/Login.vue'
+import Dashboard from '../pages/Dashboard.vue'
+import Upload from '../pages/Upload.vue'
 
 const routes = [
   { path: '/', name: 'home', component: Home },
   { path: '/login', name: 'login', component: Login },
+  {
+    path: '/sidebar',
+    component: AppLayout,
+    redirect: '/sidebar/upload', // Redireciona automaticamente ao acessar /sidebar
+    children: [
+      { path: 'dashboard', name: 'dashboard', component: Dashboard },
+      { path: 'upload', name: 'upload', component: Upload },
+    ],
+  },
 ]
 
 export default createRouter({
