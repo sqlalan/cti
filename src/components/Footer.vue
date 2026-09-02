@@ -1,9 +1,9 @@
 <template>
-  <footer class="bg-[#11365B] px-6 dark:bg-[#0A1524] py-10 text-center text-sm text-[#D9E0E6]" id="contato">
+  <footer class="scroll-mt-24 bg-brand-900 px-6 py-12 dark:bg-night-950 text-center text-sm text-ink-200" id="contato">
     <ul class="flex justify-center gap-3">
       <li>
         <a
-          class="flex h-11 w-11 items-center justify-center rounded text-[#D9E0E6] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          class="flex h-11 w-11 items-center justify-center rounded text-ink-200 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           href="https://instagram.com"
           target="_blank"
           rel="noopener noreferrer"
@@ -14,7 +14,7 @@
       </li>
       <li>
         <a
-          class="flex h-11 w-11 items-center justify-center rounded text-[#D9E0E6] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          class="flex h-11 w-11 items-center justify-center rounded text-ink-200 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           href="https://facebook.com"
           target="_blank"
           rel="noopener noreferrer"
@@ -25,7 +25,7 @@
       </li>
       <li>
         <a
-          class="flex h-11 w-11 items-center justify-center rounded text-[#D9E0E6] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          class="flex h-11 w-11 items-center justify-center rounded text-ink-200 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           href="https://wa.me/5511999999999"
           target="_blank"
           rel="noopener noreferrer"
@@ -39,7 +39,7 @@
       </li>
       <li>
         <a
-          class="flex h-11 items-center gap-2 rounded px-3 text-[#D9E0E6] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          class="flex h-11 items-center gap-2 rounded px-3 text-ink-200 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           href="mailto:contato@synthetix.com.br"
         >
           <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-10 6L2 7" /></svg>

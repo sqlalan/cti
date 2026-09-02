@@ -97,12 +97,12 @@ const eixos = computed(() => ({
   <div class="[perspective:1000px]" :style="eixos">
     <article
       ref="raiz"
-      class="relative h-full cursor-pointer select-none rounded border border-[#D9E0E6] bg-white p-6 shadow-[0_1px_3px_rgba(38,47,62,0.07)] transition-[box-shadow,border-color] duration-300 ease-out animate-flutuar-card motion-reduce:animate-none [animation-delay:var(--atraso)] hover:[animation-play-state:paused] [transform:translateZ(var(--z))_rotateX(var(--rx))_rotateY(var(--ry))_scale(var(--escala))] dark:border-[#25384E] dark:bg-[#132132] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3F77C4]"
+      class="relative h-full cursor-pointer select-none rounded border border-ink-200 bg-white p-6 shadow-cartao transition-[box-shadow,border-color] duration-300 ease-out animate-flutuar-card motion-reduce:animate-none [animation-delay:var(--atraso)] hover:[animation-play-state:paused] [transform:translateZ(var(--z))_rotateX(var(--rx))_rotateY(var(--ry))_scale(var(--escala))] dark:border-night-700 dark:bg-night-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
       :class="[
         sobre ? 'duration-75' : 'duration-500',
         aberto
-          ? 'z-10 border-[#3F77C4] shadow-[0_35px_60px_-25px_rgba(25,70,117,0.55)]'
-          : 'hover:border-[#3F77C4]/40 hover:shadow-[0_20px_35px_-20px_rgba(25,70,117,0.45)]',
+          ? 'z-10 border-brand-500 shadow-cartao-aberto'
+          : 'hover:border-brand-500/40 hover:shadow-cartao-hover',
       ]"
       :aria-pressed="aberto"
       role="button"
@@ -113,7 +113,7 @@ const eixos = computed(() => ({
       @keydown="teclar"
     >
       <span
-        class="pointer-events-none absolute inset-0 rounded bg-[radial-gradient(circle_at_var(--luz-x)_var(--luz-y),rgba(63,119,196,0.16),rgba(63,119,196,0)_55%)] transition-opacity duration-200"
+        class="pointer-events-none absolute inset-0 rounded luz-cartao transition-opacity duration-200"
         :class="sobre ? 'opacity-100' : 'opacity-0'"
         aria-hidden="true"
       ></span>

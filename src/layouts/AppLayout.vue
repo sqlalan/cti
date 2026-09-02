@@ -10,9 +10,9 @@ const itens = [
 </script>
 
 <template>
-  <div class="flex min-h-screen bg-[#F5F7FA] dark:bg-[#0B1622]">
+  <div class="flex min-h-screen bg-ink-100 dark:bg-night-950">
     <aside
-      class="fixed inset-y-0 left-0 z-30 w-64 shrink-0 border-r border-[#D9E0E6] bg-white p-6 transition-transform dark:border-[#25384E] dark:bg-[#132132] lg:static lg:translate-x-0"
+      class="fixed inset-y-0 left-0 z-30 w-64 shrink-0 border-r border-ink-200 bg-white p-6 transition-transform dark:border-night-700 dark:bg-night-900 lg:static lg:translate-x-0"
       :class="menuAberto ? 'translate-x-0' : '-translate-x-full'"
     >
       <RouterLink class="block" to="/">
@@ -22,8 +22,8 @@ const itens = [
 
       <nav class="mt-10 flex flex-col gap-1">
         <RouterLink
-          class="rounded px-4 py-2.5 text-sm font-medium text-[#5F5F68] transition-colors hover:bg-[#F5F7FA] hover:text-[#194675] dark:text-[#9FB0C2] dark:hover:bg-[#1B2C40] dark:hover:text-[#7FB0E8]"
-          active-class="bg-[#194675] text-white hover:bg-[#11365B] hover:text-white dark:bg-[#194675] dark:text-white"
+          class="rounded px-4 py-2.5 text-sm font-medium text-ink-600 transition-colors hover:bg-ink-100 hover:text-brand-800 dark:text-mist-300 dark:hover:bg-night-800 dark:hover:text-brand-300"
+          active-class="bg-brand-800 text-white hover:bg-brand-900 hover:text-white dark:bg-brand-800 dark:text-white dark:hover:bg-brand-700"
           v-for="item in itens"
           :key="item.to"
           :to="item.to"
@@ -34,7 +34,7 @@ const itens = [
       </nav>
 
       <RouterLink
-        class="mt-10 block text-sm font-medium text-[#194675] hover:text-[#3F77C4] dark:text-[#7FB0E8]"
+        class="mt-10 block text-sm font-medium text-brand-800 hover:text-brand-500 dark:text-brand-300"
         to="/"
       >
         Voltar para o site
@@ -48,9 +48,9 @@ const itens = [
     ></div>
 
     <div class="flex min-w-0 flex-1 flex-col">
-      <header class="flex items-center gap-3 border-b border-[#D9E0E6] bg-white px-6 py-4 dark:border-[#25384E] dark:bg-[#132132] lg:hidden">
+      <header class="flex items-center gap-3 border-b border-ink-200 bg-white px-6 py-4 dark:border-night-700 dark:bg-night-900 lg:hidden">
         <button
-          class="inline-flex h-11 w-11 items-center justify-center rounded text-[#194675] transition-colors hover:bg-[#F5F7FA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3F77C4] dark:text-[#7FB0E8] dark:hover:bg-[#1B2C40]"
+          class="inline-flex h-11 w-11 items-center justify-center rounded text-brand-800 transition-colors hover:bg-ink-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 dark:text-brand-300 dark:hover:bg-night-800"
           type="button"
           :aria-expanded="menuAberto"
           :aria-label="menuAberto ? 'Fechar menu' : 'Abrir menu'"
@@ -62,7 +62,7 @@ const itens = [
             <path d="M4 17h16" />
           </svg>
         </button>
-        <span class="font-bold text-[#194675] dark:text-[#7FB0E8]">Synthetix</span>
+        <span class="font-bold text-brand-800 dark:text-brand-300">Synthetix</span>
       </header>
 
       <main class="flex-1 px-6 py-8 lg:px-10">

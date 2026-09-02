@@ -38,29 +38,29 @@ function enviar() {
 </script>
 
 <template>
-  <h1 class="text-2xl font-bold text-[#262F3E] dark:text-[#E8EDF2]">Upload</h1>
-  <p class="mt-2 text-sm text-[#5F5F68] dark:text-[#9FB0C2]">
+  <h1 class="text-2xl font-bold text-ink-900 dark:text-mist-100">Upload</h1>
+  <p class="mt-2 text-sm text-ink-600 dark:text-mist-300">
     Envie planilhas ou arquivos CSV para processamento.
   </p>
 
   <label
     class="mt-8 flex cursor-pointer flex-col items-center justify-center rounded border-2 border-dashed px-6 py-14 text-center transition-colors"
     :class="arrastando
-      ? 'border-[#3F77C4] bg-[#3F77C4]/5'
-      : 'border-[#D9E0E6] bg-white dark:border-[#25384E] dark:bg-[#132132]'"
+      ? 'border-brand-500 bg-brand-500/5'
+      : 'border-ink-200 bg-white dark:border-night-700 dark:bg-night-900'"
     @dragover.prevent="arrastando = true"
     @dragleave.prevent="arrastando = false"
     @drop.prevent="soltar"
   >
-    <svg class="h-10 w-10 text-[#194675] dark:text-[#7FB0E8]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <svg class="h-10 w-10 text-brand-800 dark:text-brand-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <path d="M17 8l-5-5-5 5" />
       <path d="M12 3v13" />
     </svg>
-    <p class="mt-4 text-sm font-medium text-[#262F3E] dark:text-[#E8EDF2]">
+    <p class="mt-4 text-sm font-medium text-ink-900 dark:text-mist-100">
       Arraste os arquivos ou clique para selecionar
     </p>
-    <p class="mt-1 text-xs text-[#8C99A6] dark:text-[#6C7D90]">CSV, XLS ou XLSX</p>
+    <p class="mt-1 text-xs text-ink-400 dark:text-mist-500">CSV, XLS ou XLSX</p>
     <input
       class="sr-only"
       type="file"
@@ -72,15 +72,15 @@ function enviar() {
 
   <ul class="mt-6" v-if="arquivos.length">
     <li
-      class="flex items-center justify-between gap-4 border-b border-[#D9E0E6] py-3 dark:border-[#25384E]"
+      class="flex items-center justify-between gap-4 border-b border-ink-200 py-3 dark:border-night-700"
       v-for="(arquivo, indice) in arquivos"
       :key="`${arquivo.name}-${indice}`"
     >
-      <span class="min-w-0 truncate text-sm text-[#262F3E] dark:text-[#E8EDF2]">{{ arquivo.name }}</span>
+      <span class="min-w-0 truncate text-sm text-ink-900 dark:text-mist-100">{{ arquivo.name }}</span>
       <span class="flex shrink-0 items-center gap-4">
-        <span class="text-xs text-[#8C99A6] dark:text-[#6C7D90]">{{ formatarTamanho(arquivo.size) }}</span>
+        <span class="text-xs text-ink-400 dark:text-mist-500">{{ formatarTamanho(arquivo.size) }}</span>
         <button
-          class="text-sm font-medium text-[#194675] hover:text-[#3F77C4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3F77C4] dark:text-[#7FB0E8]"
+          class="text-sm font-medium text-brand-800 hover:text-brand-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 dark:text-brand-300"
           type="button"
           @click="remover(indice)"
         >
@@ -91,7 +91,7 @@ function enviar() {
   </ul>
 
   <p
-    class="mt-6 rounded border border-[#D7AF49] bg-[#D7AF49]/10 px-4 py-3 text-sm text-[#262F3E] dark:bg-[#D7AF49]/15 dark:text-[#E8EDF2]"
+    class="mt-6 rounded border border-warn-500 bg-warn-500/10 px-4 py-3 text-sm text-ink-900 dark:bg-warn-500/15 dark:text-mist-100"
     v-if="aviso"
     role="alert"
   >
@@ -99,7 +99,7 @@ function enviar() {
   </p>
 
   <button
-    class="mt-6 rounded bg-[#194675] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#11365B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3F77C4] disabled:cursor-not-allowed disabled:opacity-50"
+    class="mt-6 rounded bg-brand-800 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
     type="button"
     :disabled="!arquivos.length"
     @click="enviar"

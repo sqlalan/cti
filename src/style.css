@@ -1,9 +1,67 @@
 @import "tailwindcss";
 
 @theme {
+  /* Marca — azul-marinho, matiz ~211deg (mesma família do matrix e dos botões) */
+  --color-brand-900: #11365b; /* hero, fundo do matrix, rodapé */
+  --color-brand-800: #194675; /* botão primário, item ativo */
+  --color-brand-700: #1f5691; /* hover do botão no tema escuro */
+  --color-brand-500: #3f77c4; /* foco, links, realce */
+  --color-brand-300: #7fb0e8; /* texto de marca no tema escuro */
+  --color-brand-100: #cfe2f7; /* cabeça do matrix */
+
+  /* Acento — ciano, o brilho do matrix (matiz ~187deg, análogo ao azul) */
+  --color-glow-600: #0e7c8c; /* texto/ícone sobre fundo claro — 4.9:1 no branco */
+  --color-glow-400: #22b8cf; /* bordas, chips, realce */
+  --color-glow-300: #5fd8e8; /* brilho sobre fundo escuro */
+
+  /* Neutros frios do tema claro */
+  --color-ink-900: #262f3e; /* títulos */
+  --color-ink-600: #5a6b80; /* texto secundário */
+  --color-ink-400: #8496a8; /* texto terciário, placeholders */
+  --color-ink-200: #d9e0e6; /* bordas no claro, texto sobre o marinho */
+  --color-ink-100: #f5f7fa; /* fundo de página, hover no claro */
+
+  /* Superfícies do tema escuro */
+  --color-night-950: #0a1524; /* fundo de página */
+  --color-night-900: #122438; /* cartões, cabeçalho, sidebar, campos */
+  --color-night-800: #1a3050; /* hover */
+  --color-night-700: #24405f; /* bordas */
+
+  /* Texto do tema escuro */
+  --color-mist-100: #e8edf2; /* títulos */
+  --color-mist-300: #9fb0c2; /* texto secundário */
+  --color-mist-500: #6c7d90; /* texto terciário, placeholders */
+
+  /* Âmbar — exclusivo de avisos */
+  --color-warn-500: #d7af49;
+
+  --shadow-cartao: 0 1px 3px rgb(from var(--color-ink-900) r g b / 0.07);
+  --shadow-cartao-hover: 0 20px 35px -20px rgb(from var(--color-brand-800) r g b / 0.45);
+  --shadow-cartao-aberto: 0 35px 60px -25px rgb(from var(--color-brand-800) r g b / 0.55);
+  --shadow-chip: 0 8px 16px -8px rgb(from var(--color-brand-800) r g b / 0.8);
+
   --animate-flutuar: flutuar 7s ease-in-out infinite;
   --animate-flutuar-card: flutuar-card 9s ease-in-out infinite;
   --animate-flutuar-lento: flutuar-lento 11s ease-in-out infinite;
+}
+
+/* Vinheta que escurece as bordas do matrix para o texto do hero respirar. */
+@utility vinheta-hero {
+  background-image: radial-gradient(
+    ellipse 68% 60% at 50% 50%,
+    var(--color-brand-900) 34%,
+    rgb(from var(--color-brand-900) r g b / 0.65) 66%,
+    rgb(from var(--color-brand-900) r g b / 0) 100%
+  );
+}
+
+/* Brilho que acompanha o ponteiro sobre o cartão 3D. */
+@utility luz-cartao {
+  background-image: radial-gradient(
+    circle at var(--luz-x) var(--luz-y),
+    rgb(from var(--color-brand-500) r g b / 0.16),
+    rgb(from var(--color-brand-500) r g b / 0) 55%
+  );
 }
 
 @keyframes flutuar {
