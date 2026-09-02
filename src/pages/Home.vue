@@ -8,12 +8,12 @@ import MatrixRain from '../components/MatrixRain.vue'
 <template>
   <Header />
 
-  <!-- Hero e citacao dividem um unico matrix ao fundo, sem emenda entre eles. -->
+  <!-- Hero sobre o matrix. -->
   <div class="relative overflow-hidden bg-brand-900">
     <MatrixRain class="pointer-events-none absolute inset-0" />
     <div class="pointer-events-none absolute inset-0 bg-brand-900/20"></div>
 
-    <section class="relative flex min-h-[80svh] items-center px-8 py-20 text-center">
+    <section class="relative flex min-h-[56svh] items-center px-8 py-16 text-center">
       <div class="pointer-events-none absolute inset-0 vinheta-hero"></div>
 
       <div class="pointer-events-none absolute inset-0" aria-hidden="true">
@@ -29,20 +29,6 @@ import MatrixRain from '../components/MatrixRain.vue'
         <p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-ink-200">
           Conectamos dados, análises e inteligência em uma única plataforma
           para a sua empresa decidir com mais segurança.
-        </p>
-      </div>
-    </section>
-
-    <section class="relative scroll-mt-24 px-8 py-16" id="sobre">
-      <div class="pointer-events-none absolute inset-0 vinheta-hero"></div>
-      <div class="relative">
-        <blockquote class="mx-auto max-w-3xl text-center text-2xl font-semibold leading-snug text-white sm:text-3xl">
-          Porque dados, por si só, não geram valor. O valor está naquilo que
-          conseguimos compreender a partir deles.
-        </blockquote>
-        <p class="mx-auto mt-6 max-w-2xl text-center leading-relaxed text-ink-200">
-          Organizamos informações, conectamos diferentes fontes de dados e
-          transformamos grandes volumes em análises claras.
         </p>
       </div>
     </section>
