@@ -1,0 +1,2 @@
+Planilhas de exemplo para testar a tela de Upload.
+Nao entram no build: ficam fora de src/ e de public/.

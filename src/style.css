@@ -35,6 +35,33 @@
   /* Âmbar — exclusivo de avisos */
   --color-warn-500: #d7af49;
 
+  /* Gráficos — cores de dado.
+     Conferidas com validador de paleta (banda de luminosidade, piso de croma,
+     separação sob protanopia/deuteranopia e contraste sobre a superfície do
+     cartão). Não ajuste no olho: o par âmbar/vermelho parece distinto e colapsa
+     sob daltonismo — o vermelho do tema escuro puxa para o coral por isso. */
+  --color-serie-600: #3f77c4; /* série única — claro (mesmo passo do brand-500) */
+  --color-serie-400: #5b95e0; /* série única — escuro */
+
+  --color-ok-600: #0f8a5d; /* conforme — claro */
+  --color-ok-400: #2bab92; /* conforme — escuro */
+  --color-alerta-600: #b68920; /* alerta — claro */
+  --color-alerta-400: #bf8a22; /* alerta — escuro */
+  --color-erro-600: #c43631; /* erro — claro */
+  --color-erro-400: #e36378; /* erro — escuro */
+
+  /* Nível do cliente (A/B/C) — rampa ORDINAL, não status.
+     A é a faixa mais alta e recebe o passo mais escuro no claro (mais claro no
+     escuro): a ordem da faixa fica visível na própria cor. Verde/âmbar/vermelho
+     seria errado aqui — sugeriria que cliente C é defeito, e ele é só menor.
+     Conferido com o validador no modo --ordinal nos dois temas. */
+  --color-nivel-a-600: #194675; /* claro */
+  --color-nivel-a-400: #8fbdf0; /* escuro */
+  --color-nivel-b-600: #3f77c4;
+  --color-nivel-b-400: #4f8bd6;
+  --color-nivel-c-600: #7fb0e8;
+  --color-nivel-c-400: #2a5c94;
+
   --shadow-cartao: 0 1px 3px rgb(from var(--color-ink-900) r g b / 0.07);
   --shadow-cartao-hover: 0 20px 35px -20px rgb(from var(--color-brand-800) r g b / 0.45);
   --shadow-cartao-aberto: 0 35px 60px -25px rgb(from var(--color-brand-800) r g b / 0.55);

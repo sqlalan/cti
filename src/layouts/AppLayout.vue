@@ -1,18 +1,29 @@
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const menuAberto = ref(false)
 
 const itens = [
   { to: '/sidebar/dashboard', rotulo: 'Dashboard' },
   { to: '/sidebar/upload', rotulo: 'Upload' },
+  { to: '/sidebar/relatorio', rotulo: 'Relatórios' },
 ]
+
+// Só devolve o usuário para o login por enquanto. Quando a autenticação existir,
+// é aqui que a sessão precisa ser descartada (token, store, cache) antes de
+// navegar — sair sem limpar deixaria a próxima pessoa entrando na sessão anterior.
+function sair() {
+  menuAberto.value = false
+  router.push('/login')
+}
 </script>
 
 <template>
   <div class="flex min-h-screen bg-ink-100 dark:bg-night-950">
     <aside
-      class="fixed inset-y-0 left-0 z-30 w-64 shrink-0 border-r border-ink-200 bg-white p-6 transition-transform dark:border-night-700 dark:bg-night-900 lg:static lg:translate-x-0"
+      class="fixed inset-y-0 left-0 z-30 flex w-64 shrink-0 flex-col border-r border-ink-200 bg-white p-6 transition-transform dark:border-night-700 dark:bg-night-900 lg:sticky lg:inset-y-auto lg:top-0 lg:h-screen lg:translate-x-0 lg:overflow-y-auto"
       :class="menuAberto ? 'translate-x-0' : '-translate-x-full'"
     >
       <RouterLink class="block" to="/">
@@ -33,12 +44,27 @@ const itens = [
         </RouterLink>
       </nav>
 
-      <RouterLink
-        class="mt-10 block text-sm font-medium text-brand-800 hover:text-brand-500 dark:text-brand-300"
-        to="/"
+      <button
+        class="mt-auto flex w-full items-center justify-center gap-2 rounded border border-ink-200 px-4 py-2.5 text-sm font-medium text-ink-600 transition-colors hover:border-brand-500/50 hover:text-brand-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 dark:border-night-700 dark:text-mist-300 dark:hover:text-brand-300"
+        type="button"
+        @click="sair"
       >
-        Voltar para o site
-      </RouterLink>
+        <svg
+          class="h-4 w-4 shrink-0"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+          <path d="m16 17 5-5-5-5" />
+          <path d="M21 12H9" />
+        </svg>
+        Sair
+      </button>
     </aside>
 
     <div
