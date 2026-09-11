@@ -77,7 +77,7 @@ const PONTO_ESTADO = {
       <GraficoArea :pontos="painel.volume" />
 
       <template #tabela>
-        <div class="max-h-72 overflow-y-auto">
+        <div class="max-h-72 overflow-y-auto pr-2">
           <table class="w-full text-left text-sm">
             <thead class="sticky top-0 bg-white dark:bg-night-900">
               <tr class="border-b border-ink-200 dark:border-night-700">
