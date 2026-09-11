@@ -396,6 +396,21 @@ const NIVEL_PONTO = {
       </p>
     </section>
 
+    <!-- Sem nenhuma linha válida a prévia acima não renderiza, e uma seção que
+         simplesmente some não diz à pessoa que ela sumiu — parece tela quebrada.
+         Este bloco ocupa o lugar dela e aponta para a tabela de erros. -->
+    <section
+      class="mt-4 min-w-0 rounded border border-ink-200 bg-white p-5 dark:border-night-700 dark:bg-night-900"
+      v-else
+    >
+      <h2 class="text-sm font-semibold text-ink-900 dark:text-mist-100">Prévia dos dados tratados</h2>
+      <p class="mt-1 text-sm text-ink-600 dark:text-mist-300">
+        Nenhuma linha passou no tratamento, então não há o que pré-visualizar. Os
+        {{ inteiro(planilha.erros.length) }} motivos estão na tabela acima — corrija a planilha e
+        carregue de novo.
+      </p>
+    </section>
+
     <div class="mt-6 flex flex-wrap items-center gap-3">
       <button
         class="rounded bg-brand-800 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed disabled:opacity-50"

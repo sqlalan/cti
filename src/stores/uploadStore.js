@@ -32,7 +32,7 @@ async function lerMatriz(arquivo) {
     if (texto.includes('�')) {
       texto = new TextDecoder('windows-1252').decode(buffer)
     }
-    pasta = XLSX.read(texto, { type: 'string' })
+    pasta = XLSX.read(texto, { type: 'string', raw: true })
   } else {
     pasta = XLSX.read(buffer, { type: 'array', cellDates: true })
   }
