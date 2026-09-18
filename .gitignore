@@ -1,24 +1,22 @@
+# Dependências
+node_modules/
+
+# Builds
+target/
+dist/
+dist-ssr/
+
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Editor / IDE
+# .vscode da raiz contém caminhos locais do JDK; o de FrontEnd tem regra própria
+/.vscode/
+.idea/
+*.iml
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# SO
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+Thumbs.db
