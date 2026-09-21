@@ -88,7 +88,10 @@ export const ESQUEMA = [
     chave: 'servicos',
     rotulo: 'Serviços',
     apelidos: ['servicos contratados', 'servicos', 'produtos'],
-    obrigatoria: false,
+    // Cliente sem nenhum serviço é contrato sem objeto: entraria no total de
+    // faturamento sem aparecer em nenhuma contagem de serviço, e a soma das
+    // partes nunca fecharia com o todo.
+    obrigatoria: true,
     tratamento: 'listaServicos',
   },
   {
@@ -102,14 +105,18 @@ export const ESQUEMA = [
     chave: 'cidade',
     rotulo: 'Cidade',
     apelidos: ['cidade', 'municipio'],
-    obrigatoria: true,
+    // Cidade e UF são localização, não identidade: faltar uma delas empobrece
+    // o recorte regional, mas não invalida o cliente. Descartar a linha inteira
+    // por causa disso perderia o faturamento junto. Em branco, o registro cai
+    // no grupo "(em branco)" do resumo, que é visível e cobrável.
+    obrigatoria: false,
     tratamento: 'nomeProprio',
   },
   {
     chave: 'uf',
     rotulo: 'UF',
     apelidos: ['uf', 'estado', 'sigla'],
-    obrigatoria: true,
+    obrigatoria: false,
     tratamento: 'uf',
   },
 ]
@@ -302,9 +309,14 @@ const TRATAMENTOS = {
     return { valor: data }
   },
 
+  // Em branco não é erro aqui: quem decide se a coluna pode faltar é o
+  // `obrigatoria` do ESQUEMA, e deixar o tratamento reclamar por conta própria
+  // tornaria a flag decorativa — foi o que mantinha UF obrigatória na prática
+  // mesmo depois de o dicionário da planilha passar a listá-la como opcional.
+  // Sigla preenchida, porém, continua tendo que ser uma das 27.
   uf(bruto) {
     const valor = semAcento(limpar(bruto)).toUpperCase()
-    if (!valor) return { valor: '', erro: 'UF em branco' }
+    if (!valor) return { valor: '' }
     if (!UFS.includes(valor)) return { valor, erro: `UF "${valor}" não é uma sigla válida` }
     return { valor }
   },
