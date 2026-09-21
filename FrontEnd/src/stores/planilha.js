@@ -74,46 +74,133 @@ async function lerMatriz(arquivo) {
   return { matriz, aba: primeira, abasIgnoradas: demais }
 }
 
-export const useUploadStore = defineStore('upload', () => {
-  const avisos = useNotificacoesStore()
+// Store da planilha: o estado da tela de upload e do relatório.
+//
+// Segue a divisão da aula 08 — State guarda, Getters calculam, Actions fazem —
+// no formato setup do Pinia: ref é state, computed é getter, function é action.
+//
+// As REGRAS de validação ficam em dados/esquemaPlanilha.js, e a action
+// validarDados() é quem as aplica. Assim a store continua sendo o lugar onde a
+// validação acontece, e as regras continuam testáveis sem montar o app.
+export const usePlanilhaStore = defineStore('planilha', () => {
+  const notificacoes = useNotificacoesStore()
+
+  // ---------------------------------------------------------------------------
+  // STATE — dados temporários da interface. Nada aqui vai para o banco.
+  // ---------------------------------------------------------------------------
 
   // shallowRef porque o File é um objeto do navegador, não um dado nosso:
   // deixar o Vue embrulhar em proxy reativo pode quebrar arrayBuffer() e o
   // envio via FormData. Aqui só a troca do arquivo precisa disparar reação.
   const arquivo = shallowRef(null)
+  const nomeArquivo = ref('')
+  const dataUpload = ref(null)
 
-  const dados = ref([])
-  const erros = ref([])
-  const resumo = ref(null)
+  // A matriz como veio da planilha (primeira linha = cabeçalho), antes de
+  // qualquer tratamento. shallowRef porque ela nunca é alterada por dentro —
+  // só trocada inteira — e uma planilha de milhares de linhas não precisa de
+  // um proxy reativo em cada célula.
+  const dadosBrutos = shallowRef([])
 
-  // vazio → lendo → pronto | falha ; enviando → enviado | falha
-  const estado = ref('vazio')
-  const falha = ref('')
+  const dadosValidos = ref([])
+  // Cada item é a linha rejeitada com o motivo: { linha, codigo, nome, motivo }.
+  const dadosInvalidos = ref([])
+  // Linhas que passaram, mas com algo a conferir (segmento fora do dicionário…).
+  const avisos = ref([])
+  const colunasIgnoradas = ref([])
   const aba = ref('')
   const abasIgnoradas = ref([])
 
+  // vazio → lendo → pronto | falha ; enviando → enviado | falha
+  //
+  // Não se chama statusValidacao como no slide porque cobre mais que a
+  // validação: também diz se a planilha está sendo enviada ou já foi.
+  const estado = ref('vazio')
+  // Motivo do último problema do ARQUIVO (formato, leitura, envio). Problema
+  // de LINHA mora em dadosInvalidos.
+  const falha = ref('')
+
   // A notificação da operação em curso. Guardada para que a etapa seguinte
   // reescreva o mesmo cartão em vez de empilhar outro: uma operação de cada
-  // vez, um cartão de cada vez.
+  // vez, um cartão de cada vez. Fica fora do state porque não é dado de tela.
   let idOperacao = null
 
-  const temDados = computed(() => dados.value.length > 0)
-  const podeEnviar = computed(() => estado.value === 'pronto' && temDados.value)
+  // ---------------------------------------------------------------------------
+  // GETTERS — calculados a partir do state, sem alterá-lo. Recalculam sozinhos
+  // quando o state muda, então nenhum total fica desatualizado.
+  // ---------------------------------------------------------------------------
+
+  const quantidadeValidas = computed(() => dadosValidos.value.length)
+  const quantidadeInvalidas = computed(() => dadosInvalidos.value.length)
+  const quantidadeLinhas = computed(() => quantidadeValidas.value + quantidadeInvalidas.value)
+
+  const percentualValidos = computed(() =>
+    quantidadeLinhas.value === 0 ? 0 : (quantidadeValidas.value / quantidadeLinhas.value) * 100,
+  )
+
+  const temDados = computed(() => quantidadeValidas.value > 0)
+
+  // Os recortes por nível, segmento, consultor, serviço e cidade. É getter e
+  // não state: antes o resumo era calculado uma vez e guardado, e bastava
+  // alguém alterar dadosValidos para ele passar a descrever outra planilha.
+  // Só existe depois de uma validação — que sempre produz ao menos uma linha,
+  // válida ou não.
+  const resumo = computed(() =>
+    quantidadeLinhas.value === 0
+      ? null
+      : resumir(dadosValidos.value, dadosInvalidos.value, avisos.value, colunasIgnoradas.value),
+  )
+
+  // Arredondado em centavos dentro de resumir().
+  const totalFaturamento = computed(() => resumo.value?.faturamentoTotal ?? 0)
+
+  // 'falha' entra porque, com dados na tela, ela só pode ter vindo do envio —
+  // falha de leitura não deixa linha válida. Sem isto o botão travava depois
+  // de um envio malsucedido, justo quando a mensagem convida a tentar de novo.
+  const podeEnviar = computed(
+    () => temDados.value && (estado.value === 'pronto' || estado.value === 'falha'),
+  )
+
+  // ---------------------------------------------------------------------------
+  // ACTIONS — o que muda o state.
+  // ---------------------------------------------------------------------------
 
   function limpar() {
     arquivo.value = null
-    dados.value = []
-    erros.value = []
-    resumo.value = null
-    estado.value = 'vazio'
-    falha.value = ''
+    nomeArquivo.value = ''
+    dataUpload.value = null
+    dadosBrutos.value = []
+    dadosValidos.value = []
+    dadosInvalidos.value = []
+    avisos.value = []
+    colunasIgnoradas.value = []
     aba.value = ''
     abasIgnoradas.value = []
+    estado.value = 'vazio'
+    falha.value = ''
+  }
+
+  /**
+   * Aplica as regras do esquema sobre dadosBrutos e separa válidas de
+   * inválidas. Lê do state em vez de receber a lista: assim dá para validar de
+   * novo — depois de cadastrar um segmento no dicionário, por exemplo — sem
+   * pedir o arquivo outra vez.
+   *
+   * Linha com problema não derruba o arquivo: ela vai para dadosInvalidos e o
+   * resto segue, para a pessoa corrigir três linhas em vez de reenviar tudo.
+   */
+  function validarDados() {
+    const tratado = tratarLinhas(dadosBrutos.value)
+
+    dadosValidos.value = tratado.dados
+    dadosInvalidos.value = tratado.erros
+    avisos.value = tratado.avisos
+    colunasIgnoradas.value = tratado.colunasIgnoradas
   }
 
   function abrirOperacao(titulo, texto) {
-    if (idOperacao) avisos.remover(idOperacao)
-    idOperacao = avisos.notificar({ tipo: 'progresso', titulo, texto })
+    if (idOperacao) notificacoes.remover(idOperacao)
+    idOperacao = notificacoes.notificar({ tipo: 'progresso', titulo, texto })
     return idOperacao
   }
 
@@ -128,18 +215,15 @@ export const useUploadStore = defineStore('upload', () => {
     estado.value = 'falha'
     falha.value = detalhe ? `${titulo} — ${detalhe}` : titulo
 
-    if (idOperacao) avisos.remover(idOperacao)
-    idOperacao = avisos.notificar({ tipo: 'erro', titulo, texto: detalhe })
+    if (idOperacao) notificacoes.remover(idOperacao)
+    idOperacao = notificacoes.notificar({ tipo: 'erro', titulo, texto: detalhe })
 
     return false
   }
 
   /**
-   * Recebe o File, valida, lê e trata. Devolve true quando sobrou dado válido.
-   *
-   * Linha com problema não derruba o arquivo: ela vai para `erros` e o resto
-   * segue em `dados`, para a pessoa corrigir três linhas em vez de reenviar
-   * tudo no escuro.
+   * Recebe o File, confere, lê e manda validar. Devolve true quando sobrou
+   * dado válido.
    */
   async function carregar(entrada) {
     if (!entrada) {
@@ -172,45 +256,41 @@ export const useUploadStore = defineStore('upload', () => {
 
     limpar()
     arquivo.value = entrada
+    nomeArquivo.value = entrada.name
+    dataUpload.value = new Date()
     estado.value = 'lendo'
 
     const notificacao = abrirOperacao('Lendo a planilha…', entrada.name)
 
     try {
       const lido = await lerMatriz(entrada)
-      const tratado = tratarLinhas(lido.matriz)
 
-      dados.value = tratado.dados
-      erros.value = tratado.erros
-      resumo.value = resumir(
-        tratado.dados,
-        tratado.erros,
-        tratado.avisos,
-        tratado.colunasIgnoradas,
-      )
+      dadosBrutos.value = lido.matriz
       aba.value = lido.aba
       abasIgnoradas.value = lido.abasIgnoradas
+
+      validarDados()
       estado.value = 'pronto'
 
-      const validas = tratado.dados.length
-      const comErro = tratado.erros.length
+      const validas = quantidadeValidas.value
+      const comErro = quantidadeInvalidas.value
 
       // Três desfechos, três tipos. Chamar de sucesso uma leitura em que nada
       // passou seria mentir para quem só viu o cartão.
       if (!validas) {
-        avisos.atualizar(notificacao, {
+        notificacoes.atualizar(notificacao, {
           tipo: 'erro',
           titulo: 'Nenhuma linha aproveitada',
           texto: `As ${linhas(comErro)} do arquivo falharam no tratamento. Os motivos estão na tabela da página.`,
         })
       } else if (comErro) {
-        avisos.atualizar(notificacao, {
+        notificacoes.atualizar(notificacao, {
           tipo: 'aviso',
           titulo: 'Planilha lida com pendências',
           texto: `${linhas(validas)} prontas para envio e ${linhas(comErro)} de fora — confira "Linhas com erro" na página.`,
         })
       } else {
-        avisos.atualizar(notificacao, {
+        notificacoes.atualizar(notificacao, {
           tipo: 'sucesso',
           titulo: 'Planilha lida',
           texto: `${linhas(validas)} prontas para envio, na aba ${lido.aba}.`,
@@ -221,11 +301,10 @@ export const useUploadStore = defineStore('upload', () => {
     } catch (erro) {
       // Arquivo corrompido, protegido por senha ou que não é planilha de fato
       // estoura aqui dentro do SheetJS.
-      arquivo.value = entrada
       estado.value = 'falha'
       falha.value = `Não foi possível ler a planilha: ${erro.message}`
 
-      avisos.atualizar(notificacao, {
+      notificacoes.atualizar(notificacao, {
         tipo: 'erro',
         titulo: 'Não foi possível ler a planilha',
         texto: `${erro.message}. Verifique se o arquivo não está corrompido nem protegido por senha.`,
@@ -238,14 +317,15 @@ export const useUploadStore = defineStore('upload', () => {
   // -------------------------------------------------------------------------
   // Ponto de integração com o Spring Boot.
   //
-  // Está tudo montado, só não dispara. Para ligar, troque o trecho marcado por
-  // um fetch/axios de verdade. Decida com o backend o que vai no corpo:
+  // Está tudo montado, só não dispara. Pelo fluxo da aula (Pinia → Service
+  // Axios → Spring), a chamada HTTP vai morar num service em src/services/, e
+  // esta action só chama o service. Decida com o backend o que vai no corpo:
   //
   //   a) o arquivo original (FormData abaixo) — o Java reprocessa com Apache
   //      POI e o tratamento do navegador serve só de pré-visualização;
-  //   b) as linhas já tratadas (JSON.stringify(dados.value)) — menos trabalho
-  //      no servidor, mas ele ainda precisa revalidar: dado que chega do
-  //      navegador é dado que o usuário pode ter adulterado.
+  //   b) as linhas já tratadas (JSON.stringify(dadosValidos.value)) — menos
+  //      trabalho no servidor, mas ele ainda precisa revalidar: dado que chega
+  //      do navegador é dado que o usuário pode ter adulterado.
   // -------------------------------------------------------------------------
   async function enviar() {
     if (!podeEnviar.value) return false
@@ -253,16 +333,17 @@ export const useUploadStore = defineStore('upload', () => {
     estado.value = 'enviando'
     falha.value = ''
 
-    const enviadas = dados.value.length
+    const enviadas = quantidadeValidas.value
     const notificacao = abrirOperacao(
       'Enviando para o servidor…',
-      `${linhas(enviadas)} · ${arquivo.value.name}`,
+      `${linhas(enviadas)} · ${nomeArquivo.value}`,
     )
 
     const corpo = new FormData()
-    corpo.append('arquivo', arquivo.value, arquivo.value.name)
+    corpo.append('arquivo', arquivo.value, nomeArquivo.value)
+    corpo.append('dataUpload', dataUpload.value.toISOString())
     corpo.append('linhasValidas', String(enviadas))
-    corpo.append('linhasComErro', String(erros.value.length))
+    corpo.append('linhasComErro', String(quantidadeInvalidas.value))
 
     try {
       // --- TROQUE DAQUI ---
@@ -272,10 +353,10 @@ export const useUploadStore = defineStore('upload', () => {
       // --- ATÉ AQUI ---
 
       estado.value = 'enviado'
-      avisos.atualizar(notificacao, {
+      notificacoes.atualizar(notificacao, {
         tipo: 'sucesso',
         titulo: 'Envio concluído',
-        texto: `${linhas(enviadas)} de ${arquivo.value.name} chegaram ao servidor.`,
+        texto: `${linhas(enviadas)} de ${nomeArquivo.value} chegaram ao servidor.`,
       })
 
       return true
@@ -283,7 +364,7 @@ export const useUploadStore = defineStore('upload', () => {
       estado.value = 'falha'
       falha.value = `Falha ao enviar: ${erro.message}`
 
-      avisos.atualizar(notificacao, {
+      notificacoes.atualizar(notificacao, {
         tipo: 'erro',
         titulo: 'Falha no envio',
         texto: `${erro.message}. A planilha continua carregada — dá para tentar de novo sem selecionar o arquivo outra vez.`,
@@ -294,18 +375,32 @@ export const useUploadStore = defineStore('upload', () => {
   }
 
   return {
+    // state
     arquivo,
-    dados,
-    erros,
-    resumo,
-    estado,
-    falha,
+    nomeArquivo,
+    dataUpload,
+    dadosBrutos,
+    dadosValidos,
+    dadosInvalidos,
+    avisos,
+    colunasIgnoradas,
     aba,
     abasIgnoradas,
+    estado,
+    falha,
+    // getters
+    quantidadeLinhas,
+    quantidadeValidas,
+    quantidadeInvalidas,
+    percentualValidos,
+    totalFaturamento,
     temDados,
+    resumo,
     podeEnviar,
-    carregar,
+    // actions
     limpar,
+    validarDados,
+    carregar,
     enviar,
   }
 })

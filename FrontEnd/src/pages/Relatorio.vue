@@ -5,11 +5,11 @@ import GraficoArea from '../components/graficos/GraficoArea.vue'
 import GraficoBarras from '../components/graficos/GraficoBarras.vue'
 import { NIVEIS } from '../dados/esquemaPlanilha'
 import { formatarData } from '../dados/painel'
-import { useUploadStore } from '../stores/uploadStore'
+import { usePlanilhaStore } from '../stores/planilha'
 
 // O relatório lê a mesma planilha que o Upload carregou. É o que o store existe
 // para resolver: o dado atravessa a navegação sem passar por prop nem por URL.
-const planilha = useUploadStore()
+const planilha = usePlanilhaStore()
 
 const filtroSegmento = ref('todos')
 const filtroNivel = ref('todos')
@@ -17,14 +17,14 @@ const filtroConsultor = ref('todos')
 const busca = ref('')
 
 const opcoes = (chave) =>
-  computed(() => [...new Set(planilha.dados.map((r) => r[chave]))].filter(Boolean).sort())
+  computed(() => [...new Set(planilha.dadosValidos.map((r) => r[chave]))].filter(Boolean).sort())
 
 const segmentos = opcoes('segmento')
 const consultores = opcoes('consultor')
 
 const filtrados = computed(() => {
   const termo = busca.value.trim().toLowerCase()
-  return planilha.dados.filter((registro) => {
+  return planilha.dadosValidos.filter((registro) => {
     if (filtroSegmento.value !== 'todos' && registro.segmento !== filtroSegmento.value) return false
     if (filtroNivel.value !== 'todos' && registro.nivel !== filtroNivel.value) return false
     if (filtroConsultor.value !== 'todos' && registro.consultor !== filtroConsultor.value) return false
@@ -322,7 +322,7 @@ function exportarCsv() {
       v-if="temFiltro"
       role="status"
     >
-      Mostrando {{ inteiro(filtrados.length) }} de {{ inteiro(planilha.dados.length) }} clientes.
+      Mostrando {{ inteiro(filtrados.length) }} de {{ inteiro(planilha.quantidadeValidas) }} clientes.
     </p>
 
     <div class="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

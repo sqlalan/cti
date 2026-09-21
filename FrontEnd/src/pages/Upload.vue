@@ -1,9 +1,9 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { FORMATOS, TAMANHO_MAXIMO, formatarTamanho, useUploadStore } from '../stores/uploadStore'
+import { FORMATOS, TAMANHO_MAXIMO, formatarTamanho, usePlanilhaStore } from '../stores/planilha'
 import { ESQUEMA, NIVEIS } from '../dados/esquemaPlanilha'
 
-const planilha = useUploadStore()
+const planilha = usePlanilhaStore()
 
 const arrastando = ref(false)
 const LIMITE_PREVIA = 15
@@ -19,8 +19,8 @@ const ACEITOS = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 ].join(',')
 
-const previa = computed(() => planilha.dados.slice(0, LIMITE_PREVIA))
-const ocultas = computed(() => Math.max(0, planilha.dados.length - LIMITE_PREVIA))
+const previa = computed(() => planilha.dadosValidos.slice(0, LIMITE_PREVIA))
+const ocultas = computed(() => Math.max(0, planilha.quantidadeValidas - LIMITE_PREVIA))
 
 function selecionar(evento) {
   const [arquivo] = evento.target.files
@@ -199,7 +199,7 @@ const grupos = computed(() => {
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div class="min-w-0">
           <h2 class="truncate text-sm font-semibold text-ink-900 dark:text-mist-100">
-            {{ planilha.arquivo.name }}
+            {{ planilha.nomeArquivo }}
           </h2>
           <p class="mt-1 text-xs text-ink-600 dark:text-mist-300">
             {{ formatarTamanho(planilha.arquivo.size) }} · aba
@@ -223,30 +223,30 @@ const grupos = computed(() => {
         <div>
           <dt class="text-xs text-ink-600 dark:text-mist-300">Linhas lidas</dt>
           <dd class="mt-1 text-2xl font-semibold text-ink-900 dark:text-mist-100">
-            {{ inteiro(planilha.resumo.linhas) }}
+            {{ inteiro(planilha.quantidadeLinhas) }}
           </dd>
         </div>
         <div>
           <dt class="text-xs text-ink-600 dark:text-mist-300">Válidas</dt>
           <dd class="mt-1 text-2xl font-semibold text-ok-600 dark:text-ok-400">
-            {{ inteiro(planilha.resumo.validas) }}
+            {{ inteiro(planilha.quantidadeValidas) }}
           </dd>
         </div>
         <div>
           <dt class="text-xs text-ink-600 dark:text-mist-300">Com erro</dt>
           <dd
             class="mt-1 text-2xl font-semibold"
-            :class="planilha.resumo.comErro
+            :class="planilha.quantidadeInvalidas
               ? 'text-erro-600 dark:text-erro-400'
               : 'text-ink-900 dark:text-mist-100'"
           >
-            {{ inteiro(planilha.resumo.comErro) }}
+            {{ inteiro(planilha.quantidadeInvalidas) }}
           </dd>
         </div>
         <div>
           <dt class="text-xs text-ink-600 dark:text-mist-300">Faturamento somado</dt>
           <dd class="mt-1 whitespace-nowrap text-2xl font-semibold text-ink-900 dark:text-mist-100">
-            {{ dinheiro(planilha.resumo.faturamentoTotal) }}
+            {{ dinheiro(planilha.totalFaturamento) }}
           </dd>
         </div>
       </dl>
@@ -335,10 +335,10 @@ const grupos = computed(() => {
 
     <section
       class="mt-4 min-w-0 rounded border border-ink-200 bg-white p-5 dark:border-night-700 dark:bg-night-900"
-      v-if="planilha.erros.length"
+      v-if="planilha.quantidadeInvalidas"
     >
       <h2 class="text-sm font-semibold text-ink-900 dark:text-mist-100">
-        Linhas com erro ({{ inteiro(planilha.erros.length) }})
+        Linhas com erro ({{ inteiro(planilha.quantidadeInvalidas) }})
       </h2>
       <p class="mt-1 text-xs text-ink-600 dark:text-mist-300">
         Estas linhas ficam de fora do envio. O número é o da linha na planilha.
@@ -357,7 +357,7 @@ const grupos = computed(() => {
           <tbody>
             <tr
               class="border-b border-ink-200 last:border-0 dark:border-night-700"
-              v-for="erro in planilha.erros"
+              v-for="erro in planilha.dadosInvalidos"
               :key="`${erro.linha}-${erro.motivo}`"
             >
               <td class="py-2 pr-4 tabular-nums text-ink-600 dark:text-mist-300">{{ erro.linha }}</td>
@@ -438,7 +438,7 @@ const grupos = computed(() => {
       <h2 class="text-sm font-semibold text-ink-900 dark:text-mist-100">Prévia dos dados tratados</h2>
       <p class="mt-1 text-sm text-ink-600 dark:text-mist-300">
         Nenhuma linha passou no tratamento, então não há o que pré-visualizar. Os
-        {{ inteiro(planilha.erros.length) }} motivos estão na tabela acima — corrija a planilha e
+        {{ inteiro(planilha.quantidadeInvalidas) }} motivos estão na tabela acima — corrija a planilha e
         carregue de novo.
       </p>
     </section>
@@ -480,6 +480,6 @@ const grupos = computed(() => {
     role="status"
   >
     O envio ainda não sai da máquina: o ponto de integração está marcado em
-    <code class="text-xs">enviar()</code>, em <code class="text-xs">src/stores/uploadStore.js</code>.
+    <code class="text-xs">enviar()</code>, em <code class="text-xs">src/stores/planilha.js</code>.
   </p>
 </template>
