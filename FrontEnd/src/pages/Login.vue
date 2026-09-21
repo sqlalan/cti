@@ -1,16 +1,28 @@
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/authStore'
 
-const email = ref('')
+const usuario = ref('')
 const senha = ref('')
-const lembrar = ref(false)
+const mensagem = ref('')
 const mostrarSenha = ref(false)
-const aviso = ref('')
 
-// A autenticação ainda não está conectada a um backend.
+const router = useRouter()
+const auth = useAuthStore()
+
 function entrar() {
-  aviso.value =
-    'Autenticação ainda não conectada. Integre este formulário à API antes de publicar.'
+  mensagem.value = ''
+  // trim só no usuário: "   " passaria no teste de campo vazio da store e
+  // entraria como nome de ninguém. Senha vai como foi digitada — espaço pode
+  // fazer parte dela.
+  if (auth.login(usuario.value.trim(), senha.value)) {
+    // Pelo nome, e não por '/upload' como no slide: neste projeto a tela mora
+    // em /sidebar/upload, e o nome continua valendo se o caminho mudar.
+    router.push({ name: 'upload' })
+  } else {
+    mensagem.value = 'Preencha usuário e senha.'
+  }
 }
 </script>
 
@@ -47,16 +59,18 @@ function entrar() {
           Entre com as credenciais fornecidas pela sua empresa.
         </p>
 
+        <!-- Sem `required` nos campos: a regra de campo vazio mora na store, e
+             o navegador barrando antes dela esconderia a mensagem da aula e
+             deixaria duas validações dizendo coisas diferentes. -->
         <form class="mt-8" @submit.prevent="entrar">
-          <label class="block text-sm font-medium text-ink-900 dark:text-mist-100" for="email">E-mail</label>
+          <label class="block text-sm font-medium text-ink-900 dark:text-mist-100" for="usuario">Usuário</label>
           <input
             class="mt-2 w-full rounded border border-ink-200 bg-white dark:border-night-700 dark:bg-night-900 px-4 py-2.5 text-sm text-ink-900 dark:text-mist-100 placeholder:text-ink-400 dark:placeholder:text-mist-500 focus:border-brand-500 focus:outline-2 focus:outline-offset-0 focus:outline-brand-500"
-            id="email"
-            v-model="email"
-            type="email"
-            autocomplete="email"
-            placeholder="voce@empresa.com.br"
-            required
+            id="usuario"
+            v-model="usuario"
+            type="text"
+            autocomplete="username"
+            placeholder="seu.usuario"
           />
 
           <label class="mt-5 block text-sm font-medium text-ink-900 dark:text-mist-100" for="senha">Senha</label>
@@ -68,7 +82,6 @@ function entrar() {
               :type="mostrarSenha ? 'text' : 'password'"
               autocomplete="current-password"
               placeholder="••••••••"
-              required
             />
             <button
               class="absolute inset-y-0 right-0 px-4 text-xs font-semibold text-brand-800 dark:text-brand-300 hover:text-brand-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
@@ -79,15 +92,9 @@ function entrar() {
             </button>
           </div>
 
-          <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
-            <label class="flex items-center gap-2 text-sm text-ink-600 dark:text-mist-300">
-              <input
-                class="h-4 w-4 rounded border-ink-200 accent-brand-800 dark:border-night-700"
-                v-model="lembrar"
-                type="checkbox"
-              />
-              Manter conectado
-            </label>
+          <!-- "Manter conectado" saiu: pela aula o login sempre persiste no
+               localStorage, e uma caixa que não muda nada engana quem marca. -->
+          <div class="mt-5 flex justify-end">
             <a class="text-sm font-medium text-brand-800 dark:text-brand-300 hover:text-brand-500" href="#">
               Esqueci minha senha
             </a>
@@ -95,10 +102,10 @@ function entrar() {
 
           <p
             class="mt-6 rounded border border-warn-500 bg-warn-500/10 dark:bg-warn-500/15 px-4 py-3 text-sm text-ink-900 dark:text-mist-100"
-            v-if="aviso"
+            v-if="mensagem"
             role="alert"
           >
-            {{ aviso }}
+            {{ mensagem }}
           </p>
 
           <button

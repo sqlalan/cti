@@ -2,8 +2,10 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Notificacoes from '../components/Notificacoes.vue'
+import { useAuthStore } from '../stores/authStore'
 
 const router = useRouter()
+const auth = useAuthStore()
 const menuAberto = ref(false)
 
 const itens = [
@@ -12,11 +14,12 @@ const itens = [
   { to: '/sidebar/relatorio', rotulo: 'Relatórios' },
 ]
 
-// Só devolve o usuário para o login por enquanto. Quando a autenticação existir,
-// é aqui que a sessão precisa ser descartada (token, store, cache) antes de
-// navegar — sair sem limpar deixaria a próxima pessoa entrando na sessão anterior.
+// A sessão é descartada ANTES de navegar: sair sem limpar deixaria o
+// localStorage marcado como logado, e a próxima pessoa no mesmo navegador
+// entraria na sessão anterior. Quando houver token de API, ele sai aqui também.
 function sair() {
   menuAberto.value = false
+  auth.logout()
   router.push('/login')
 }
 </script>
@@ -45,8 +48,13 @@ function sair() {
         </RouterLink>
       </nav>
 
+      <p class="mt-auto truncate px-1 pb-3 text-sm text-ink-600 dark:text-mist-300">
+        Conectado como
+        <span class="font-semibold text-ink-900 dark:text-mist-100">{{ auth.nomeExibicao }}</span>
+      </p>
+
       <button
-        class="mt-auto flex w-full items-center justify-center gap-2 rounded border border-ink-200 px-4 py-2.5 text-sm font-medium text-ink-600 transition-colors hover:border-brand-500/50 hover:text-brand-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 dark:border-night-700 dark:text-mist-300 dark:hover:text-brand-300"
+        class="flex w-full items-center justify-center gap-2 rounded border border-ink-200 px-4 py-2.5 text-sm font-medium text-ink-600 transition-colors hover:border-brand-500/50 hover:text-brand-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 dark:border-night-700 dark:text-mist-300 dark:hover:text-brand-300"
         type="button"
         @click="sair"
       >
