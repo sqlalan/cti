@@ -33,9 +33,16 @@ const fatia = (item) => (item[props.campo] / total.value) * 100
 </script>
 
 <template>
-  <ul class="flex flex-col gap-3">
+  <!-- As colunas moram no <ul>, e cada linha as herda por subgrid. Com o grid
+       em cada <li>, a coluna `auto` media só o próprio rótulo e o próprio
+       valor: a barra de "Tecnologia" começava depois da de "Saúde", e o trilho
+       encolhia ou crescia conforme o número à direita. A mesma porcentagem
+       virava comprimentos diferentes — o gráfico deixava de ser comparável,
+       que é a única coisa que ele precisa garantir. Aqui as três colunas são
+       medidas uma vez, pelo maior conteúdo de todas as linhas. -->
+  <ul class="grid grid-cols-[minmax(3.25rem,auto)_1fr_auto] gap-x-3 gap-y-3">
     <li
-      class="relative grid grid-cols-[minmax(3.25rem,auto)_1fr_auto] items-center gap-3 rounded focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-brand-500"
+      class="relative col-span-3 grid grid-cols-subgrid items-center rounded focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-brand-500"
       v-for="item in itens"
       :key="item.rotulo"
       tabindex="0"
@@ -59,7 +66,10 @@ const fatia = (item) => (item[props.campo] / total.value) * 100
         ></span>
       </span>
 
-      <span class="whitespace-nowrap text-xs font-semibold tabular-nums text-ink-900 dark:text-mist-100">
+      <!-- Com a coluna compartilhada, valor curto sobraria encostado à esquerda
+           e a borda direita ficaria serrilhada. Número alinhado à direita põe
+           cada casa decimal embaixo da mesma casa, que é como se compara. -->
+      <span class="whitespace-nowrap text-right text-xs font-semibold tabular-nums text-ink-900 dark:text-mist-100">
         {{ rotular(item[campo]) }}
       </span>
 
