@@ -202,7 +202,7 @@ const grupos = computed(() => {
             {{ planilha.nomeArquivo }}
           </h2>
           <p class="mt-1 text-xs text-ink-600 dark:text-mist-300">
-            {{ formatarTamanho(planilha.arquivo.size) }} · aba
+            {{ formatarTamanho(planilha.tamanhoArquivo) }} · aba
             <span class="font-medium">{{ planilha.aba }}</span>
             <span v-if="planilha.resumo.periodo">
               · contratações de {{ dataCurta(planilha.resumo.periodo.inicio) }} a

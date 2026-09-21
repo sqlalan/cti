@@ -95,6 +95,7 @@ export const usePlanilhaStore = defineStore('planilha', () => {
   const arquivo = shallowRef(null)
   const nomeArquivo = ref('')
   const dataUpload = ref(null)
+  const tamanhoArquivo = ref(0) // em bytes
 
   // A matriz como veio da planilha (primeira linha = cabeçalho), antes de
   // qualquer tratamento. shallowRef porque ela nunca é alterada por dentro —
@@ -154,6 +155,47 @@ export const usePlanilhaStore = defineStore('planilha', () => {
   // Arredondado em centavos dentro de resumir().
   const totalFaturamento = computed(() => resumo.value?.faturamentoTotal ?? 0)
 
+  const faturamentoMedio = computed(() =>
+    quantidadeValidas.value === 0
+      ? 0
+      : Math.round((totalFaturamento.value / quantidadeValidas.value) * 100) / 100,
+  )
+
+  // Códigos distintos em TODAS as linhas lidas, válidas ou não: é quantos
+  // clientes a planilha diz ter. Um código repetido conta uma vez só — por
+  // isso pode dar menos que quantidadeLinhas. '—' é o marcador de linha sem
+  // código, não um código.
+  const quantidadeClientes = computed(() => {
+    const codigos = [...dadosValidos.value, ...dadosInvalidos.value]
+      .map((linha) => linha.codigo)
+      .filter((codigo) => codigo && codigo !== '—')
+    return new Set(codigos).size
+  })
+
+  // Mensagens prontas para o usuário, no formato "Linha 8: Consultor em
+  // branco". Getter, e não uma lista preenchida na action: é só outra forma
+  // de ler dadosInvalidos, e guardada à parte poderia discordar dela.
+  const erros = computed(() =>
+    dadosInvalidos.value.map(
+      (item) => `Linha ${item.linha}: ${item.motivo.charAt(0).toUpperCase()}${item.motivo.slice(1)}`,
+    ),
+  )
+
+  // Leitura ou envio em andamento.
+  const carregando = computed(() => estado.value === 'lendo' || estado.value === 'enviando')
+
+  // O resultado da validação em texto. Depois de validada, a planilha
+  // continua "válida" ou "com inconsistências" mesmo durante e depois do
+  // envio — o envio é outro assunto, contado em `estado`.
+  const statusValidacao = computed(() => {
+    if (quantidadeLinhas.value > 0) {
+      return quantidadeInvalidas.value === 0 ? 'Arquivo válido' : 'Arquivo possui inconsistências'
+    }
+    if (estado.value === 'lendo') return 'Lendo planilha'
+    if (estado.value === 'falha') return 'Arquivo não lido'
+    return 'Aguardando arquivo'
+  })
+
   // 'falha' entra porque, com dados na tela, ela só pode ter vindo do envio —
   // falha de leitura não deixa linha válida. Sem isto o botão travava depois
   // de um envio malsucedido, justo quando a mensagem convida a tentar de novo.
@@ -169,6 +211,7 @@ export const usePlanilhaStore = defineStore('planilha', () => {
     arquivo.value = null
     nomeArquivo.value = ''
     dataUpload.value = null
+    tamanhoArquivo.value = 0
     dadosBrutos.value = []
     dadosValidos.value = []
     dadosInvalidos.value = []
@@ -258,6 +301,7 @@ export const usePlanilhaStore = defineStore('planilha', () => {
     arquivo.value = entrada
     nomeArquivo.value = entrada.name
     dataUpload.value = new Date()
+    tamanhoArquivo.value = entrada.size
     estado.value = 'lendo'
 
     const notificacao = abrirOperacao('Lendo a planilha…', entrada.name)
@@ -379,6 +423,7 @@ export const usePlanilhaStore = defineStore('planilha', () => {
     arquivo,
     nomeArquivo,
     dataUpload,
+    tamanhoArquivo,
     dadosBrutos,
     dadosValidos,
     dadosInvalidos,
@@ -394,6 +439,11 @@ export const usePlanilhaStore = defineStore('planilha', () => {
     quantidadeInvalidas,
     percentualValidos,
     totalFaturamento,
+    faturamentoMedio,
+    quantidadeClientes,
+    erros,
+    carregando,
+    statusValidacao,
     temDados,
     resumo,
     podeEnviar,

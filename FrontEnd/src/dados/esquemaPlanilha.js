@@ -105,18 +105,18 @@ export const ESQUEMA = [
     chave: 'cidade',
     rotulo: 'Cidade',
     apelidos: ['cidade', 'municipio'],
-    // Cidade e UF são localização, não identidade: faltar uma delas empobrece
-    // o recorte regional, mas não invalida o cliente. Descartar a linha inteira
-    // por causa disso perderia o faturamento junto. Em branco, o registro cai
-    // no grupo "(em branco)" do resumo, que é visível e cobrável.
-    obrigatoria: false,
+    // Cidade e UF obrigatórias pelo guia da aula 08. A aba dicionario_dados da
+    // planilha modelo diz o contrário (opcionais) — os dois documentos
+    // divergem, e prevaleceu o guia. Se a regra mudar, é só esta flag: o
+    // tratamento de UF não reclama de vazio por conta própria.
+    obrigatoria: true,
     tratamento: 'nomeProprio',
   },
   {
     chave: 'uf',
     rotulo: 'UF',
     apelidos: ['uf', 'estado', 'sigla'],
-    obrigatoria: false,
+    obrigatoria: true,
     tratamento: 'uf',
   },
 ]
