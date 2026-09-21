@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { FORMATOS, TAMANHO_MAXIMO, formatarTamanho, useUploadStore } from '../stores/uploadStore'
-import { ESQUEMA } from '../dados/esquemaPlanilha'
+import { ESQUEMA, NIVEIS } from '../dados/esquemaPlanilha'
 
 const planilha = useUploadStore()
 
@@ -66,6 +66,62 @@ const NIVEL_PONTO = {
   B: 'bg-nivel-b-600 dark:bg-nivel-b-400',
   C: 'bg-nivel-c-600 dark:bg-nivel-c-400',
 }
+
+// Grade das duas faixas do resumo — os totais em cima e os recortes embaixo.
+// Mora num lugar só porque as colunas precisam cair uma sobre a outra, e isso
+// depende de a quantidade de colunas, o breakpoint E o espaço entre elas serem
+// idênticos: com 16px em cima e 40px embaixo, a diferença se repartia entre as
+// colunas e cada uma deslizava 6px a mais que a anterior. O breakpoint é xl
+// porque "R$ 72.360.000,00" em text-2xl não cabe em ¼ de uma tela lg.
+const COLUNAS_RESUMO = 'grid gap-x-10 sm:grid-cols-2 xl:grid-cols-4'
+
+// Os quatro recortes do resumo, na mesma forma: um template só desenha todos,
+// e eles não voltam a divergir de layout como o de nível chegou a divergir.
+//
+// Todos contam clientes, e a lista segue a ordem do número que ela mostra. O
+// resumo entrega segmento e consultor ordenados por FATURAMENTO — ordem certa
+// para o relatório, que desenha faturamento, mas aqui ao lado de uma contagem
+// ela fazia a coluna subir e descer (7, 4, 7, 3…) e parecer número solto.
+// Nível é a exceção: A, B, C é ordem de faixa, e reordenar por quantidade
+// apagaria justamente o que a rampa de cor mostra.
+const grupos = computed(() => {
+  const resumo = planilha.resumo
+  if (!resumo) return []
+
+  const porQuantidade = (itens) =>
+    [...itens].sort(
+      (a, b) => b.quantidade - a.quantidade || a.rotulo.localeCompare(b.rotulo, 'pt-BR'),
+    )
+
+  return [
+    {
+      titulo: 'Por nível',
+      itens: NIVEIS.map((nivel) => ({
+        rotulo: nivel,
+        quantidade: resumo.porNivel[nivel] ?? 0,
+        ponto: NIVEL_PONTO[nivel],
+      })),
+    },
+    {
+      titulo: 'Por segmento',
+      itens: porQuantidade(
+        resumo.porSegmento.map((item) => ({ rotulo: item.chave, quantidade: item.linhas })),
+      ),
+    },
+    {
+      titulo: 'Por consultor',
+      itens: porQuantidade(
+        resumo.porConsultor.map((item) => ({ rotulo: item.chave, quantidade: item.linhas })),
+      ),
+    },
+    {
+      titulo: 'Serviços contratados',
+      itens: porQuantidade(
+        resumo.porServico.map((item) => ({ rotulo: item.servico, quantidade: item.clientes })),
+      ),
+    },
+  ]
+})
 </script>
 
 <template>
@@ -163,7 +219,7 @@ const NIVEL_PONTO = {
         </button>
       </div>
 
-      <dl class="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <dl class="mt-5 gap-y-4" :class="COLUNAS_RESUMO">
         <div>
           <dt class="text-xs text-ink-600 dark:text-mist-300">Linhas lidas</dt>
           <dd class="mt-1 text-2xl font-semibold text-ink-900 dark:text-mist-100">
@@ -195,64 +251,44 @@ const NIVEL_PONTO = {
         </div>
       </dl>
 
-      <div class="mt-6 grid gap-6 lg:grid-cols-4 sm:grid-cols-2">
-        <div>
-          <h3 class="text-xs font-semibold text-ink-900 dark:text-mist-100">Por nível</h3>
-          <ul class="mt-2 flex flex-col gap-1.5">
-            <li
-              class="flex items-baseline gap-2 text-sm"
-              v-for="(quantidade, nivel) in planilha.resumo.porNivel"
-              :key="nivel"
-            >
-              <span
-                class="h-2.5 w-2.5 shrink-0 rounded-sm"
-                :class="NIVEL_PONTO[nivel]"
-                aria-hidden="true"
-              ></span>
-              <span class="w-4 font-semibold text-ink-900 dark:text-mist-100">{{ nivel }}</span>
-              <span class="tabular-nums text-ink-600 dark:text-mist-300">{{ inteiro(quantidade) }}</span>
-            </li>
-          </ul>
-        </div>
-
-        <div>
-          <h3 class="text-xs font-semibold text-ink-900 dark:text-mist-100">Por segmento</h3>
+      <!-- Três coisas amarram cada número à sua lista, e não à vizinha:
+           a lista tem largura limitada, então o número fica perto do nome e
+           longe da próxima coluna; o fio sob o título termina onde a lista
+           termina, fechando o bloco; e o "clientes" em cima da coluna diz o
+           que o número conta. Antes, cada lista ocupava ¼ da tela e o número
+           ia para a borda — colado no nome da coluna seguinte. -->
+      <div class="mt-6 gap-y-6" :class="COLUNAS_RESUMO">
+        <!-- 192px: o piso é o cabeçalho mais longo ("Serviços contratados" +
+             "clientes" medem 166px) — abaixo disso ele quebra de linha. Os 26px
+             de folga absorvem fonte que renderize maior em outro sistema. -->
+        <div class="w-full max-w-48" v-for="grupo in grupos" :key="grupo.titulo">
+          <div class="flex items-baseline justify-between gap-3 border-b border-ink-200 pb-1.5 dark:border-night-700">
+            <h3 class="text-xs font-semibold text-ink-900 dark:text-mist-100">{{ grupo.titulo }}</h3>
+            <span class="text-xs text-ink-400 dark:text-mist-500">clientes</span>
+          </div>
           <ul class="mt-2 flex flex-col gap-1.5">
             <li
               class="flex items-baseline justify-between gap-3 text-sm"
-              v-for="item in planilha.resumo.porSegmento"
-              :key="item.chave"
+              v-for="item in grupo.itens"
+              :key="item.rotulo"
             >
-              <span class="min-w-0 truncate text-ink-900 dark:text-mist-100">{{ item.chave }}</span>
-              <span class="shrink-0 tabular-nums text-ink-600 dark:text-mist-300">{{ item.linhas }}</span>
-            </li>
-          </ul>
-        </div>
-
-        <div>
-          <h3 class="text-xs font-semibold text-ink-900 dark:text-mist-100">Por consultor</h3>
-          <ul class="mt-2 flex flex-col gap-1.5">
-            <li
-              class="flex items-baseline justify-between gap-3 text-sm"
-              v-for="item in planilha.resumo.porConsultor"
-              :key="item.chave"
-            >
-              <span class="min-w-0 truncate text-ink-900 dark:text-mist-100">{{ item.chave }}</span>
-              <span class="shrink-0 tabular-nums text-ink-600 dark:text-mist-300">{{ item.linhas }}</span>
-            </li>
-          </ul>
-        </div>
-
-        <div>
-          <h3 class="text-xs font-semibold text-ink-900 dark:text-mist-100">Serviços contratados</h3>
-          <ul class="mt-2 flex flex-col gap-1.5">
-            <li
-              class="flex items-baseline justify-between gap-3 text-sm"
-              v-for="item in planilha.resumo.porServico"
-              :key="item.servico"
-            >
-              <span class="min-w-0 truncate text-ink-900 dark:text-mist-100">{{ item.servico }}</span>
-              <span class="shrink-0 tabular-nums text-ink-600 dark:text-mist-300">{{ item.clientes }}</span>
+              <span class="flex min-w-0 items-center gap-2">
+                <span
+                  class="h-2.5 w-2.5 shrink-0 rounded-sm"
+                  :class="item.ponto"
+                  v-if="item.ponto"
+                  aria-hidden="true"
+                ></span>
+                <span
+                  class="truncate text-ink-900 dark:text-mist-100"
+                  :class="{ 'font-semibold': item.ponto }"
+                >
+                  {{ item.rotulo }}
+                </span>
+              </span>
+              <span class="shrink-0 font-medium tabular-nums text-ink-900 dark:text-mist-100">
+                {{ inteiro(item.quantidade) }}
+              </span>
             </li>
           </ul>
         </div>
