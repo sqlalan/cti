@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { FORMATOS, TAMANHO_MAXIMO, useUploadStore } from '../stores/uploadStore'
+import { FORMATOS, TAMANHO_MAXIMO, formatarTamanho, useUploadStore } from '../stores/uploadStore'
 import { ESQUEMA } from '../dados/esquemaPlanilha'
 
 const planilha = useUploadStore()
@@ -34,12 +34,6 @@ function soltar(evento) {
   arrastando.value = false
   const [arquivo] = evento.dataTransfer.files
   planilha.carregar(arquivo)
-}
-
-function formatarTamanho(bytes) {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1).replace('.', ',')} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`
 }
 
 const inteiro = (valor) => valor.toLocaleString('pt-BR')
@@ -112,10 +106,13 @@ const NIVEL_PONTO = {
     <input class="sr-only" type="file" :accept="ACEITOS" @change="selecionar" />
   </label>
 
+  <!-- Estes blocos não são mais região viva: quem anuncia agora é a pilha de
+       notificações, e duas regiões dizendo a mesma frase fazem o leitor de
+       tela repetir tudo. Aqui eles seguem como estado visível na página —
+       o aviso passa, a situação continua. -->
   <p
     class="mt-4 rounded border border-ink-200 bg-white px-4 py-3 text-sm text-ink-600 dark:border-night-700 dark:bg-night-900 dark:text-mist-300"
     v-if="planilha.estado === 'lendo'"
-    role="status"
   >
     Lendo a planilha…
   </p>
@@ -123,7 +120,6 @@ const NIVEL_PONTO = {
   <p
     class="mt-4 flex items-start gap-2 rounded border border-warn-500 bg-warn-500/10 px-4 py-3 text-sm text-ink-900 dark:bg-warn-500/15 dark:text-mist-100"
     v-if="planilha.falha"
-    role="alert"
   >
     <svg
       class="mt-0.5 h-4 w-4 shrink-0 text-warn-500"
@@ -424,7 +420,6 @@ const NIVEL_PONTO = {
       <p
         class="flex items-center gap-1.5 text-sm font-medium text-ok-600 dark:text-ok-400"
         v-if="planilha.estado === 'enviado'"
-        role="status"
       >
         <svg
           class="h-4 w-4 shrink-0"

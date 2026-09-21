@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import Notificacoes from '../components/Notificacoes.vue'
 
 const router = useRouter()
 const menuAberto = ref(false)
@@ -95,5 +96,10 @@ function sair() {
         <RouterView />
       </main>
     </div>
+
+    <!-- Fica no layout, e não dentro da página de upload, por dois motivos: a
+         região viva precisa existir antes do primeiro aviso nascer, e qualquer
+         tela da sidebar passa a poder avisar sem montar nada. -->
+    <Notificacoes />
   </div>
 </template>

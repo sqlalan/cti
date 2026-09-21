@@ -2,9 +2,27 @@ import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
 import * as XLSX from 'xlsx'
 import { resumir, tratarLinhas } from '../dados/esquemaPlanilha'
+import { useNotificacoesStore } from './notificacoes'
 
 export const FORMATOS = ['.xlsx', '.xls', '.csv']
 export const TAMANHO_MAXIMO = 25 * 1024 * 1024
+
+/**
+ * Tamanho legível. Mora aqui, e não na página, porque a recusa por arquivo
+ * grande precisa do valor dentro da própria mensagem — e duas cópias da mesma
+ * conversão divergem no primeiro ajuste.
+ */
+export function formatarTamanho(bytes) {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1).replace('.', ',')} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`
+}
+
+// "1 linhas" denuncia texto montado por máquina e contamina a confiança no
+// resto da mensagem.
+function linhas(quantidade) {
+  return `${quantidade.toLocaleString('pt-BR')} ${quantidade === 1 ? 'linha' : 'linhas'}`
+}
 
 function extensao(nome) {
   const ponto = nome.lastIndexOf('.')
@@ -57,6 +75,8 @@ async function lerMatriz(arquivo) {
 }
 
 export const useUploadStore = defineStore('upload', () => {
+  const avisos = useNotificacoesStore()
+
   // shallowRef porque o File é um objeto do navegador, não um dado nosso:
   // deixar o Vue embrulhar em proxy reativo pode quebrar arrayBuffer() e o
   // envio via FormData. Aqui só a troca do arquivo precisa disparar reação.
@@ -72,6 +92,11 @@ export const useUploadStore = defineStore('upload', () => {
   const aba = ref('')
   const abasIgnoradas = ref([])
 
+  // A notificação da operação em curso. Guardada para que a etapa seguinte
+  // reescreva o mesmo cartão em vez de empilhar outro: uma operação de cada
+  // vez, um cartão de cada vez.
+  let idOperacao = null
+
   const temDados = computed(() => dados.value.length > 0)
   const podeEnviar = computed(() => estado.value === 'pronto' && temDados.value)
 
@@ -86,10 +111,26 @@ export const useUploadStore = defineStore('upload', () => {
     abasIgnoradas.value = []
   }
 
-  function recusar(motivo) {
+  function abrirOperacao(titulo, texto) {
+    if (idOperacao) avisos.remover(idOperacao)
+    idOperacao = avisos.notificar({ tipo: 'progresso', titulo, texto })
+    return idOperacao
+  }
+
+  /**
+   * Recusa o arquivo antes de tentar ler. O motivo vai para dois lugares de
+   * propósito: a notificação avisa na hora, porque a pessoa pode estar olhando
+   * o fim da página, e o banner fixo continua ali depois que ela sai — o
+   * estado de "não deu certo" não se resolve sozinho.
+   */
+  function recusar(titulo, detalhe) {
     limpar()
     estado.value = 'falha'
-    falha.value = motivo
+    falha.value = detalhe ? `${titulo} — ${detalhe}` : titulo
+
+    if (idOperacao) avisos.remover(idOperacao)
+    idOperacao = avisos.notificar({ tipo: 'erro', titulo, texto: detalhe })
+
     return false
   }
 
@@ -101,19 +142,39 @@ export const useUploadStore = defineStore('upload', () => {
    * tudo no escuro.
    */
   async function carregar(entrada) {
-    if (!entrada) return recusar('Nenhum arquivo recebido')
-
-    if (!FORMATOS.includes(extensao(entrada.name))) {
-      return recusar(`Formato não aceito — envie ${FORMATOS.join(', ')}`)
+    if (!entrada) {
+      return recusar(
+        'Nenhum arquivo recebido',
+        'A seleção veio vazia — tente arrastar o arquivo de novo.',
+      )
     }
-    if (entrada.size === 0) return recusar('O arquivo está vazio')
+
+    const tipo = extensao(entrada.name)
+    if (!FORMATOS.includes(tipo)) {
+      return recusar(
+        'Formato não aceito',
+        `${tipo ? `A extensão ${tipo} não é lida aqui.` : 'O arquivo não tem extensão.'} ` +
+          `Envie ${FORMATOS.join(', ')}.`,
+      )
+    }
+    if (entrada.size === 0) {
+      return recusar(
+        'Arquivo vazio',
+        'O arquivo tem 0 byte — provavelmente a exportação da planilha falhou.',
+      )
+    }
     if (entrada.size > TAMANHO_MAXIMO) {
-      return recusar(`Arquivo acima de ${Math.round(TAMANHO_MAXIMO / 1024 / 1024)} MB`)
+      return recusar(
+        'Arquivo grande demais',
+        `O limite é ${formatarTamanho(TAMANHO_MAXIMO)} e este tem ${formatarTamanho(entrada.size)}.`,
+      )
     }
 
     limpar()
     arquivo.value = entrada
     estado.value = 'lendo'
+
+    const notificacao = abrirOperacao('Lendo a planilha…', entrada.name)
 
     try {
       const lido = await lerMatriz(entrada)
@@ -131,13 +192,45 @@ export const useUploadStore = defineStore('upload', () => {
       abasIgnoradas.value = lido.abasIgnoradas
       estado.value = 'pronto'
 
-      return tratado.dados.length > 0
+      const validas = tratado.dados.length
+      const comErro = tratado.erros.length
+
+      // Três desfechos, três tipos. Chamar de sucesso uma leitura em que nada
+      // passou seria mentir para quem só viu o cartão.
+      if (!validas) {
+        avisos.atualizar(notificacao, {
+          tipo: 'erro',
+          titulo: 'Nenhuma linha aproveitada',
+          texto: `As ${linhas(comErro)} do arquivo falharam no tratamento. Os motivos estão na tabela da página.`,
+        })
+      } else if (comErro) {
+        avisos.atualizar(notificacao, {
+          tipo: 'aviso',
+          titulo: 'Planilha lida com pendências',
+          texto: `${linhas(validas)} prontas para envio e ${linhas(comErro)} de fora — confira "Linhas com erro" na página.`,
+        })
+      } else {
+        avisos.atualizar(notificacao, {
+          tipo: 'sucesso',
+          titulo: 'Planilha lida',
+          texto: `${linhas(validas)} prontas para envio, na aba ${lido.aba}.`,
+        })
+      }
+
+      return validas > 0
     } catch (erro) {
       // Arquivo corrompido, protegido por senha ou que não é planilha de fato
       // estoura aqui dentro do SheetJS.
       arquivo.value = entrada
       estado.value = 'falha'
       falha.value = `Não foi possível ler a planilha: ${erro.message}`
+
+      avisos.atualizar(notificacao, {
+        tipo: 'erro',
+        titulo: 'Não foi possível ler a planilha',
+        texto: `${erro.message}. Verifique se o arquivo não está corrompido nem protegido por senha.`,
+      })
+
       return false
     }
   }
@@ -160,9 +253,15 @@ export const useUploadStore = defineStore('upload', () => {
     estado.value = 'enviando'
     falha.value = ''
 
+    const enviadas = dados.value.length
+    const notificacao = abrirOperacao(
+      'Enviando para o servidor…',
+      `${linhas(enviadas)} · ${arquivo.value.name}`,
+    )
+
     const corpo = new FormData()
     corpo.append('arquivo', arquivo.value, arquivo.value.name)
-    corpo.append('linhasValidas', String(dados.value.length))
+    corpo.append('linhasValidas', String(enviadas))
     corpo.append('linhasComErro', String(erros.value.length))
 
     try {
@@ -173,10 +272,23 @@ export const useUploadStore = defineStore('upload', () => {
       // --- ATÉ AQUI ---
 
       estado.value = 'enviado'
+      avisos.atualizar(notificacao, {
+        tipo: 'sucesso',
+        titulo: 'Envio concluído',
+        texto: `${linhas(enviadas)} de ${arquivo.value.name} chegaram ao servidor.`,
+      })
+
       return true
     } catch (erro) {
       estado.value = 'falha'
       falha.value = `Falha ao enviar: ${erro.message}`
+
+      avisos.atualizar(notificacao, {
+        tipo: 'erro',
+        titulo: 'Falha no envio',
+        texto: `${erro.message}. A planilha continua carregada — dá para tentar de novo sem selecionar o arquivo outra vez.`,
+      })
+
       return false
     }
   }
