@@ -245,7 +245,7 @@ function exportarCsv() {
     </p>
     <RouterLink
       class="mt-6 rounded bg-brand-800 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-      to="/sidebar/upload"
+      :to="{ name: 'upload' }"
     >
       Ir para o Upload
     </RouterLink>

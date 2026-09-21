@@ -17,8 +17,8 @@ function entrar() {
   // entraria como nome de ninguém. Senha vai como foi digitada — espaço pode
   // fazer parte dela.
   if (auth.login(usuario.value.trim(), senha.value)) {
-    // Pelo nome, e não por '/upload' como no slide: neste projeto a tela mora
-    // em /sidebar/upload, e o nome continua valendo se o caminho mudar.
+    // O slide usa router.push('/upload'), e a URL é essa mesma. Aqui vai pelo
+    // nome porque é o padrão do projeto: o caminho só existe em router/index.js.
     router.push({ name: 'upload' })
   } else {
     mensagem.value = 'Preencha usuário e senha.'
@@ -29,7 +29,7 @@ function entrar() {
 <template>
   <div class="grid min-h-screen lg:grid-cols-2">
     <section class="hidden flex-col justify-between bg-brand-900 p-12 lg:flex">
-      <RouterLink class="text-xl font-bold text-white" to="/">Synthetix</RouterLink>
+      <RouterLink class="text-xl font-bold text-white" :to="{ name: 'home' }">Synthetix</RouterLink>
       <div>
         <p class="text-3xl font-bold leading-snug text-white">
           Dados que conectam.<br />Inteligência que transforma.
@@ -45,14 +45,14 @@ function entrar() {
     <section class="relative flex items-center justify-center bg-white px-6 dark:bg-night-950 py-16">
       <RouterLink
         class="absolute right-6 top-6 inline-flex items-center gap-2 rounded text-sm font-semibold text-brand-800 dark:text-brand-300 transition-colors hover:text-brand-500 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-500"
-        to="/"
+        :to="{ name: 'home' }"
       >
         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5" /><path d="m12 19-7-7 7-7" /></svg>
         Voltar para o site
       </RouterLink>
 
       <div class="w-full max-w-sm">
-        <RouterLink class="text-xl font-bold text-brand-800 dark:text-brand-300 lg:hidden" to="/">Synthetix</RouterLink>
+        <RouterLink class="text-xl font-bold text-brand-800 dark:text-brand-300 lg:hidden" :to="{ name: 'home' }">Synthetix</RouterLink>
 
         <h1 class="mt-8 text-2xl font-bold text-ink-900 dark:text-mist-100 lg:mt-0">Acessar a plataforma</h1>
         <p class="mt-2 text-sm text-ink-600 dark:text-mist-300">
@@ -118,7 +118,7 @@ function entrar() {
 
         <p class="mt-8 text-center text-sm text-ink-600 dark:text-mist-300">
           Ainda não tem acesso?
-          <RouterLink class="font-medium text-brand-800 dark:text-brand-300 hover:text-brand-500" to="/#contato">
+          <RouterLink class="font-medium text-brand-800 dark:text-brand-300 hover:text-brand-500" :to="{ name: 'home', hash: '#contato' }">
             Fale com nosso time
           </RouterLink>
         </p>

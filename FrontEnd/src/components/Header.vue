@@ -7,7 +7,7 @@ const menuAberto = ref(false)
 <template>
   <header class="sticky top-0 z-20 border-b border-ink-200 bg-white dark:border-night-700 dark:bg-night-900">
     <div class="flex items-center justify-between gap-4 px-8 py-4">
-      <RouterLink class="shrink-0" to="/" @click="menuAberto = false">
+      <RouterLink class="shrink-0" :to="{ name: 'home' }" @click="menuAberto = false">
         <img class="h-10 w-auto dark:hidden" src="../assets/logo-claro.png" alt="Synthetix" width="421" height="120" />
         <img class="hidden h-10 w-auto dark:block" src="../assets/logo-escuro.png" alt="" aria-hidden="true" width="421" height="120" />
       </RouterLink>
@@ -18,7 +18,7 @@ const menuAberto = ref(false)
       </nav>
 
       <div class="flex shrink-0 items-center gap-2">
-        <RouterLink class="hidden shrink-0 items-center justify-center rounded bg-brand-800 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 sm:inline-flex" to="/login">Entrar</RouterLink>
+        <RouterLink class="hidden shrink-0 items-center justify-center rounded bg-brand-800 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 sm:inline-flex" :to="{ name: 'login' }">Entrar</RouterLink>
 
         <button
           class="inline-flex h-11 w-11 items-center justify-center rounded text-brand-800 dark:text-brand-300 transition-colors hover:bg-ink-100 dark:hover:bg-night-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 md:hidden"
@@ -47,7 +47,7 @@ const menuAberto = ref(false)
     >
       <a class="block py-2.5 hover:text-brand-500" href="#plataforma" @click="menuAberto = false">Plataforma</a>
       <a class="block py-2.5 hover:text-brand-500" href="#contato" @click="menuAberto = false">Contato</a>
-      <RouterLink class="mt-2 inline-flex w-full items-center justify-center rounded bg-brand-800 px-5 py-2.5 font-semibold text-white transition-colors hover:bg-brand-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 sm:hidden" to="/login" @click="menuAberto = false">Entrar</RouterLink>
+      <RouterLink class="mt-2 inline-flex w-full items-center justify-center rounded bg-brand-800 px-5 py-2.5 font-semibold text-white transition-colors hover:bg-brand-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 sm:hidden" :to="{ name: 'login' }" @click="menuAberto = false">Entrar</RouterLink>
     </nav>
   </header>
 </template>

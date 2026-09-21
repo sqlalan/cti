@@ -9,9 +9,9 @@ const auth = useAuthStore()
 const menuAberto = ref(false)
 
 const itens = [
-  { to: '/sidebar/dashboard', rotulo: 'Dashboard' },
-  { to: '/sidebar/upload', rotulo: 'Upload' },
-  { to: '/sidebar/relatorio', rotulo: 'Relatórios' },
+  { nome: 'dashboard', rotulo: 'Dashboard' },
+  { nome: 'upload', rotulo: 'Upload' },
+  { nome: 'relatorio', rotulo: 'Relatórios' },
 ]
 
 // A sessão é descartada ANTES de navegar: sair sem limpar deixaria o
@@ -20,7 +20,7 @@ const itens = [
 function sair() {
   menuAberto.value = false
   auth.logout()
-  router.push('/login')
+  router.push({ name: 'login' })
 }
 </script>
 
@@ -30,7 +30,7 @@ function sair() {
       class="fixed inset-y-0 left-0 z-30 flex w-64 shrink-0 flex-col border-r border-ink-200 bg-white p-6 transition-transform dark:border-night-700 dark:bg-night-900 lg:sticky lg:inset-y-auto lg:top-0 lg:h-screen lg:translate-x-0 lg:overflow-y-auto"
       :class="menuAberto ? 'translate-x-0' : '-translate-x-full'"
     >
-      <RouterLink class="block" to="/">
+      <RouterLink class="block" :to="{ name: 'home' }">
         <img class="h-9 w-auto dark:hidden" src="../assets/logo-claro.png" alt="Synthetix" width="421" height="120" />
         <img class="hidden h-9 w-auto dark:block" src="../assets/logo-escuro.png" alt="" aria-hidden="true" width="421" height="120" />
       </RouterLink>
@@ -40,8 +40,8 @@ function sair() {
           class="rounded px-4 py-2.5 text-sm font-medium text-ink-600 transition-colors hover:bg-ink-100 hover:text-brand-800 dark:text-mist-300 dark:hover:bg-night-800 dark:hover:text-brand-300"
           active-class="bg-brand-800 text-white hover:bg-brand-900 hover:text-white dark:bg-brand-800 dark:text-white dark:hover:bg-brand-700"
           v-for="item in itens"
-          :key="item.to"
-          :to="item.to"
+          :key="item.nome"
+          :to="{ name: item.nome }"
           @click="menuAberto = false"
         >
           {{ item.rotulo }}
