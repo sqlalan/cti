@@ -105,18 +105,19 @@ export const ESQUEMA = [
     chave: 'cidade',
     rotulo: 'Cidade',
     apelidos: ['cidade', 'municipio'],
-    // Cidade e UF obrigatórias pelo guia da aula 08. A aba dicionario_dados da
-    // planilha modelo diz o contrário (opcionais) — os dois documentos
-    // divergem, e prevaleceu o guia. Se a regra mudar, é só esta flag: o
-    // tratamento de UF não reclama de vazio por conta própria.
-    obrigatoria: true,
+    // Cidade e UF opcionais, como na aba dicionario_dados da planilha modelo.
+    // O guia de aplicação do Pinia (aula 08) lista as duas como obrigatórias;
+    // os documentos divergem, e prevaleceu o dicionário. Em branco, o registro
+    // cai no grupo "(em branco)" do resumo. Se a regra mudar, é só esta flag:
+    // o tratamento de UF não reclama de vazio por conta própria.
+    obrigatoria: false,
     tratamento: 'nomeProprio',
   },
   {
     chave: 'uf',
     rotulo: 'UF',
     apelidos: ['uf', 'estado', 'sigla'],
-    obrigatoria: true,
+    obrigatoria: false,
     tratamento: 'uf',
   },
 ]
