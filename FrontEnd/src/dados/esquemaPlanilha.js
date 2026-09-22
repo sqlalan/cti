@@ -31,7 +31,15 @@ export const SEGMENTOS = [
   { canonico: 'Educação', sinonimos: ['educacao', 'ensino', 'educacional'] },
 ]
 
-// Serviços contratados. A célula é multivalorada, separada por ponto e vírgula.
+// Serviços contratados. A célula é multivalorada: o padrão do dicionário é
+// ponto e vírgula, mas vírgula e barra também separam — são as variações que
+// mais aparecem, e sem isso "Internet Dedicada, Firewall" virava UM serviço
+// inexistente e a empresa sumia da contagem dos dois. Nenhum nome do catálogo
+// abaixo contém esses caracteres; se um dia contiver, SEPARADOR_SERVICOS
+// precisa mudar junto. " e " fica de fora de propósito: é palavra comum e
+// partiria um serviço que a tivesse no nome.
+export const SEPARADOR_SERVICOS = /[;,/]/
+
 export const SERVICOS = [
   { canonico: 'Internet Dedicada', sinonimos: ['internet dedicada', 'internet'] },
   { canonico: 'Link Empresarial', sinonimos: ['link empresarial', 'link'] },
@@ -267,7 +275,7 @@ const TRATAMENTOS = {
     const desconhecidos = []
     const itens = []
 
-    for (const pedaco of texto.split(';')) {
+    for (const pedaco of texto.split(SEPARADOR_SERVICOS)) {
       const limpo = limpar(pedaco)
       if (!limpo) continue
       const canonico = consultarDicionario(SERVICOS, limpo)
