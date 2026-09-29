@@ -1,9 +1,9 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { FORMATOS, TAMANHO_MAXIMO, formatarTamanho, usePlanilhaStore } from '../stores/planilha'
+import { FORMATOS, TAMANHO_MAXIMO, formatarTamanho, useUploadStore } from '../stores/uploadStore'
 import { ESQUEMA, NIVEIS } from '../dados/esquemaPlanilha'
 
-const planilha = usePlanilhaStore()
+const planilha = useUploadStore()
 
 const arrastando = ref(false)
 const LIMITE_PREVIA = 15
@@ -318,10 +318,15 @@ const grupos = computed(() => {
         Avisos ({{ inteiro(planilha.resumo.avisos.length) }})
       </h2>
       <p class="mt-1 text-xs text-ink-600 dark:text-mist-300">
-        Estas linhas seguem no envio. Vale conferir o cadastro do dicionário em
-        <code class="text-xs">esquemaPlanilha.js</code>.
+        Estas linhas seguem no envio: ou o valor foi ajustado pelo tratamento, ou falta
+        cadastrá-lo no dicionário em <code class="text-xs">esquemaPlanilha.js</code>. A contagem
+        por tipo está no <RouterLink class="underline" :to="{ name: 'relatorio' }">Relatório</RouterLink>.
       </p>
-      <ul class="mt-3 flex flex-col gap-1.5">
+      <!-- A lista cresceu quando a padronização passou a ser reportada: numa
+           planilha bagunçada são dezenas de linhas. Rolar dentro da própria
+           seção evita que ela empurre a prévia e a tabela de erros para fora
+           da tela. -->
+      <ul class="mt-3 flex max-h-64 flex-col gap-1.5 overflow-auto">
         <li
           class="text-sm text-ink-900 dark:text-mist-100"
           v-for="(aviso, i) in planilha.resumo.avisos"
@@ -480,6 +485,6 @@ const grupos = computed(() => {
     role="status"
   >
     O envio ainda não sai da máquina: o ponto de integração está marcado em
-    <code class="text-xs">enviar()</code>, em <code class="text-xs">src/stores/planilha.js</code>.
+    <code class="text-xs">enviar()</code>, em <code class="text-xs">src/stores/uploadStore.js</code>.
   </p>
 </template>

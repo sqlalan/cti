@@ -1,7 +1,13 @@
 import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
 import * as XLSX from 'xlsx'
-import { resumir, tratarLinhas } from '../dados/esquemaPlanilha'
+import {
+  TIPOS_AVISO,
+  TIPOS_ERRO,
+  resumir,
+  rotularTipo,
+  tratarLinhas,
+} from '../dados/esquemaPlanilha'
 import { useNotificacoesStore } from './notificacoes'
 
 export const FORMATOS = ['.xlsx', '.xls', '.csv']
@@ -82,7 +88,7 @@ async function lerMatriz(arquivo) {
 // As REGRAS de validação ficam em dados/esquemaPlanilha.js, e a action
 // validarDados() é quem as aplica. Assim a store continua sendo o lugar onde a
 // validação acontece, e as regras continuam testáveis sem montar o app.
-export const usePlanilhaStore = defineStore('planilha', () => {
+export const useUploadStore = defineStore('upload', () => {
   const notificacoes = useNotificacoesStore()
 
   // ---------------------------------------------------------------------------
@@ -180,6 +186,69 @@ export const usePlanilhaStore = defineStore('planilha', () => {
       (item) => `Linha ${item.linha}: ${item.motivo.charAt(0).toUpperCase()}${item.motivo.slice(1)}`,
     ),
   )
+
+  // Uma linha por PROBLEMA, não por registro: a linha 32 com faturamento vazio
+  // e UF inválida rende duas ocorrências. É o formato que o relatório pede —
+  // linha, campo e descrição — e o que dadosInvalidos, agrupado por registro,
+  // não entrega.
+  //
+  // Os dois contadores respondem perguntas diferentes e por isso divergem de
+  // propósito: quantidadeInvalidas conta REGISTROS reprovados (o que vai para
+  // "registros com erro"), totalOcorrencias conta PROBLEMAS encontrados.
+  const ocorrencias = computed(() =>
+    dadosInvalidos.value.flatMap((item) =>
+      (item.problemas ?? []).map((problema) => ({
+        linha: item.linha,
+        codigo: item.codigo,
+        nome: item.nome,
+        campo: problema.coluna,
+        tipo: problema.tipo,
+        rotulo: rotularTipo(problema.tipo),
+        descricao: problema.mensagem,
+      })),
+    ),
+  )
+
+  const totalOcorrencias = computed(() => ocorrencias.value.length)
+
+  // Conta por natureza do problema. Segue a ordem de TIPOS_ERRO em vez de
+  // ordenar por quantidade: o quadro é uma lista de verificações realizadas, e
+  // uma ordem estável deixa a pessoa reencontrar a linha depois de recarregar.
+  // Tipos com zero entram na lista — "Duplicados 0" é resultado de validação,
+  // e some-los faria parecer que a checagem não rodou.
+  const errosPorTipo = computed(() => {
+    const contagem = new Map()
+    for (const ocorrencia of ocorrencias.value) {
+      contagem.set(ocorrencia.tipo, (contagem.get(ocorrencia.tipo) ?? 0) + 1)
+    }
+    return TIPOS_ERRO.map(({ tipo, rotulo }) => ({
+      tipo,
+      rotulo,
+      quantidade: contagem.get(tipo) ?? 0,
+    }))
+  })
+
+  // Avisos não reprovam a linha, então ficam num quadro à parte: somados aos
+  // erros, inflariam o número de problemas com coisas que o sistema já resolveu.
+  const avisosPorTipo = computed(() => {
+    const contagem = new Map()
+    for (const aviso of avisos.value) {
+      contagem.set(aviso.tipo, (contagem.get(aviso.tipo) ?? 0) + 1)
+    }
+    return TIPOS_AVISO.map(({ tipo, rotulo }) => ({
+      tipo,
+      rotulo,
+      quantidade: contagem.get(tipo) ?? 0,
+    }))
+  })
+
+  // O quadro "Validação realizada / Quantidade" do enunciado, pronto para a
+  // tela. Registros válidos fecha a lista porque é a linha que dá sentido às
+  // outras: sem ela o quadro mostra só o que falhou.
+  const quadroValidacao = computed(() => [
+    ...errosPorTipo.value,
+    { tipo: 'validos', rotulo: 'Registros válidos', quantidade: quantidadeValidas.value },
+  ])
 
   // Leitura ou envio em andamento.
   const carregando = computed(() => estado.value === 'lendo' || estado.value === 'enviando')
@@ -442,6 +511,11 @@ export const usePlanilhaStore = defineStore('planilha', () => {
     faturamentoMedio,
     quantidadeClientes,
     erros,
+    ocorrencias,
+    totalOcorrencias,
+    errosPorTipo,
+    avisosPorTipo,
+    quadroValidacao,
     carregando,
     statusValidacao,
     temDados,
