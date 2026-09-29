@@ -1,12 +1,7 @@
 // Esquema da planilha de clientes e regras de tratamento.
 //
-// Modelado sobre a planilha real: codigo_cliente, nome_cliente, consultor,
-// segmento, nivel_cliente, faturamento_anual, servicos_contratados,
-// data_contratacao, cidade, uf.
-//
-// `apelidos` existe porque cabeçalho de planilha nunca vem padronizado. A
-// comparação é feita sobre a forma achatada (sem acento, minúscula, sem espaço
-// nem pontuação sobrando), então listar a variação esperada basta.
+// Cabeçalho de planilha nunca vem padronizado: `apelidos` lista as variações, e
+// a comparação usa a forma achatada (sem acento, caixa ou pontuação).
 
 export const NIVEIS = ['A', 'B', 'C']
 
@@ -15,13 +10,9 @@ export const UFS = [
   'PA', 'PB', 'PE', 'PI', 'PR', 'RJ', 'RN', 'RO', 'RR', 'RS', 'SC', 'SE', 'SP', 'TO',
 ]
 
-// Dicionário de segmentos.
-//
-// É o coração do tratamento. Caixa-alta e remoção de acento resolvem
-// "Indústria" x "industria", mas NÃO resolvem "IND." — que na planilha real
-// aparece como abreviação. Sem sinônimo declarado, "IND." viraria um segmento
-// próprio e o agrupamento mentiria. Acrescente aqui toda abreviação nova que
-// aparecer, em vez de tentar adivinhar por regra.
+// Dicionário de segmentos. Achatar resolve "Indústria" x "industria", mas não
+// "IND." — sem sinônimo declarado ela viraria um segmento próprio e o
+// agrupamento mentiria. Declare cada abreviação nova aqui.
 export const SEGMENTOS = [
   { canonico: 'Indústria', sinonimos: ['industria', 'ind', 'industrial', 'fabrica'] },
   { canonico: 'Comércio', sinonimos: ['comercio', 'com', 'comercial', 'varejo'] },
@@ -31,13 +22,10 @@ export const SEGMENTOS = [
   { canonico: 'Educação', sinonimos: ['educacao', 'ensino', 'educacional'] },
 ]
 
-// Serviços contratados. A célula é multivalorada: o padrão do dicionário é
-// ponto e vírgula, mas vírgula e barra também separam — são as variações que
-// mais aparecem, e sem isso "Internet Dedicada, Firewall" virava UM serviço
-// inexistente e a empresa sumia da contagem dos dois. Nenhum nome do catálogo
-// abaixo contém esses caracteres; se um dia contiver, SEPARADOR_SERVICOS
-// precisa mudar junto. " e " fica de fora de propósito: é palavra comum e
-// partiria um serviço que a tivesse no nome.
+// Célula multivalorada. Aceita vírgula e barra além do ponto e vírgula do
+// dicionário; sem isso "Internet Dedicada, Firewall" virava um serviço só,
+// inexistente. Nenhum nome do catálogo contém esses caracteres — se passar a
+// conter, mude o separador junto. " e " fica de fora: partiria nome que a use.
 export const SEPARADOR_SERVICOS = /[;,/]/
 
 export const SERVICOS = [
@@ -49,17 +37,9 @@ export const SERVICOS = [
   { canonico: 'Cloud', sinonimos: ['cloud', 'nuvem'] },
 ]
 
-// ---------------------------------------------------------------------------
-// Catálogo de tipos de problema
-//
-// O relatório precisa responder "quantos campos vazios, quantos duplicados" —
-// e para isso o problema tem que NASCER com um tipo. Antes o motivo era só
-// frase concatenada: dava para ler o erro, nunca para agrupar por natureza.
-//
-// O rótulo mora junto do código de propósito. Se a tela mantivesse o seu
-// próprio dicionário de tipo → texto, um tipo novo apareceria no relatório
-// como "espacos" até alguém lembrar de traduzi-lo no outro arquivo.
-// ---------------------------------------------------------------------------
+// Catálogo de tipos de problema. O problema nasce com um tipo para o relatório
+// poder contar por natureza, e o rótulo mora aqui para a tela não manter um
+// segundo dicionário que envelhece em separado.
 
 // Erro derruba a linha: ela não entra em dadosValidos.
 export const TIPOS_ERRO = [
@@ -71,16 +51,12 @@ export const TIPOS_ERRO = [
 ]
 
 // Aviso não derruba: a linha passa e o assunto é reportado. Os dois primeiros
-// são correções que o tratamento JÁ aplicou — ficam registrados porque
-// "identificar espaços desnecessários" é resultado de análise, e uma limpeza
-// silenciosa não deixa a pessoa corrigir a planilha na origem.
-// "Espaços em branco" foi trocado por "Espaços extras" de propósito. Em
-// português a primeira forma se lê como CÉLULA vazia, e é assim que o
-// enunciado e o dicionário a usam. Com o rótulo anterior, o relatório mostrava
-// "Espaços em branco removidos: 0" numa planilha que tem três células vazias —
-// parecia que a checagem havia falhado, quando as células vazias estão
-// contadas em "Campos obrigatórios vazios", que é onde reprovam a linha.
-// Este contador é só do trim: espaço nas pontas ou dobrado dentro do texto.
+// são correções já aplicadas, registradas para a pessoa poder corrigir a
+// planilha na origem.
+//
+// "Espaços extras", e não "espaços em branco": em português a segunda forma se
+// lê como célula vazia, e o contador marcando 0 numa planilha com três células
+// vazias parecia falha da checagem. Célula vazia é contada em 'vazio'.
 export const TIPOS_AVISO = [
   { tipo: 'espacos', rotulo: 'Espaços extras removidos' },
   { tipo: 'padronizacao', rotulo: 'Textos padronizados' },
@@ -138,9 +114,8 @@ export const ESQUEMA = [
     chave: 'servicos',
     rotulo: 'Serviços',
     apelidos: ['servicos contratados', 'servicos', 'produtos'],
-    // Cliente sem nenhum serviço é contrato sem objeto: entraria no total de
-    // faturamento sem aparecer em nenhuma contagem de serviço, e a soma das
-    // partes nunca fecharia com o todo.
+    // Cliente sem serviço entraria no faturamento total sem aparecer em
+    // contagem nenhuma, e a soma das partes não fecharia com o todo.
     obrigatoria: true,
     tratamento: 'listaServicos',
   },
@@ -155,11 +130,9 @@ export const ESQUEMA = [
     chave: 'cidade',
     rotulo: 'Cidade',
     apelidos: ['cidade', 'municipio'],
-    // Cidade e UF opcionais, como na aba dicionario_dados da planilha modelo.
-    // O guia de aplicação do Pinia (aula 08) lista as duas como obrigatórias;
-    // os documentos divergem, e prevaleceu o dicionário. Em branco, o registro
-    // cai no grupo "(em branco)" do resumo. Se a regra mudar, é só esta flag:
-    // o tratamento de UF não reclama de vazio por conta própria.
+    // Opcionais pela aba dicionario_dados da planilha. O guia do Pinia lista as
+    // duas como obrigatórias; os documentos divergem e prevaleceu o dicionário.
+    // Se a regra mudar, é só esta flag.
     obrigatoria: false,
     tratamento: 'nomeProprio',
   },
@@ -174,16 +147,10 @@ export const ESQUEMA = [
     chave: 'email',
     rotulo: 'E-mail',
     apelidos: ['email', 'e mail', 'email cliente', 'email contato', 'contato'],
-    // A planilha modelo NÃO tem esta coluna — as 10 colunas da aba
-    // upload_clientes vão de codigo_cliente a uf. O enunciado, porém, pede
-    // validação de e-mail entre as mínimas. Registrar como opcional resolve a
-    // divergência sem falsear o modelo: onde a coluna não existe, nada é
-    // cobrado; no dia em que ela aparecer, o formato passa a ser validado sem
-    // tocar em código. Marcar obrigatoria: true reprovaria as 36 linhas da
-    // planilha de aula por um campo que ela não tem.
-    //
-    // Fica no fim do ESQUEMA para não abrir uma coluna vazia no meio da prévia,
-    // que percorre esta lista na ordem.
+    // A planilha modelo não tem esta coluna, mas o enunciado pede validação de
+    // e-mail. Opcional resolve a divergência: obrigatória reprovaria as 39
+    // linhas por um campo que o arquivo não tem. No fim da lista para não abrir
+    // coluna vazia no meio da prévia, que percorre o ESQUEMA na ordem.
     obrigatoria: false,
     tratamento: 'email',
   },
@@ -193,9 +160,8 @@ export const ESQUEMA = [
 // Limpeza de texto
 // ---------------------------------------------------------------------------
 
-//   é o espaço não separável, que entra sozinho quando a planilha veio de
-// uma cópia da web. Ele é invisível na tela e é a causa mais comum de "esse
-// trim não funcionou".
+// Inclui o espaço não separável, invisível na tela e causa mais comum de
+// "esse trim não funcionou". Entra sozinho quando a planilha veio da web.
 function limpar(bruto) {
   if (bruto === null || bruto === undefined) return ''
   return String(bruto).replace(/[\s ]+/g, ' ').trim()
@@ -206,9 +172,8 @@ function semAcento(texto) {
   return texto.normalize('NFD').replace(/[̀-ͯ]/g, '')
 }
 
-// Forma achatada: só para casar cabeçalho e consultar dicionário, nunca para
-// exibir. Tira acento, caixa, pontuação e underscore — assim "codigo_cliente",
-// "Código Cliente" e "CODIGO  CLIENTE" caem no mesmo lugar, e "IND." vira "ind".
+// Só para casar cabeçalho e consultar dicionário, nunca para exibir. Faz
+// "codigo_cliente", "Código Cliente" e "CODIGO  CLIENTE" caírem no mesmo lugar.
 export function achatar(bruto) {
   return semAcento(limpar(bruto))
     .toLowerCase()
@@ -222,12 +187,10 @@ const PARTICULAS = new Set(['de', 'da', 'do', 'das', 'dos', 'e', 'em', 'a', 'o']
 
 // Corrige "ANA SOUZA" para "Ana Souza".
 //
-// A regra de preservar sigla curta só vale quando o valor tem caixa mista: em
-// "Consultoria TI" o TI é sigla de verdade. Já quando o texto INTEIRO vem em
-// caixa-alta, isso é digitação gritada, não sigla — e sem esta distinção
-// "ANA SOUZA" continuaria "ANA Souza", virando um consultor separado de
-// "Ana Souza" no agrupamento. Foi exatamente o que aconteceu antes de existir
-// esta verificação.
+// Preservar sigla curta só vale em texto de caixa mista — em "Consultoria TI" o
+// TI é sigla de verdade. Texto inteiro em caixa-alta é digitação gritada, e sem
+// essa distinção "ANA SOUZA" virava "ANA Souza", um consultor separado de
+// "Ana Souza" no agrupamento.
 function nomeProprio(texto) {
   const limpo = limpar(texto)
   if (!limpo) return ''
@@ -260,27 +223,38 @@ function consultarDicionario(dicionario, bruto) {
   return achado ? achado.canonico : null
 }
 
+// Primeira letra em maiúscula. As mensagens vêm de três origens e cada uma
+// nascia como o autor escreveu: "Consultor em branco" ao lado de "código CTI035
+// repetido" na mesma coluna. Normalizar na CRIAÇÃO, e não na exibição, vale
+// também para mensagem que ainda não existe. Locale pt-BR por causa do acento.
+function maiuscula(texto) {
+  if (!texto) return texto
+  return texto.charAt(0).toLocaleUpperCase('pt-BR') + texto.slice(1)
+}
+
+// Ponto único da normalização: antes cada `push` montava o objeto à mão, e
+// bastava um novo esquecer a regra para a inconsistência voltar.
+const problemaDe = (tipo, coluna, mensagem) => ({ tipo, coluna, mensagem: maiuscula(mensagem) })
+
+const avisoDe = (linha, coluna, tipo, mensagem) => ({
+  linha,
+  coluna,
+  tipo,
+  motivo: maiuscula(mensagem),
+})
+
 // ---------------------------------------------------------------------------
 // Tratamentos por coluna
 //
-// Cada um devolve { valor, erro?, aviso? }, onde erro e aviso são
-// { tipo, mensagem }:
-//   erro  → a linha inteira é rejeitada e vai para a lista de erros;
-//   aviso → a linha passa, mas o assunto é reportado no relatório.
-//
-// O `tipo` vem de TIPOS_ERRO / TIPOS_AVISO e é o que permite contar por
-// natureza. A mensagem vai direto para a tela: escreva para quem vai corrigir
-// a planilha. Um mesmo tratamento produz tipos diferentes — moeda em branco é
-// 'vazio', moeda com letra é 'formato' — e é por isso que o tipo é decidido
-// aqui, no ponto que sabe o que aconteceu, e não depois por palpite no texto.
+// Devolvem { valor, erro?, aviso? }, com erro e aviso em { tipo, mensagem }:
+// erro rejeita a linha, aviso só reporta. O tipo é decidido aqui, onde se sabe
+// o que aconteceu — um mesmo tratamento produz tipos diferentes. A mensagem vai
+// direto para a tela: escreva para quem vai corrigir a planilha.
 // ---------------------------------------------------------------------------
 
-// Nenhum tratamento reclama de célula vazia por conta própria: quem decide se
-// a coluna pode faltar é o `obrigatoria` do ESQUEMA, e ele já emite
-// "<Rótulo> em branco" para toda coluna. Quando os dois emitiam, a mesma
-// tabela misturava "Cliente em branco" com "segmento em branco" — a segunda
-// escrita pelo tratamento, em minúscula e com o nome interno do campo. Deixar
-// a origem única resolve a caixa e faz a flag valer para todas as colunas.
+// Nenhum tratamento reclama de célula vazia: quem decide é o `obrigatoria` do
+// ESQUEMA, que já emite "<Rótulo> em branco". Com as duas origens, a mesma
+// tabela misturava "Cliente em branco" e "segmento em branco".
 const erroFormato = (mensagem) => ({ tipo: 'formato', mensagem })
 
 const TRATAMENTOS = {
@@ -296,12 +270,10 @@ const TRATAMENTOS = {
     return { valor: nomeProprio(bruto) }
   },
 
-  // Validação de formato, não de existência: só o envio de verdade prova que
-  // uma caixa existe. A regra cobre o que estraga cadastro na prática — espaço
-  // no meio, arroba faltando ou dobrada, domínio sem ponto, TLD de uma letra.
-  // Deliberadamente mais simples que o RFC 5322: a expressão completa é
-  // ilegível, e o que ela libera a mais (comentários, aspas, IP literal) não
-  // aparece em planilha comercial.
+  // Formato, não existência — só o envio prova que a caixa existe. Cobre o que
+  // estraga cadastro: espaço no meio, arroba faltando ou dobrada, domínio sem
+  // ponto. Mais simples que o RFC 5322 de propósito: o que ele libera a mais
+  // não aparece em planilha comercial.
   email(bruto) {
     const valor = limpar(bruto).toLowerCase()
     if (!valor) return { valor: '' }
@@ -311,9 +283,8 @@ const TRATAMENTOS = {
     return { valor }
   },
 
-  // Devolve a forma canônica COM acento e caixa correta ("Indústria"), porque
-  // ela vai para a tela. O achatamento é usado só na consulta, então agrupar
-  // continua certo sem precisar exibir tudo em caixa-alta.
+  // Devolve a forma canônica com acento e caixa ("Indústria") porque vai para a
+  // tela; o achatamento serve só à consulta.
   segmento(bruto) {
     const limpo = limpar(bruto)
     if (!limpo) return { valor: '' }
@@ -321,8 +292,8 @@ const TRATAMENTOS = {
     const canonico = consultarDicionario(SEGMENTOS, limpo)
     if (canonico) return { valor: canonico }
 
-    // Desconhecido não derruba a linha: o negócio pode ter criado um segmento
-    // novo. Passa adiante em forma apresentável e o relatório cobra o cadastro.
+    // Desconhecido não derruba a linha: pode ser segmento novo. Passa adiante e
+    // o relatório cobra o cadastro.
     return {
       valor: nomeProprio(limpo),
       aviso: { tipo: 'dicionario', mensagem: `segmento "${limpo}" não está no dicionário` },
@@ -338,8 +309,8 @@ const TRATAMENTOS = {
     return { valor }
   },
 
-  // Aceita "R$ 1.850.000,00" e também 1850000 ou 1850000.00, porque a mesma
-  // planilha costuma trazer os dois quando passou por mãos diferentes.
+  // Aceita "R$ 1.850.000,00", 1850000 e 1850000.00: a mesma planilha traz os
+  // três quando passou por mãos diferentes.
   moeda(bruto) {
     // Vindo do xlsx a célula já é número; só o CSV entrega texto para converter.
     if (typeof bruto === 'number') {
@@ -395,9 +366,8 @@ const TRATAMENTOS = {
     return { valor: itens }
   },
 
-  // dd/mm/aaaa. new Date("15/01/2025") não serve: o motor interpreta como
-  // mês 15 e devolve Invalid Date — ou, pior, com "03/02/2025" devolve
-  // 3 de fevereiro em vez de 2 de março, silenciosamente.
+  // dd/mm/aaaa à mão porque new Date("15/01/2025") lê mês 15 e, pior, com
+  // "03/02/2025" devolve 3 de fevereiro em vez de 2 de março, sem avisar.
   dataBR(bruto) {
     const texto = limpar(bruto)
     if (!texto) return { valor: null }
@@ -419,11 +389,8 @@ const TRATAMENTOS = {
     return { valor: data }
   },
 
-  // Em branco não é erro aqui: quem decide se a coluna pode faltar é o
-  // `obrigatoria` do ESQUEMA, e deixar o tratamento reclamar por conta própria
-  // tornaria a flag decorativa — foi o que mantinha UF obrigatória na prática
-  // mesmo depois de o dicionário da planilha passar a listá-la como opcional.
-  // Sigla preenchida, porém, continua tendo que ser uma das 27.
+  // Vazio não é erro aqui (ver `obrigatoria`), mas sigla preenchida tem de ser
+  // uma das 27.
   uf(bruto) {
     const valor = semAcento(limpar(bruto)).toUpperCase()
     if (!valor) return { valor: '' }
@@ -474,15 +441,9 @@ function linhaVazia(celulas) {
 /**
  * Detecta o que o tratamento corrigiu em silêncio.
  *
- * Só faz sentido sobre célula de TEXTO: número e Date vêm tipados do SheetJS e
- * não passaram por limpeza nenhuma. A comparação é contra o bruto original, e
- * não contra o valor final, porque as duas coisas são independentes — uma
- * célula pode ter só espaço sobrando (" Campinas "), só caixa errada
- * ("ANA SOUZA") ou as duas (" industria ").
- *
- * Os dois avisos são emitidos juntos quando os dois ocorrem: são achados de
- * natureza diferente, e colapsá-los em um esconderia metade do que o enunciado
- * pede para identificar.
+ * Só sobre célula de TEXTO: número e Date vêm tipados do SheetJS, sem limpeza.
+ * Espaço sobrando e caixa errada são independentes — " industria " tem os dois —
+ * e por isso os dois avisos podem sair juntos.
  */
 function correcoesSilenciosas(bruto, valor, coluna) {
   if (typeof bruto !== 'string') return []
@@ -490,10 +451,9 @@ function correcoesSilenciosas(bruto, valor, coluna) {
   const achados = []
   const aparado = limpar(bruto)
 
-  // A frase põe o rótulo antes dos dois-pontos, e não como sujeito do
-  // particípio, para não depender do gênero da coluna: "Cidade padronizado" e
-  // "Serviços padronizado" saíam errados, e concordar de verdade exigiria
-  // declarar o gênero de cada rótulo no ESQUEMA por causa de uma frase.
+  // Rótulo antes dos dois-pontos para não depender do gênero da coluna:
+  // "Cidade padronizado" saía errado, e concordar exigiria declarar o gênero de
+  // cada rótulo no ESQUEMA.
   if (aparado !== bruto) {
     achados.push({
       tipo: 'espacos',
@@ -514,28 +474,26 @@ function correcoesSilenciosas(bruto, valor, coluna) {
 }
 
 /**
- * Recebe a matriz crua da planilha (primeira linha = cabeçalho) e devolve
+ * Recebe a matriz crua (primeira linha = cabeçalho) e devolve
  * { dados, erros, avisos, colunasIgnoradas }.
  *
- * Uma linha com problema NÃO derruba o arquivo: ela vai para `erros` com o
- * número da linha como aparece no Excel, e as demais seguem para `dados`.
- *
- * Cada item de `erros` traz `problemas`, a lista tipada do que deu errado
- * naquela linha — é dela que sai a contagem por tipo e o campo culpado. O
- * `motivo` continua existindo como a mesma lista em frase única, porque é o que
- * a tabela de erros mostra numa célula só.
+ * Linha com problema não derruba o arquivo: vai para `erros` com o número da
+ * linha do Excel. Cada item traz `problemas` tipados — de onde saem a contagem
+ * por tipo e o campo culpado — e `motivo`, a mesma lista em frase única.
  */
 export function tratarLinhas(matriz) {
-  // Problema de ESTRUTURA não pertence a nenhuma coluna: vale para o arquivo
-  // inteiro. Entra com coluna '—' para que a tabela de ocorrências não precise
-  // de um caso especial.
-  const erroEstrutura = (linha, mensagem) => ({
-    linha,
-    codigo: '—',
-    nome: '(sem nome)',
-    motivo: mensagem,
-    problemas: [{ tipo: 'estrutura', coluna: '—', mensagem }],
-  })
+  // Estrutura vale para o arquivo inteiro, não para uma coluna: entra com '—'
+  // para a tabela de ocorrências não precisar de caso especial.
+  const erroEstrutura = (linha, mensagem) => {
+    const problemas = [problemaDe('estrutura', '—', mensagem)]
+    return {
+      linha,
+      codigo: '—',
+      nome: '(sem nome)',
+      problemas,
+      motivo: problemas[0].mensagem,
+    }
+  }
 
   if (!matriz.length) {
     return {
@@ -572,9 +530,8 @@ export function tratarLinhas(matriz) {
     const linha = indice + 2 // +1 pelo cabeçalho, +1 porque o Excel conta de 1
     if (linhaVazia(celulas)) return
 
-    // O registro só recebe chaves vindas do ESQUEMA, nunca nomes do arquivo.
-    // Isso fecha a porta para a poluição de protótipo do SheetJS: um cabeçalho
-    // chamado "__proto__" nunca chega a virar chave de objeto aqui.
+    // Só chaves do ESQUEMA, nunca nomes do arquivo: fecha a porta para a
+    // poluição de protótipo — "__proto__" no cabeçalho nunca vira chave aqui.
     const registro = {}
     const problemas = []
 
@@ -585,52 +542,39 @@ export function tratarLinhas(matriz) {
 
       registro[coluna.chave] = valor
 
-      // O problema guarda a coluna que o produziu. Antes o nome do campo só
-      // existia dentro da frase, o que dava para ler e não para filtrar nem
-      // agrupar — e o relatório pede o campo como informação própria.
-      if (erro) problemas.push({ tipo: erro.tipo, coluna: coluna.rotulo, mensagem: erro.mensagem })
-      if (aviso) {
-        avisos.push({ linha, coluna: coluna.rotulo, tipo: aviso.tipo, motivo: aviso.mensagem })
-      }
+      // O problema guarda a coluna que o produziu: dentro da frase, o campo dava
+      // para ler e não para agrupar, e o relatório o pede como informação própria.
+      if (erro) problemas.push(problemaDe(erro.tipo, coluna.rotulo, erro.mensagem))
+      if (aviso) avisos.push(avisoDe(linha, coluna.rotulo, aviso.tipo, aviso.mensagem))
 
-      // Espaço sobrando e caixa padronizada só são reportados quando a linha
-      // não tem erro naquela coluna: apontar "espaço sobrando em Consultor" numa
-      // célula que está simplesmente vazia é ruído em cima do problema real.
+      // Só reporta correção onde a coluna não tem erro: apontar espaço sobrando
+      // numa célula vazia é ruído em cima do problema real.
       if (!erro) {
         for (const achado of correcoesSilenciosas(bruto, valor, coluna)) {
-          avisos.push({
-            linha,
-            coluna: coluna.rotulo,
-            tipo: achado.tipo,
-            motivo: achado.mensagem,
-          })
+          avisos.push(avisoDe(linha, coluna.rotulo, achado.tipo, achado.mensagem))
         }
       }
 
-      // O `obrigatoria` do esquema precisa valer para TODA coluna. Tratamento de
-      // texto nunca devolve erro por conta própria, então sem esta verificação
-      // um consultor em branco passaria batido — a coluna estaria marcada como
-      // obrigatória só no papel.
+      // Tratamento de texto nunca devolve erro por conta própria: sem esta
+      // verificação um consultor em branco passaria, e a flag seria decorativa.
       const vazio = valor === '' || valor === null || (Array.isArray(valor) && !valor.length)
       if (!erro && coluna.obrigatoria && vazio) {
-        problemas.push({
-          tipo: 'vazio',
-          coluna: coluna.rotulo,
-          mensagem: `${coluna.rotulo} em branco`,
-        })
+        problemas.push(problemaDe('vazio', coluna.rotulo, `${coluna.rotulo} em branco`))
       }
     }
 
-    // Código repetido é erro de cadastro, não de digitação: duas linhas com o
-    // mesmo CTI vão virar dois registros do mesmo cliente lá na frente.
+    // Código repetido é erro de cadastro: duas linhas com o mesmo CTI viram dois
+    // registros do mesmo cliente lá na frente.
     if (registro.codigo) {
       const anterior = vistos.get(registro.codigo)
       if (anterior) {
-        problemas.push({
-          tipo: 'duplicado',
-          coluna: 'Código',
-          mensagem: `código ${registro.codigo} repetido (já apareceu na linha ${anterior})`,
-        })
+        problemas.push(
+          problemaDe(
+            'duplicado',
+            'Código',
+            `código ${registro.codigo} repetido (já apareceu na linha ${anterior})`,
+          ),
+        )
       } else {
         vistos.set(registro.codigo, linha)
       }
@@ -671,9 +615,8 @@ function agrupar(dados, obterChave) {
 }
 
 export function resumir(dados, erros, avisos = [], colunasIgnoradas = []) {
-  // Somar float acumula resíduo (0,1 + 0,2 não dá 0,3), e um total sairia como
-  // 59215.310000000005. Sem efeito na tela, que formata, mas envenena qualquer
-  // comparação de soma feita depois.
+  // Somar float acumula resíduo: o total sairia 59215.310000000005. A tela
+  // formata e esconde, mas qualquer comparação de soma feita depois quebra.
   const emCentavos = (n) => Math.round(n * 100) / 100
   const ordenar = (lista) =>
     lista

@@ -13,19 +13,15 @@ import { useNotificacoesStore } from './notificacoes'
 export const FORMATOS = ['.xlsx', '.xls', '.csv']
 export const TAMANHO_MAXIMO = 25 * 1024 * 1024
 
-/**
- * Tamanho legível. Mora aqui, e não na página, porque a recusa por arquivo
- * grande precisa do valor dentro da própria mensagem — e duas cópias da mesma
- * conversão divergem no primeiro ajuste.
- */
+// Mora aqui, e não na página, porque a recusa por arquivo grande precisa do
+// valor dentro da mensagem — duas cópias divergem no primeiro ajuste.
 export function formatarTamanho(bytes) {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1).replace('.', ',')} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`
 }
 
-// "1 linhas" denuncia texto montado por máquina e contamina a confiança no
-// resto da mensagem.
+// "1 linhas" denuncia texto montado por máquina.
 function linhas(quantidade) {
   return `${quantidade.toLocaleString('pt-BR')} ${quantidade === 1 ? 'linha' : 'linhas'}`
 }
@@ -38,20 +34,18 @@ function extensao(nome) {
 /**
  * Lê o arquivo e devolve a matriz crua (primeira linha = cabeçalho).
  *
- * `header: 1` é deliberado: pede a planilha como array de arrays em vez de
- * deixar o SheetJS montar objetos com os nomes do cabeçalho como chave. Além de
- * dar controle do mapeamento, fecha a porta da poluição de protótipo — uma
- * coluna chamada "__proto__" nunca vira chave de objeto nossa.
+ * `header: 1` pede array de arrays em vez de deixar o SheetJS montar objetos
+ * com o cabeçalho como chave: dá controle do mapeamento e fecha a porta da
+ * poluição de protótipo.
  */
 async function lerMatriz(arquivo) {
   const buffer = await arquivo.arrayBuffer()
   let pasta
 
   if (extensao(arquivo.name) === '.csv') {
-    // CSV não carrega declaração de codificação. Excel no Windows exporta em
-    // windows-1252 por padrão, e decodificar isso como UTF-8 transforma
-    // "Indústria" em "Ind�stria". O caractere de substituição é o sinal de que
-    // o palpite errou, então tentamos de novo na outra codificação.
+    // CSV não declara codificação, e o Excel no Windows exporta windows-1252:
+    // lido como UTF-8, "Indústria" vira "Ind�stria". O caractere de substituição
+    // é o sinal de que o palpite errou.
     let texto = new TextDecoder('utf-8').decode(buffer)
     if (texto.includes('�')) {
       texto = new TextDecoder('windows-1252').decode(buffer)
@@ -64,12 +58,10 @@ async function lerMatriz(arquivo) {
   const [primeira, ...demais] = pasta.SheetNames
   if (!primeira) throw new Error('O arquivo não tem nenhuma aba')
 
-  // raw: true é decisivo. Com raw: false o SheetJS RENDERIZA a célula pelo
-  // formato numérico e devolve "R$ 1,850,000.00" e "1/15/25" — separador e
-  // ordem de data americanos, independente de locale. Seria jogar fora o dado
-  // bom (a célula guarda um número e uma data de verdade) para depois tentar
-  // adivinhá-lo de volta a partir do texto. Com raw: true, número chega número
-  // e data chega Date; só o CSV, que não tem tipo, continua vindo como texto.
+  // raw: true é decisivo. Com raw: false o SheetJS renderiza a célula pelo
+  // formato e devolve "R$ 1,850,000.00" e "1/15/25" — separador e data
+  // americanos, seja qual for o locale. Seria descartar o dado bom para depois
+  // adivinhá-lo de volta do texto. Só o CSV, sem tipo, ainda chega como texto.
   const matriz = XLSX.utils.sheet_to_json(pasta.Sheets[primeira], {
     header: 1,
     raw: true,
@@ -82,12 +74,9 @@ async function lerMatriz(arquivo) {
 
 // Store da planilha: o estado da tela de upload e do relatório.
 //
-// Segue a divisão da aula 08 — State guarda, Getters calculam, Actions fazem —
-// no formato setup do Pinia: ref é state, computed é getter, function é action.
-//
-// As REGRAS de validação ficam em dados/esquemaPlanilha.js, e a action
-// validarDados() é quem as aplica. Assim a store continua sendo o lugar onde a
-// validação acontece, e as regras continuam testáveis sem montar o app.
+// Formato setup do Pinia: ref é state, computed é getter, function é action.
+// As regras de validação ficam em dados/esquemaPlanilha.js e a action
+// validarDados() as aplica — assim elas são testáveis sem montar o app.
 export const useUploadStore = defineStore('upload', () => {
   const notificacoes = useNotificacoesStore()
 
@@ -95,18 +84,15 @@ export const useUploadStore = defineStore('upload', () => {
   // STATE — dados temporários da interface. Nada aqui vai para o banco.
   // ---------------------------------------------------------------------------
 
-  // shallowRef porque o File é um objeto do navegador, não um dado nosso:
-  // deixar o Vue embrulhar em proxy reativo pode quebrar arrayBuffer() e o
-  // envio via FormData. Aqui só a troca do arquivo precisa disparar reação.
+  // shallowRef: embrulhar o File em proxy reativo pode quebrar arrayBuffer() e
+  // o envio via FormData. Só a troca do arquivo precisa disparar reação.
   const arquivo = shallowRef(null)
   const nomeArquivo = ref('')
   const dataUpload = ref(null)
   const tamanhoArquivo = ref(0) // em bytes
 
-  // A matriz como veio da planilha (primeira linha = cabeçalho), antes de
-  // qualquer tratamento. shallowRef porque ela nunca é alterada por dentro —
-  // só trocada inteira — e uma planilha de milhares de linhas não precisa de
-  // um proxy reativo em cada célula.
+  // A matriz crua, antes de qualquer tratamento. shallowRef porque ela só é
+  // trocada inteira, e milhares de linhas não precisam de proxy por célula.
   const dadosBrutos = shallowRef([])
 
   const dadosValidos = ref([])
@@ -118,23 +104,20 @@ export const useUploadStore = defineStore('upload', () => {
   const aba = ref('')
   const abasIgnoradas = ref([])
 
-  // vazio → lendo → pronto | falha ; enviando → enviado | falha
-  //
-  // Não se chama statusValidacao como no slide porque cobre mais que a
-  // validação: também diz se a planilha está sendo enviada ou já foi.
+  // vazio → lendo → pronto | falha ; enviando → enviado | falha. Não se chama
+  // statusValidacao porque cobre também o envio.
   const estado = ref('vazio')
   // Motivo do último problema do ARQUIVO (formato, leitura, envio). Problema
   // de LINHA mora em dadosInvalidos.
   const falha = ref('')
 
-  // A notificação da operação em curso. Guardada para que a etapa seguinte
-  // reescreva o mesmo cartão em vez de empilhar outro: uma operação de cada
-  // vez, um cartão de cada vez. Fica fora do state porque não é dado de tela.
+  // A notificação em curso, para a etapa seguinte reescrever o mesmo cartão em
+  // vez de empilhar outro. Fora do state porque não é dado de tela.
   let idOperacao = null
 
   // ---------------------------------------------------------------------------
-  // GETTERS — calculados a partir do state, sem alterá-lo. Recalculam sozinhos
-  // quando o state muda, então nenhum total fica desatualizado.
+  // GETTERS — derivam do state e recalculam sozinhos, então nenhum total fica
+  // desatualizado.
   // ---------------------------------------------------------------------------
 
   const quantidadeValidas = computed(() => dadosValidos.value.length)
@@ -147,11 +130,9 @@ export const useUploadStore = defineStore('upload', () => {
 
   const temDados = computed(() => quantidadeValidas.value > 0)
 
-  // Os recortes por nível, segmento, consultor, serviço e cidade. É getter e
-  // não state: antes o resumo era calculado uma vez e guardado, e bastava
-  // alguém alterar dadosValidos para ele passar a descrever outra planilha.
-  // Só existe depois de uma validação — que sempre produz ao menos uma linha,
-  // válida ou não.
+  // Os recortes por nível, segmento, consultor, serviço e cidade. Getter e não
+  // state: guardado, bastava alterar dadosValidos para ele passar a descrever
+  // outra planilha.
   const resumo = computed(() =>
     quantidadeLinhas.value === 0
       ? null
@@ -167,10 +148,8 @@ export const useUploadStore = defineStore('upload', () => {
       : Math.round((totalFaturamento.value / quantidadeValidas.value) * 100) / 100,
   )
 
-  // Códigos distintos em TODAS as linhas lidas, válidas ou não: é quantos
-  // clientes a planilha diz ter. Um código repetido conta uma vez só — por
-  // isso pode dar menos que quantidadeLinhas. '—' é o marcador de linha sem
-  // código, não um código.
+  // Códigos distintos em todas as linhas, válidas ou não. Repetido conta uma
+  // vez, então pode dar menos que quantidadeLinhas. '—' é marcador, não código.
   const quantidadeClientes = computed(() => {
     const codigos = [...dadosValidos.value, ...dadosInvalidos.value]
       .map((linha) => linha.codigo)
@@ -178,23 +157,16 @@ export const useUploadStore = defineStore('upload', () => {
     return new Set(codigos).size
   })
 
-  // Mensagens prontas para o usuário, no formato "Linha 8: Consultor em
-  // branco". Getter, e não uma lista preenchida na action: é só outra forma
-  // de ler dadosInvalidos, e guardada à parte poderia discordar dela.
+  // Mensagens prontas, no formato "Linha 8: Consultor em branco". Getter porque
+  // é só outra forma de ler dadosInvalidos. Não capitaliza: a mensagem já nasce
+  // com maiúscula no esquema, e a regra daqui a tabela do Upload não usava.
   const erros = computed(() =>
-    dadosInvalidos.value.map(
-      (item) => `Linha ${item.linha}: ${item.motivo.charAt(0).toUpperCase()}${item.motivo.slice(1)}`,
-    ),
+    dadosInvalidos.value.map((item) => `Linha ${item.linha}: ${item.motivo}`),
   )
 
-  // Uma linha por PROBLEMA, não por registro: a linha 32 com faturamento vazio
-  // e UF inválida rende duas ocorrências. É o formato que o relatório pede —
-  // linha, campo e descrição — e o que dadosInvalidos, agrupado por registro,
-  // não entrega.
-  //
-  // Os dois contadores respondem perguntas diferentes e por isso divergem de
-  // propósito: quantidadeInvalidas conta REGISTROS reprovados (o que vai para
-  // "registros com erro"), totalOcorrencias conta PROBLEMAS encontrados.
+  // Uma linha por PROBLEMA, não por registro — é o formato que o relatório pede
+  // (linha, campo, descrição). Os dois contadores divergem de propósito:
+  // quantidadeInvalidas conta registros reprovados, totalOcorrencias, problemas.
   const ocorrencias = computed(() =>
     dadosInvalidos.value.flatMap((item) =>
       (item.problemas ?? []).map((problema) => ({
@@ -211,11 +183,9 @@ export const useUploadStore = defineStore('upload', () => {
 
   const totalOcorrencias = computed(() => ocorrencias.value.length)
 
-  // Conta por natureza do problema. Segue a ordem de TIPOS_ERRO em vez de
-  // ordenar por quantidade: o quadro é uma lista de verificações realizadas, e
-  // uma ordem estável deixa a pessoa reencontrar a linha depois de recarregar.
-  // Tipos com zero entram na lista — "Duplicados 0" é resultado de validação,
-  // e some-los faria parecer que a checagem não rodou.
+  // Ordem de TIPOS_ERRO e não por quantidade: é uma lista de verificações, e
+  // ordem estável deixa reencontrar a linha. Tipo com zero fica — "Duplicados 0"
+  // é resultado, e esconder faria parecer que a checagem não rodou.
   const errosPorTipo = computed(() => {
     const contagem = new Map()
     for (const ocorrencia of ocorrencias.value) {
@@ -228,8 +198,8 @@ export const useUploadStore = defineStore('upload', () => {
     }))
   })
 
-  // Avisos não reprovam a linha, então ficam num quadro à parte: somados aos
-  // erros, inflariam o número de problemas com coisas que o sistema já resolveu.
+  // Quadro à parte: somados aos erros, inflariam o total com o que já foi
+  // resolvido.
   const avisosPorTipo = computed(() => {
     const contagem = new Map()
     for (const aviso of avisos.value) {
@@ -242,9 +212,8 @@ export const useUploadStore = defineStore('upload', () => {
     }))
   })
 
-  // O quadro "Validação realizada / Quantidade" do enunciado, pronto para a
-  // tela. Registros válidos fecha a lista porque é a linha que dá sentido às
-  // outras: sem ela o quadro mostra só o que falhou.
+  // O quadro "Validação realizada / Quantidade". Registros válidos fecha a
+  // lista: sem ela o quadro mostra só o que falhou.
   const quadroValidacao = computed(() => [
     ...errosPorTipo.value,
     { tipo: 'validos', rotulo: 'Registros válidos', quantidade: quantidadeValidas.value },
@@ -253,9 +222,8 @@ export const useUploadStore = defineStore('upload', () => {
   // Leitura ou envio em andamento.
   const carregando = computed(() => estado.value === 'lendo' || estado.value === 'enviando')
 
-  // O resultado da validação em texto. Depois de validada, a planilha
-  // continua "válida" ou "com inconsistências" mesmo durante e depois do
-  // envio — o envio é outro assunto, contado em `estado`.
+  // O resultado em texto. Continua "válida" ou "com inconsistências" durante e
+  // depois do envio — o envio é outro assunto, contado em `estado`.
   const statusValidacao = computed(() => {
     if (quantidadeLinhas.value > 0) {
       return quantidadeInvalidas.value === 0 ? 'Arquivo válido' : 'Arquivo possui inconsistências'
@@ -265,9 +233,8 @@ export const useUploadStore = defineStore('upload', () => {
     return 'Aguardando arquivo'
   })
 
-  // 'falha' entra porque, com dados na tela, ela só pode ter vindo do envio —
-  // falha de leitura não deixa linha válida. Sem isto o botão travava depois
-  // de um envio malsucedido, justo quando a mensagem convida a tentar de novo.
+  // 'falha' entra porque, com dados na tela, ela só pode ter vindo do envio.
+  // Sem isto o botão travava justo quando a mensagem convida a tentar de novo.
   const podeEnviar = computed(
     () => temDados.value && (estado.value === 'pronto' || estado.value === 'falha'),
   )
@@ -293,13 +260,9 @@ export const useUploadStore = defineStore('upload', () => {
   }
 
   /**
-   * Aplica as regras do esquema sobre dadosBrutos e separa válidas de
-   * inválidas. Lê do state em vez de receber a lista: assim dá para validar de
-   * novo — depois de cadastrar um segmento no dicionário, por exemplo — sem
-   * pedir o arquivo outra vez.
-   *
-   * Linha com problema não derruba o arquivo: ela vai para dadosInvalidos e o
-   * resto segue, para a pessoa corrigir três linhas em vez de reenviar tudo.
+   * Aplica as regras do esquema sobre dadosBrutos e separa válidas de inválidas.
+   * Lê do state em vez de receber a lista, para dar para validar de novo — depois
+   * de cadastrar um segmento, por exemplo — sem pedir o arquivo outra vez.
    */
   function validarDados() {
     const tratado = tratarLinhas(dadosBrutos.value)
@@ -317,10 +280,8 @@ export const useUploadStore = defineStore('upload', () => {
   }
 
   /**
-   * Recusa o arquivo antes de tentar ler. O motivo vai para dois lugares de
-   * propósito: a notificação avisa na hora, porque a pessoa pode estar olhando
-   * o fim da página, e o banner fixo continua ali depois que ela sai — o
-   * estado de "não deu certo" não se resolve sozinho.
+   * Recusa o arquivo antes de tentar ler. O motivo vai para dois lugares: a
+   * notificação avisa na hora, o banner fixo continua depois que ela passa.
    */
   function recusar(titulo, detalhe) {
     limpar()
@@ -333,10 +294,7 @@ export const useUploadStore = defineStore('upload', () => {
     return false
   }
 
-  /**
-   * Recebe o File, confere, lê e manda validar. Devolve true quando sobrou
-   * dado válido.
-   */
+  // Recebe o File, confere, lê e manda validar. true se sobrou dado válido.
   async function carregar(entrada) {
     if (!entrada) {
       return recusar(
@@ -388,7 +346,7 @@ export const useUploadStore = defineStore('upload', () => {
       const validas = quantidadeValidas.value
       const comErro = quantidadeInvalidas.value
 
-      // Três desfechos, três tipos. Chamar de sucesso uma leitura em que nada
+      // Três desfechos, três tipos: chamar de sucesso uma leitura em que nada
       // passou seria mentir para quem só viu o cartão.
       if (!validas) {
         notificacoes.atualizar(notificacao, {
@@ -412,8 +370,7 @@ export const useUploadStore = defineStore('upload', () => {
 
       return validas > 0
     } catch (erro) {
-      // Arquivo corrompido, protegido por senha ou que não é planilha de fato
-      // estoura aqui dentro do SheetJS.
+      // Corrompido, protegido por senha ou que não é planilha estoura no SheetJS.
       estado.value = 'falha'
       falha.value = `Não foi possível ler a planilha: ${erro.message}`
 
@@ -428,17 +385,11 @@ export const useUploadStore = defineStore('upload', () => {
   }
 
   // -------------------------------------------------------------------------
-  // Ponto de integração com o Spring Boot.
-  //
-  // Está tudo montado, só não dispara. Pelo fluxo da aula (Pinia → Service
-  // Axios → Spring), a chamada HTTP vai morar num service em src/services/, e
-  // esta action só chama o service. Decida com o backend o que vai no corpo:
-  //
-  //   a) o arquivo original (FormData abaixo) — o Java reprocessa com Apache
-  //      POI e o tratamento do navegador serve só de pré-visualização;
-  //   b) as linhas já tratadas (JSON.stringify(dadosValidos.value)) — menos
-  //      trabalho no servidor, mas ele ainda precisa revalidar: dado que chega
-  //      do navegador é dado que o usuário pode ter adulterado.
+  // Ponto de integração com o Spring Boot. Está montado, só não dispara: a
+  // chamada HTTP vai morar num service em src/services/ e esta action só o
+  // chama. Falta decidir o corpo — o arquivo original (FormData abaixo) ou as
+  // linhas já tratadas. Em qualquer caso o servidor revalida: dado que vem do
+  // navegador é dado que o usuário pode ter adulterado.
   // -------------------------------------------------------------------------
   async function enviar() {
     if (!podeEnviar.value) return false
