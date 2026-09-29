@@ -193,9 +193,28 @@ separação sob daltonismo e contraste) — não ajuste no olho.
 A pasta fica fora de `src/` e de `public/`, então nada dali entra no build.
 
 O arquivo tem 6 abas; a aplicação lê **só a primeira** (`upload_clientes`) e
-reporta as demais como ignoradas. São 36 linhas com **3 erros propositais** —
-faturamento em branco, consultor em branco e código repetido — além de 23
-grafias diferentes de segmento, que o dicionário reduz a 6.
+reporta as demais como ignoradas. São 39 linhas, das quais 31 passam e **8
+reprovam** por 4 motivos distintos:
+
+| Verificação | Onde |
+| --- | --- |
+| Campos obrigatórios vazios (3) | `F32` faturamento, `G33` serviços, `C34` consultor |
+| Dados fora do padrão (4) | nível `F` na linha 2 e `E` nas linhas 38–40 |
+| Registros duplicados (1) | `CTI035` repetido nas linhas 36 e 37 |
+
+Passam com aviso outras 34 padronizações: 23 grafias de segmento que o
+dicionário reduz a 6, consultores em caixa-alta e o código `Cti004`.
+
+Duas armadilhas de leitura deste arquivo:
+
+- As **células vazias são ausentes**, não string vazia — `ws['F32']` é
+  `undefined`, e não `{ v: '' }`. Por isso o tratamento não pode confiar em
+  comparar com `''`: quem decide é a flag `obrigatoria` do `ESQUEMA`, sobre o
+  valor já normalizado.
+- A aba `LEIA-ME` do arquivo promete "espaços extras" que **não existem**.
+  Varredura célula a célula: nenhuma tem espaço nas pontas, dobrado ou nbsp.
+  O contador "Espaços extras removidos" marcar 0 é o resultado correto. Ela
+  também não menciona os níveis inválidos, que são o defeito mais visível.
 
 ### Cuidado ao ler células com o SheetJS
 
