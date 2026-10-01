@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import AppLayout from '../layouts/AppLayout.vue'
 import Home from '../pages/Home.vue'
 import Login from '../pages/Login.vue'
+import Cadastro from '../pages/Cadastro.vue'
 import Dashboard from '../pages/Dashboard.vue'
 import Upload from '../pages/Upload.vue'
 import Relatorio from '../pages/Relatorio.vue'
@@ -13,6 +14,7 @@ import Relatorio from '../pages/Relatorio.vue'
 const routes = [
   { path: '/', name: 'home', component: Home },
   { path: '/login', name: 'login', component: Login },
+  { path: '/cadastro', name: 'cadastro', component: Cadastro },
   {
     // O layout não acrescenta segmento à URL: a sidebar é como a tela é
     // desenhada, não uma área do sistema. As telas ficam em /upload,

@@ -3,25 +3,25 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
 
-const usuario = ref('')
+const email = ref('')
 const senha = ref('')
 const mensagem = ref('')
 const mostrarSenha = ref(false)
+const enviando = ref(false)
 
 const router = useRouter()
 const auth = useAuthStore()
 
-function entrar() {
+async function entrar() {
   mensagem.value = ''
-  // trim só no usuário: "   " passaria no teste de campo vazio da store e
-  // entraria como nome de ninguém. Senha vai como foi digitada — espaço pode
-  // fazer parte dela.
-  if (auth.login(usuario.value.trim(), senha.value)) {
+  enviando.value = true
+  // trim só no e-mail. Senha vai como foi digitada — espaço pode fazer parte dela.
+  mensagem.value = await auth.login(email.value.trim(), senha.value)
+  enviando.value = false
+  if (!mensagem.value) {
     // O slide usa router.push('/upload'), e a URL é essa mesma. Aqui vai pelo
     // nome porque é o padrão do projeto: o caminho só existe em router/index.js.
     router.push({ name: 'upload' })
-  } else {
-    mensagem.value = 'Preencha usuário e senha.'
   }
 }
 </script>
@@ -63,14 +63,14 @@ function entrar() {
              o navegador barrando antes dela esconderia a mensagem da aula e
              deixaria duas validações dizendo coisas diferentes. -->
         <form class="mt-8" @submit.prevent="entrar">
-          <label class="block text-sm font-medium text-ink-900 dark:text-mist-100" for="usuario">Usuário</label>
+          <label class="block text-sm font-medium text-ink-900 dark:text-mist-100" for="email">E-mail</label>
           <input
             class="mt-2 w-full rounded border border-ink-200 bg-white dark:border-night-700 dark:bg-night-900 px-4 py-2.5 text-sm text-ink-900 dark:text-mist-100 placeholder:text-ink-400 dark:placeholder:text-mist-500 focus:border-brand-500 focus:outline-2 focus:outline-offset-0 focus:outline-brand-500"
-            id="usuario"
-            v-model="usuario"
-            type="text"
+            id="email"
+            v-model="email"
+            type="email"
             autocomplete="username"
-            placeholder="seu.usuario"
+            placeholder="voce@empresa.com"
           />
 
           <label class="mt-5 block text-sm font-medium text-ink-900 dark:text-mist-100" for="senha">Senha</label>
@@ -109,17 +109,18 @@ function entrar() {
           </p>
 
           <button
-            class="mt-6 w-full rounded bg-brand-800 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+            class="mt-6 w-full rounded bg-brand-800 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-wait disabled:opacity-70"
             type="submit"
+            :disabled="enviando"
           >
-            Entrar
+            {{ enviando ? 'Entrando…' : 'Entrar' }}
           </button>
         </form>
 
         <p class="mt-8 text-center text-sm text-ink-600 dark:text-mist-300">
           Ainda não tem acesso?
-          <RouterLink class="font-medium text-brand-800 dark:text-brand-300 hover:text-brand-500" :to="{ name: 'home', hash: '#contato' }">
-            Fale com nosso time
+          <RouterLink class="font-medium text-brand-800 dark:text-brand-300 hover:text-brand-500" :to="{ name: 'cadastro' }">
+            Criar minha conta
           </RouterLink>
         </p>
       </div>
