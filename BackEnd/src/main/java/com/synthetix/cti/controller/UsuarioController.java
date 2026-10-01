@@ -1,5 +1,6 @@
 package com.synthetix.cti.controller;
 
+import com.synthetix.cti.dto.LoginRequest;
 import com.synthetix.cti.dto.UsuarioDTO;
 import com.synthetix.cti.dto.UsuarioRequest;
 import com.synthetix.cti.service.UsuarioService;
@@ -40,6 +41,11 @@ public class UsuarioController {
 	public ResponseEntity<UsuarioDTO> criar(@Valid @RequestBody UsuarioRequest request) {
 		UsuarioDTO criado = service.criar(request);
 		return ResponseEntity.created(URI.create("/api/usuarios/" + criado.id())).body(criado);
+	}
+
+	@PostMapping("/login")
+	public UsuarioDTO login(@Valid @RequestBody LoginRequest request) {
+		return service.login(request);
 	}
 
 	@PutMapping("/{id}")

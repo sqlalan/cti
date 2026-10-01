@@ -41,6 +41,16 @@ public class GlobalExceptionHandler {
 		return problema(HttpStatus.CONFLICT, "E-mail duplicado", ex.getMessage());
 	}
 
+	@ExceptionHandler(ConsultorJaVinculadoException.class)
+	public ProblemDetail consultorJaVinculado(ConsultorJaVinculadoException ex) {
+		return problema(HttpStatus.CONFLICT, "Consultor ja vinculado", ex.getMessage());
+	}
+
+	@ExceptionHandler(CredenciaisInvalidasException.class)
+	public ProblemDetail credenciaisInvalidas(CredenciaisInvalidasException ex) {
+		return problema(HttpStatus.UNAUTHORIZED, "Credenciais invalidas", ex.getMessage());
+	}
+
 	@ExceptionHandler(RecursoNaoEncontradoException.class)
 	public ProblemDetail naoEncontrado(RecursoNaoEncontradoException ex) {
 		return problema(HttpStatus.NOT_FOUND, "Recurso nao encontrado", ex.getMessage());

@@ -20,6 +20,11 @@ public class Usuario {
 	@Column(nullable = false)
 	private String senha;
 
+	// Usuario 1 -- 1 Consultor. Nulo no banco so para nao quebrar linhas antigas; a API exige.
+	@OneToOne
+	@JoinColumn(name = "consultor_id", unique = true)
+	private Consultor consultor;
+
 	@Column(nullable = false)
 	private boolean ativo = true;
 
@@ -63,6 +68,14 @@ public class Usuario {
 
 	public void setSenha(String senha) {
 		this.senha = senha;
+	}
+
+	public Consultor getConsultor() {
+		return consultor;
+	}
+
+	public void setConsultor(Consultor consultor) {
+		this.consultor = consultor;
 	}
 
 	public boolean isAtivo() {

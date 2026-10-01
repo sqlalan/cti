@@ -1,5 +1,6 @@
 package com.synthetix.cti.repository;
 
+import com.synthetix.cti.model.Consultor;
 import com.synthetix.cti.model.Usuario;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,5 +10,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 	Optional<Usuario> findByEmail(String email);
 
 	boolean existsByEmail(String email);
+
+	Optional<Usuario> findByConsultor(Consultor consultor);
 
 }
