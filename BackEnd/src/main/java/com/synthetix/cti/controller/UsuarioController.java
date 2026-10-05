@@ -1,6 +1,7 @@
 package com.synthetix.cti.controller;
 
 import com.synthetix.cti.dto.LoginRequest;
+import com.synthetix.cti.dto.LoginResponse;
 import com.synthetix.cti.dto.UsuarioDTO;
 import com.synthetix.cti.dto.UsuarioRequest;
 import com.synthetix.cti.service.UsuarioService;
@@ -44,7 +45,7 @@ public class UsuarioController {
 	}
 
 	@PostMapping("/login")
-	public UsuarioDTO login(@Valid @RequestBody LoginRequest request) {
+	public LoginResponse login(@Valid @RequestBody LoginRequest request) {
 		return service.login(request);
 	}
 

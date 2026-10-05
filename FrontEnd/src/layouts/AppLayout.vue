@@ -16,7 +16,7 @@ const itens = [
 
 // A sessão é descartada ANTES de navegar: sair sem limpar deixaria o
 // localStorage marcado como logado, e a próxima pessoa no mesmo navegador
-// entraria na sessão anterior. Quando houver token de API, ele sai aqui também.
+// entraria na sessão anterior. O token sai junto, no logout da store.
 function sair() {
   menuAberto.value = false
   auth.logout()

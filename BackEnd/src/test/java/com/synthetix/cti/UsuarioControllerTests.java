@@ -1,6 +1,7 @@
 package com.synthetix.cti;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -8,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.jayway.jsonpath.JsonPath;
 import com.synthetix.cti.model.Consultor;
 import com.synthetix.cti.repository.ConsultorRepository;
 import com.synthetix.cti.repository.UsuarioRepository;
@@ -72,15 +74,52 @@ class UsuarioControllerTests {
 	}
 
 	@Test
-	void loginComSenhaCorretaDevolveUsuario() throws Exception {
+	void loginComSenhaCorretaDevolveTokenEUsuario() throws Exception {
 		cadastrar("bia@exemplo.com");
 		this.mockMvc
 			.perform(post("/api/usuarios/login").contentType(MediaType.APPLICATION_JSON).content("""
 					{"email":"bia@exemplo.com","senha":"segredo123"}
 					"""))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.email").value("bia@exemplo.com"))
-			.andExpect(jsonPath("$.senha").doesNotExist());
+			.andExpect(jsonPath("$.token").isNotEmpty())
+			.andExpect(jsonPath("$.tipo").value("Bearer"))
+			.andExpect(jsonPath("$.expiraEm").exists())
+			.andExpect(jsonPath("$.usuario.email").value("bia@exemplo.com"))
+			.andExpect(jsonPath("$.usuario.senha").doesNotExist());
+	}
+
+	@Test
+	void tokenDoLoginLiberaAsRotasProtegidas() throws Exception {
+		cadastrar("fabio@exemplo.com");
+		String token = JsonPath.read(this.mockMvc
+			.perform(post("/api/usuarios/login").contentType(MediaType.APPLICATION_JSON).content("""
+					{"email":"fabio@exemplo.com","senha":"segredo123"}
+					"""))
+			.andReturn()
+			.getResponse()
+			.getContentAsString(), "$.token");
+
+		this.mockMvc.perform(get("/api/usuarios").header("Authorization", "Bearer " + token))
+			.andExpect(status().isOk());
+	}
+
+	@Test
+	void tokenInvalidoOuAdulteradoDevolve401() throws Exception {
+		this.mockMvc.perform(get("/api/usuarios").header("Authorization", "Bearer nao.e.um-token"))
+			.andExpect(status().isUnauthorized());
+
+		// Assinado com outra chave: o cabecalho e o corpo sao validos, a assinatura nao.
+		String forjado = "eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJjdGktYXBpIiwic3ViIjoieEB4LmNvbSIsImV4cCI6NDEwMjQ0NDgwMH0."
+				+ "Zm9yamFkbw";
+		this.mockMvc.perform(get("/api/usuarios").header("Authorization", "Bearer " + forjado))
+			.andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void basicAuthNaoEMaisAceito() throws Exception {
+		cadastrar("gil@exemplo.com");
+		this.mockMvc.perform(get("/api/usuarios").with(httpBasic("gil@exemplo.com", "segredo123")))
+			.andExpect(status().isUnauthorized());
 	}
 
 	@Test

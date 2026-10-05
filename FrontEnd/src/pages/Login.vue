@@ -1,16 +1,28 @@
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
+
+const route = useRoute()
+const router = useRouter()
+const auth = useAuthStore()
 
 const email = ref('')
 const senha = ref('')
-const mensagem = ref('')
+const mensagem = ref(
+  route.query.sessao === 'expirada' ? 'Sua sessão expirou. Entre de novo para continuar.' : '',
+)
 const mostrarSenha = ref(false)
 const enviando = ref(false)
 
-const router = useRouter()
-const auth = useAuthStore()
+// Só caminho interno: "//site.com" ou "https://..." no ?voltar= levaria a
+// pessoa para fora do sistema logo depois de digitar a senha.
+function destino() {
+  const voltar = route.query.voltar
+  return typeof voltar === 'string' && voltar.startsWith('/') && !voltar.startsWith('//')
+    ? voltar
+    : { name: 'upload' }
+}
 
 async function entrar() {
   mensagem.value = ''
@@ -19,9 +31,7 @@ async function entrar() {
   mensagem.value = await auth.login(email.value.trim(), senha.value)
   enviando.value = false
   if (!mensagem.value) {
-    // O slide usa router.push('/upload'), e a URL é essa mesma. Aqui vai pelo
-    // nome porque é o padrão do projeto: o caminho só existe em router/index.js.
-    router.push({ name: 'upload' })
+    router.push(destino())
   }
 }
 </script>

@@ -1,6 +1,7 @@
 package com.synthetix.cti.service;
 
 import com.synthetix.cti.dto.LoginRequest;
+import com.synthetix.cti.dto.LoginResponse;
 import com.synthetix.cti.dto.UsuarioDTO;
 import com.synthetix.cti.dto.UsuarioRequest;
 import com.synthetix.cti.exception.ConsultorJaVinculadoException;
@@ -26,11 +27,14 @@ public class UsuarioService {
 
 	private final PasswordEncoder passwordEncoder;
 
+	private final TokenService tokenService;
+
 	public UsuarioService(UsuarioRepository repository, CatalogoService catalogo,
-			PasswordEncoder passwordEncoder) {
+			PasswordEncoder passwordEncoder, TokenService tokenService) {
 		this.repository = repository;
 		this.catalogo = catalogo;
 		this.passwordEncoder = passwordEncoder;
+		this.tokenService = tokenService;
 	}
 
 	public List<UsuarioDTO> listar() {
@@ -42,11 +46,12 @@ public class UsuarioService {
 	}
 
 	// Mesma mensagem para e-mail inexistente e senha errada: nao revela quais e-mails existem.
-	public UsuarioDTO login(LoginRequest request) {
+	public LoginResponse login(LoginRequest request) {
 		return repository.findByEmail(request.email())
 			.filter(Usuario::isAtivo)
 			.filter(usuario -> passwordEncoder.matches(request.senha(), usuario.getSenha()))
 			.map(UsuarioDTO::de)
+			.map(tokenService::emitir)
 			.orElseThrow(CredenciaisInvalidasException::new);
 	}
 

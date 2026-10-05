@@ -4,17 +4,23 @@ import { api, mensagemDeErro } from '../services/api'
 // Formato de opções (state / getters / actions), como na aula 07. As outras
 // stores do projeto usam o formato setup; os dois são Pinia e convivem sem
 // problema.
+
+const CHAVES = ['cti_token', 'cti_expira_em', 'cti_usuario', 'cti_consultor']
+
 export const useAuthStore = defineStore('auth', {
   // STATE = dados guardados enquanto a aplicação está em uso. Começa lendo o
   // localStorage para que atualizar a página não desconecte ninguém.
   state: () => ({
-    logado: localStorage.getItem('cti_logado') === 'true',
+    token: localStorage.getItem('cti_token') || '',
+    expiraEm: localStorage.getItem('cti_expira_em') || '',
     usuario: localStorage.getItem('cti_usuario') || '',
     consultor: localStorage.getItem('cti_consultor') || '',
   }),
 
-  // GETTERS = valores calculados do state.
+  // GETTERS = valores calculados do state. "Logado" é ter token dentro da
+  // validade: token vencido no localStorage não abre as telas.
   getters: {
+    logado: (state) => Boolean(state.token) && new Date(state.expiraEm) > new Date(),
     nomeExibicao: (state) => state.usuario || 'Usuário',
   },
 
@@ -34,36 +40,39 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    // O próprio consultor cria a conta e já entra no sistema.
+    // O próprio consultor cria a conta e já entra: o cadastro não devolve
+    // token, então o login vem logo em seguida com a mesma senha.
     async cadastrar(dados) {
       try {
-        const { data } = await api.post('/usuarios', dados)
-        this.entrar(data)
-        return ''
+        await api.post('/usuarios', dados)
       } catch (erro) {
         return mensagemDeErro(erro)
       }
+      return this.login(dados.email, dados.senha)
     },
 
-    // A senha nunca vai para o localStorage, só o que identifica a sessão.
-    entrar(usuario) {
-      this.logado = true
+    // Só o token e o que identifica a pessoa vão para o localStorage; a
+    // senha nunca.
+    entrar({ token, expiraEm, usuario }) {
+      this.token = token
+      this.expiraEm = expiraEm
       this.usuario = usuario.nome
       this.consultor = usuario.consultor || ''
 
-      localStorage.setItem('cti_logado', 'true')
+      localStorage.setItem('cti_token', this.token)
+      localStorage.setItem('cti_expira_em', this.expiraEm)
       localStorage.setItem('cti_usuario', this.usuario)
       localStorage.setItem('cti_consultor', this.consultor)
     },
 
     logout() {
-      this.logado = false
+      this.token = ''
+      this.expiraEm = ''
       this.usuario = ''
       this.consultor = ''
 
-      localStorage.removeItem('cti_logado')
-      localStorage.removeItem('cti_usuario')
-      localStorage.removeItem('cti_consultor')
+      // Inclui a chave da versão anterior, que marcava "logado" sem token.
+      for (const chave of [...CHAVES, 'cti_logado']) localStorage.removeItem(chave)
     },
   },
 })
