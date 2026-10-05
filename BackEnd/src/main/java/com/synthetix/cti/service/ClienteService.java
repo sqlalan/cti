@@ -7,14 +7,10 @@ import com.synthetix.cti.dto.ContratoRequest;
 import com.synthetix.cti.exception.ClienteDuplicadoException;
 import com.synthetix.cti.exception.RecursoNaoEncontradoException;
 import com.synthetix.cti.model.Cliente;
-import com.synthetix.cti.model.Consultor;
 import com.synthetix.cti.model.Contrato;
 import com.synthetix.cti.model.NivelCliente;
-import com.synthetix.cti.model.Servico;
 import com.synthetix.cti.repository.ClienteRepository;
-import com.synthetix.cti.repository.ConsultorRepository;
 import com.synthetix.cti.repository.ContratoRepository;
-import com.synthetix.cti.repository.ServicoRepository;
 import java.util.List;
 import java.util.Locale;
 import org.springframework.stereotype.Service;
@@ -26,17 +22,14 @@ public class ClienteService {
 
 	private final ClienteRepository clienteRepository;
 
-	private final ConsultorRepository consultorRepository;
-
-	private final ServicoRepository servicoRepository;
+	private final CatalogoService catalogo;
 
 	private final ContratoRepository contratoRepository;
 
-	public ClienteService(ClienteRepository clienteRepository, ConsultorRepository consultorRepository,
-			ServicoRepository servicoRepository, ContratoRepository contratoRepository) {
+	public ClienteService(ClienteRepository clienteRepository, CatalogoService catalogo,
+			ContratoRepository contratoRepository) {
 		this.clienteRepository = clienteRepository;
-		this.consultorRepository = consultorRepository;
-		this.servicoRepository = servicoRepository;
+		this.catalogo = catalogo;
 		this.contratoRepository = contratoRepository;
 	}
 
@@ -54,7 +47,7 @@ public class ClienteService {
 		if (clienteRepository.existsByCodigo(codigo)) {
 			throw new ClienteDuplicadoException(codigo);
 		}
-		Cliente cliente = new Cliente(codigo, request.nome(), consultorPorNome(request.consultor()));
+		Cliente cliente = new Cliente(codigo, request.nome(), catalogo.consultorPorNome(request.consultor()));
 		preencher(cliente, request);
 		return ClienteDTO.de(clienteRepository.save(cliente));
 	}
@@ -71,7 +64,7 @@ public class ClienteService {
 		});
 		cliente.setCodigo(codigo);
 		cliente.setNome(request.nome());
-		cliente.setConsultor(consultorPorNome(request.consultor()));
+		cliente.setConsultor(catalogo.consultorPorNome(request.consultor()));
 		preencher(cliente, request);
 		return ClienteDTO.de(clienteRepository.save(cliente));
 	}
@@ -99,7 +92,7 @@ public class ClienteService {
 	@Transactional
 	public ContratoDTO contratar(Long clienteId, ContratoRequest request) {
 		Cliente cliente = buscarEntidade(clienteId);
-		Contrato contrato = cliente.contratar(servicoPorNome(request.servico()), request.dataContratacao());
+		Contrato contrato = cliente.contratar(catalogo.servicoPorNome(request.servico()), request.dataContratacao());
 		return ContratoDTO.de(contratoRepository.save(contrato));
 	}
 
@@ -117,16 +110,6 @@ public class ClienteService {
 		cliente.setFaturamentoAnual(request.faturamentoAnual());
 		cliente.setCidade(request.cidade());
 		cliente.setUf(request.uf());
-	}
-
-	private Consultor consultorPorNome(String nome) {
-		return consultorRepository.findByNomeIgnoreCase(nome.trim())
-			.orElseGet(() -> consultorRepository.save(new Consultor(nome)));
-	}
-
-	private Servico servicoPorNome(String nome) {
-		return servicoRepository.findByNomeIgnoreCase(nome.trim())
-			.orElseGet(() -> servicoRepository.save(new Servico(nome)));
 	}
 
 	private Cliente buscarEntidade(Long id) {

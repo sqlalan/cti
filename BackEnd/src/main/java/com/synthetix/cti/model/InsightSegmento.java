@@ -31,6 +31,16 @@ public class InsightSegmento extends Insight {
 				+ faturamentoTotal.toPlainString();
 	}
 
+	@Override
+	public String getCategoria() {
+		return "SEGMENTO";
+	}
+
+	@Override
+	public String getTitulo() {
+		return "Segmento " + segmento;
+	}
+
 	public String getSegmento() {
 		return segmento;
 	}

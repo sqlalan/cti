@@ -8,6 +8,9 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 /**
  * Traduz as excecoes da aplicacao em respostas HTTP claras para o Front-end, no formato
@@ -54,6 +57,23 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(RecursoNaoEncontradoException.class)
 	public ProblemDetail naoEncontrado(RecursoNaoEncontradoException ex) {
 		return problema(HttpStatus.NOT_FOUND, "Recurso nao encontrado", ex.getMessage());
+	}
+
+	@ExceptionHandler(ProcessamentoPlanilhaException.class)
+	public ProblemDetail processamento(ProcessamentoPlanilhaException ex) {
+		return problema(HttpStatus.INTERNAL_SERVER_ERROR, "Falha ao processar a planilha", ex.getMessage());
+	}
+
+	@ExceptionHandler(MaxUploadSizeExceededException.class)
+	public ProblemDetail arquivoGrande(MaxUploadSizeExceededException ex) {
+		return problema(HttpStatus.CONTENT_TOO_LARGE, "Arquivo grande demais",
+				"A planilha passa do limite de 25 MB aceito pelo servidor");
+	}
+
+	@ExceptionHandler({ MissingServletRequestPartException.class, MultipartException.class })
+	public ProblemDetail semArquivo(Exception ex) {
+		return problema(HttpStatus.BAD_REQUEST, "Arquivo ausente",
+				"Envie a planilha como multipart/form-data no campo 'arquivo'");
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)

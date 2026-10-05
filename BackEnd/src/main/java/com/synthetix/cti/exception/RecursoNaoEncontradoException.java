@@ -9,4 +9,8 @@ public class RecursoNaoEncontradoException extends RuntimeException {
 		super(recurso + " nao encontrado: " + id);
 	}
 
+	public RecursoNaoEncontradoException(String mensagem) {
+		super(mensagem);
+	}
+
 }

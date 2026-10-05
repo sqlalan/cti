@@ -22,14 +22,14 @@ public class UsuarioService {
 
 	private final UsuarioRepository repository;
 
-	private final ConsultorRepository consultorRepository;
+	private final CatalogoService catalogo;
 
 	private final PasswordEncoder passwordEncoder;
 
-	public UsuarioService(UsuarioRepository repository, ConsultorRepository consultorRepository,
+	public UsuarioService(UsuarioRepository repository, CatalogoService catalogo,
 			PasswordEncoder passwordEncoder) {
 		this.repository = repository;
-		this.consultorRepository = consultorRepository;
+		this.catalogo = catalogo;
 		this.passwordEncoder = passwordEncoder;
 	}
 
@@ -88,8 +88,7 @@ public class UsuarioService {
 
 	// Mesmo criterio da planilha: acha pelo nome ou cadastra. Cada consultor tem um usuario so.
 	private Consultor consultorLivre(String nome, Long idDoUsuario) {
-		Consultor consultor = consultorRepository.findByNomeIgnoreCase(nome.trim())
-			.orElseGet(() -> consultorRepository.save(new Consultor(nome)));
+		Consultor consultor = catalogo.consultorPorNome(nome);
 		repository.findByConsultor(consultor).filter(outro -> !outro.getId().equals(idDoUsuario)).ifPresent(outro -> {
 			throw new ConsultorJaVinculadoException(consultor.getNome());
 		});

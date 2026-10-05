@@ -30,6 +30,11 @@ public abstract class Insight {
 	@JoinColumn(name = "contrato_id")
 	private Contrato contrato;
 
+	// Analise 1 -- N Insight: a planilha processada que gerou este insight
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "analise_id")
+	private Analise analise;
+
 	@PrePersist
 	void aoGerar() {
 		if (geradoEm == null) {
@@ -41,6 +46,13 @@ public abstract class Insight {
 	 * Texto do insight pronto para exibicao. Cada subclasse formata do seu jeito.
 	 */
 	public abstract String gerarResumo();
+
+	/**
+	 * Agrupamento usado pelo dashboard (SEGMENTO, FATURAMENTO, SERVICO...).
+	 */
+	public abstract String getCategoria();
+
+	public abstract String getTitulo();
 
 	public Long getId() {
 		return id;
@@ -64,6 +76,14 @@ public abstract class Insight {
 
 	public void setContrato(Contrato contrato) {
 		this.contrato = contrato;
+	}
+
+	public Analise getAnalise() {
+		return analise;
+	}
+
+	void setAnalise(Analise analise) {
+		this.analise = analise;
 	}
 
 }

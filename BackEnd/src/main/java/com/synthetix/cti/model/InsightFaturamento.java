@@ -32,6 +32,16 @@ public class InsightFaturamento extends Insight {
 				+ faturamentoTotal.toPlainString() + " por ano";
 	}
 
+	@Override
+	public String getCategoria() {
+		return "FATURAMENTO";
+	}
+
+	@Override
+	public String getTitulo() {
+		return faixa.getDescricao();
+	}
+
 	public FaixaFaturamento getFaixa() {
 		return faixa;
 	}
