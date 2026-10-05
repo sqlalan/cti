@@ -1,0 +1,7 @@
+pandas>=2.2
+numpy>=1.26
+scipy>=1.11
+# 3.9+: boxplot usa o parâmetro tick_labels
+matplotlib>=3.9
+# leitura de .xlsx pelo pandas
+openpyxl>=3.1

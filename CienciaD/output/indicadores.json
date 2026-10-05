@@ -1,0 +1,784 @@
+{
+  "qualidade": {
+    "linhas_lidas": 39,
+    "linhas_validas": 31,
+    "linhas_rejeitadas": 8,
+    "percentual_aproveitado": 79.48717948717949,
+    "avisos": 34,
+    "erros_por_tipo": {
+      "formato": 4,
+      "vazio": 3,
+      "duplicado": 1
+    },
+    "avisos_por_tipo": {
+      "padronizacao": 34
+    }
+  },
+  "frequencias": {
+    "segmento": [
+      {
+        "categoria": "Comércio",
+        "quantidade": 8,
+        "percentual": 25.806451612903224
+      },
+      {
+        "categoria": "Serviços",
+        "quantidade": 7,
+        "percentual": 22.58064516129032
+      },
+      {
+        "categoria": "Indústria",
+        "quantidade": 6,
+        "percentual": 19.35483870967742
+      },
+      {
+        "categoria": "Saúde",
+        "quantidade": 4,
+        "percentual": 12.903225806451612
+      },
+      {
+        "categoria": "Tecnologia",
+        "quantidade": 3,
+        "percentual": 9.67741935483871
+      },
+      {
+        "categoria": "Educação",
+        "quantidade": 3,
+        "percentual": 9.67741935483871
+      }
+    ],
+    "nivel": [
+      {
+        "categoria": "A",
+        "quantidade": 12,
+        "percentual": 38.70967741935484
+      },
+      {
+        "categoria": "B",
+        "quantidade": 13,
+        "percentual": 41.935483870967744
+      },
+      {
+        "categoria": "C",
+        "quantidade": 6,
+        "percentual": 19.35483870967742
+      }
+    ],
+    "consultor": [
+      {
+        "categoria": "Carlos Lima",
+        "quantidade": 8,
+        "percentual": 25.806451612903224
+      },
+      {
+        "categoria": "Ana Souza",
+        "quantidade": 8,
+        "percentual": 25.806451612903224
+      },
+      {
+        "categoria": "Carla Mendes",
+        "quantidade": 8,
+        "percentual": 25.806451612903224
+      },
+      {
+        "categoria": "Marcos Reis",
+        "quantidade": 7,
+        "percentual": 22.58064516129032
+      }
+    ],
+    "cidade": [
+      {
+        "categoria": "Campinas",
+        "quantidade": 14,
+        "percentual": 45.16129032258064
+      },
+      {
+        "categoria": "Hortolândia",
+        "quantidade": 6,
+        "percentual": 19.35483870967742
+      },
+      {
+        "categoria": "Paulínia",
+        "quantidade": 6,
+        "percentual": 19.35483870967742
+      },
+      {
+        "categoria": "Sumaré",
+        "quantidade": 5,
+        "percentual": 16.129032258064516
+      }
+    ],
+    "uf": [
+      {
+        "categoria": "SP",
+        "quantidade": 31,
+        "percentual": 100.0
+      }
+    ]
+  },
+  "moda": {
+    "segmento": [
+      "Comércio"
+    ],
+    "nivel": [
+      "B"
+    ],
+    "servico": [
+      "Internet Dedicada"
+    ]
+  },
+  "faturamento": {
+    "geral": {
+      "n": 31,
+      "soma": 70510000.0,
+      "media": 2274516.129032258,
+      "mediana": 1420000.0,
+      "minimo": 390000.0,
+      "maximo": 7200000.0,
+      "amplitude": 6810000.0,
+      "variancia": 3759992258064.516,
+      "desvio_padrao": 1939069.9466663178,
+      "coeficiente_variacao": 85.25197609793767,
+      "q1": 835000.0,
+      "q3": 3250000.0,
+      "iqr": 2415000.0,
+      "p90": 5100000.0
+    },
+    "por_segmento": [
+      {
+        "segmento": "Comércio",
+        "n": 8,
+        "soma": 8190000.0,
+        "media": 1023750.0,
+        "mediana": 695000.0,
+        "minimo": 470000.0,
+        "maximo": 3400000.0,
+        "amplitude": 2930000.0,
+        "variancia": 946569642857.1428,
+        "desvio_padrao": 972918.1069633471,
+        "coeficiente_variacao": 95.03473572291547,
+        "q1": 595000.0,
+        "q3": 832500.0,
+        "iqr": 237500.0,
+        "p90": 1712999.9999999995
+      },
+      {
+        "segmento": "Educação",
+        "n": 3,
+        "soma": 4270000.0,
+        "media": 1423333.3333333333,
+        "mediana": 1080000.0,
+        "minimo": 890000.0,
+        "maximo": 2300000.0,
+        "amplitude": 1410000.0,
+        "variancia": 585433333333.3334,
+        "desvio_padrao": 765136.1534611558,
+        "coeficiente_variacao": 53.75663841647466,
+        "q1": 985000.0,
+        "q3": 1690000.0,
+        "iqr": 705000.0,
+        "p90": 2056000.0
+      },
+      {
+        "segmento": "Indústria",
+        "n": 6,
+        "soma": 26120000.0,
+        "media": 4353333.333333333,
+        "mediana": 4475000.0,
+        "minimo": 1420000.0,
+        "maximo": 7200000.0,
+        "amplitude": 5780000.0,
+        "variancia": 4058466666666.6665,
+        "desvio_padrao": 2014563.641751401,
+        "coeficiente_variacao": 46.276347054013804,
+        "q1": 3287500.0,
+        "q3": 5362500.0,
+        "iqr": 2075000.0,
+        "p90": 6325000.0
+      },
+      {
+        "segmento": "Saúde",
+        "n": 4,
+        "soma": 12150000.0,
+        "media": 3037500.0,
+        "mediana": 2415000.0,
+        "minimo": 420000.0,
+        "maximo": 6900000.0,
+        "amplitude": 6480000.0,
+        "variancia": 7641225000000.0,
+        "desvio_padrao": 2764276.578057992,
+        "coeficiente_variacao": 91.00499022413142,
+        "q1": 1590000.0,
+        "q3": 3862500.0,
+        "iqr": 2272500.0,
+        "p90": 5685000.000000001
+      },
+      {
+        "segmento": "Serviços",
+        "n": 7,
+        "soma": 10780000.0,
+        "media": 1540000.0,
+        "mediana": 1250000.0,
+        "minimo": 390000.0,
+        "maximo": 4200000.0,
+        "amplitude": 3810000.0,
+        "variancia": 1506666666666.6667,
+        "desvio_padrao": 1227463.5093014645,
+        "coeficiente_variacao": 79.70542268191329,
+        "q1": 1050000.0,
+        "q3": 1420000.0,
+        "iqr": 370000.0,
+        "p90": 2592000.000000001
+      },
+      {
+        "segmento": "Tecnologia",
+        "n": 3,
+        "soma": 9000000.0,
+        "media": 3000000.0,
+        "mediana": 2750000.0,
+        "minimo": 1650000.0,
+        "maximo": 4600000.0,
+        "amplitude": 2950000.0,
+        "variancia": 2222500000000.0,
+        "desvio_padrao": 1490805.1515875575,
+        "coeficiente_variacao": 49.69350505291858,
+        "q1": 2200000.0,
+        "q3": 3675000.0,
+        "iqr": 1475000.0,
+        "p90": 4230000.0
+      }
+    ],
+    "por_nivel": [
+      {
+        "nivel": "A",
+        "n": 12,
+        "soma": 51700000.0,
+        "media": 4308333.333333333,
+        "mediana": 4025000.0,
+        "minimo": 2300000.0,
+        "maximo": 7200000.0,
+        "amplitude": 4900000.0,
+        "variancia": 2562651515151.515,
+        "desvio_padrao": 1600828.3840410612,
+        "coeficiente_variacao": 37.156558236929854,
+        "q1": 3037500.0,
+        "q3": 5187500.0,
+        "iqr": 2150000.0,
+        "p90": 6755000.000000001
+      },
+      {
+        "nivel": "B",
+        "n": 13,
+        "soma": 15690000.0,
+        "media": 1206923.076923077,
+        "mediana": 1170000.0,
+        "minimo": 710000.0,
+        "maximo": 1980000.0,
+        "amplitude": 1270000.0,
+        "variancia": 135239743589.74359,
+        "desvio_padrao": 367749.5664032027,
+        "coeficiente_variacao": 30.47000868860188,
+        "q1": 930000.0,
+        "q3": 1420000.0,
+        "iqr": 490000.0,
+        "p90": 1624000.0
+      },
+      {
+        "nivel": "C",
+        "n": 6,
+        "soma": 3120000.0,
+        "media": 520000.0,
+        "mediana": 510000.0,
+        "minimo": 390000.0,
+        "maximo": 680000.0,
+        "amplitude": 290000.0,
+        "variancia": 12800000000.0,
+        "desvio_padrao": 113137.0849898476,
+        "coeficiente_variacao": 21.757131728816848,
+        "q1": 432500.0,
+        "q3": 595000.0,
+        "iqr": 162500.0,
+        "p90": 645000.0
+      }
+    ],
+    "por_consultor": [
+      {
+        "consultor": "Ana Souza",
+        "n": 8,
+        "soma": 16330000.0,
+        "media": 2041250.0,
+        "mediana": 1335000.0,
+        "minimo": 390000.0,
+        "maximo": 5450000.0,
+        "amplitude": 5060000.0,
+        "variancia": 3183441071428.5713,
+        "desvio_padrao": 1784220.0176627801,
+        "coeficiente_variacao": 87.40820662156914,
+        "q1": 1110000.0,
+        "q3": 2190000.0,
+        "iqr": 1080000.0,
+        "p90": 4575000.0
+      },
+      {
+        "consultor": "Carla Mendes",
+        "n": 8,
+        "soma": 17030000.0,
+        "media": 2128750.0,
+        "mediana": 1530000.0,
+        "minimo": 420000.0,
+        "maximo": 6900000.0,
+        "amplitude": 6480000.0,
+        "variancia": 4456755357142.857,
+        "desvio_padrao": 2111102.876968069,
+        "coeficiente_variacao": 99.17101007483589,
+        "q1": 820000.0,
+        "q3": 2437500.0,
+        "iqr": 1617500.0,
+        "p90": 4064999.999999999
+      },
+      {
+        "consultor": "Carlos Lima",
+        "n": 8,
+        "soma": 8900000.0,
+        "media": 1112500.0,
+        "mediana": 745000.0,
+        "minimo": 470000.0,
+        "maximo": 3400000.0,
+        "amplitude": 2930000.0,
+        "variancia": 925650000000.0,
+        "desvio_padrao": 962107.0626494746,
+        "coeficiente_variacao": 86.48153372130109,
+        "q1": 647500.0,
+        "q3": 1072500.0,
+        "iqr": 425000.0,
+        "p90": 1943999.9999999995
+      },
+      {
+        "consultor": "Marcos Reis",
+        "n": 7,
+        "soma": 28250000.0,
+        "media": 4035714.285714286,
+        "mediana": 3850000.0,
+        "minimo": 1650000.0,
+        "maximo": 7200000.0,
+        "amplitude": 5550000.0,
+        "variancia": 3286428571428.572,
+        "desvio_padrao": 1812850.9512446332,
+        "coeficiente_variacao": 44.920200561813914,
+        "q1": 2925000.0,
+        "q3": 4850000.0,
+        "iqr": 1925000.0,
+        "p90": 5940000.000000001
+      }
+    ],
+    "participacao_por_nivel": [
+      {
+        "nivel": "A",
+        "faturamento": 51700000.0,
+        "percentual": 73.32293291731669
+      },
+      {
+        "nivel": "B",
+        "faturamento": 15690000.0,
+        "percentual": 22.25216281378528
+      },
+      {
+        "nivel": "C",
+        "faturamento": 3120000.0,
+        "percentual": 4.424904268898029
+      }
+    ],
+    "outliers": {
+      "limite_inferior": -2787500.0,
+      "limite_superior": 6872500.0,
+      "clientes": [
+        {
+          "codigo": "CTI027",
+          "nome": "Indústria Prime",
+          "segmento": "Indústria",
+          "faturamento": 7200000.0
+        },
+        {
+          "codigo": "CTI015",
+          "nome": "Hospital Vida",
+          "segmento": "Saúde",
+          "faturamento": 6900000.0
+        }
+      ]
+    }
+  },
+  "servicos": {
+    "total_contratos": 59,
+    "media_por_cliente": 1.903225806451613,
+    "frequencia": [
+      {
+        "categoria": "Internet Dedicada",
+        "quantidade": 15,
+        "percentual": 25.423728813559322
+      },
+      {
+        "categoria": "Firewall",
+        "quantidade": 11,
+        "percentual": 18.64406779661017
+      },
+      {
+        "categoria": "Backup",
+        "quantidade": 10,
+        "percentual": 16.94915254237288
+      },
+      {
+        "categoria": "MPLS",
+        "quantidade": 9,
+        "percentual": 15.254237288135593
+      },
+      {
+        "categoria": "Link Empresarial",
+        "quantidade": 7,
+        "percentual": 11.864406779661017
+      },
+      {
+        "categoria": "Cloud",
+        "quantidade": 7,
+        "percentual": 11.864406779661017
+      }
+    ],
+    "por_nivel": {
+      "A": [
+        {
+          "categoria": "Firewall",
+          "quantidade": 9,
+          "percentual": 28.125
+        },
+        {
+          "categoria": "MPLS",
+          "quantidade": 8,
+          "percentual": 25.0
+        },
+        {
+          "categoria": "Backup",
+          "quantidade": 6,
+          "percentual": 18.75
+        },
+        {
+          "categoria": "Cloud",
+          "quantidade": 5,
+          "percentual": 15.625
+        },
+        {
+          "categoria": "Internet Dedicada",
+          "quantidade": 4,
+          "percentual": 12.5
+        }
+      ],
+      "B": [
+        {
+          "categoria": "Internet Dedicada",
+          "quantidade": 10,
+          "percentual": 47.61904761904761
+        },
+        {
+          "categoria": "Backup",
+          "quantidade": 4,
+          "percentual": 19.047619047619047
+        },
+        {
+          "categoria": "Link Empresarial",
+          "quantidade": 2,
+          "percentual": 9.523809523809524
+        },
+        {
+          "categoria": "Cloud",
+          "quantidade": 2,
+          "percentual": 9.523809523809524
+        },
+        {
+          "categoria": "Firewall",
+          "quantidade": 2,
+          "percentual": 9.523809523809524
+        },
+        {
+          "categoria": "MPLS",
+          "quantidade": 1,
+          "percentual": 4.761904761904762
+        }
+      ],
+      "C": [
+        {
+          "categoria": "Link Empresarial",
+          "quantidade": 5,
+          "percentual": 83.33333333333334
+        },
+        {
+          "categoria": "Internet Dedicada",
+          "quantidade": 1,
+          "percentual": 16.666666666666664
+        }
+      ]
+    }
+  },
+  "cruzamentos": {
+    "segmento_x_nivel": [
+      {
+        "segmento": "Comércio",
+        "A": 1,
+        "B": 3,
+        "C": 4
+      },
+      {
+        "segmento": "Educação",
+        "A": 1,
+        "B": 2,
+        "C": 0
+      },
+      {
+        "segmento": "Indústria",
+        "A": 5,
+        "B": 1,
+        "C": 0
+      },
+      {
+        "segmento": "Saúde",
+        "A": 2,
+        "B": 1,
+        "C": 1
+      },
+      {
+        "segmento": "Serviços",
+        "A": 1,
+        "B": 5,
+        "C": 1
+      },
+      {
+        "segmento": "Tecnologia",
+        "A": 2,
+        "B": 1,
+        "C": 0
+      }
+    ],
+    "nivel_x_qtd_servicos": [
+      {
+        "nivel": "A",
+        "1": 0,
+        "2": 5,
+        "3": 6,
+        "4": 1
+      },
+      {
+        "nivel": "B",
+        "1": 5,
+        "2": 8,
+        "3": 0,
+        "4": 0
+      },
+      {
+        "nivel": "C",
+        "1": 6,
+        "2": 0,
+        "3": 0,
+        "4": 0
+      }
+    ]
+  },
+  "contratacoes": {
+    "por_mes": [
+      {
+        "mes": "2025-02",
+        "clientes": 2,
+        "contratos": 3,
+        "clientes_acumulados": 2
+      },
+      {
+        "mes": "2025-03",
+        "clientes": 2,
+        "contratos": 4,
+        "clientes_acumulados": 4
+      },
+      {
+        "mes": "2025-04",
+        "clientes": 2,
+        "contratos": 4,
+        "clientes_acumulados": 6
+      },
+      {
+        "mes": "2025-05",
+        "clientes": 2,
+        "contratos": 4,
+        "clientes_acumulados": 8
+      },
+      {
+        "mes": "2025-06",
+        "clientes": 2,
+        "contratos": 2,
+        "clientes_acumulados": 10
+      },
+      {
+        "mes": "2025-07",
+        "clientes": 2,
+        "contratos": 4,
+        "clientes_acumulados": 12
+      },
+      {
+        "mes": "2025-08",
+        "clientes": 2,
+        "contratos": 5,
+        "clientes_acumulados": 14
+      },
+      {
+        "mes": "2025-09",
+        "clientes": 2,
+        "contratos": 3,
+        "clientes_acumulados": 16
+      },
+      {
+        "mes": "2025-10",
+        "clientes": 2,
+        "contratos": 5,
+        "clientes_acumulados": 18
+      },
+      {
+        "mes": "2025-11",
+        "clientes": 1,
+        "contratos": 2,
+        "clientes_acumulados": 19
+      },
+      {
+        "mes": "2025-12",
+        "clientes": 0,
+        "contratos": 0,
+        "clientes_acumulados": 19
+      },
+      {
+        "mes": "2026-01",
+        "clientes": 2,
+        "contratos": 3,
+        "clientes_acumulados": 21
+      },
+      {
+        "mes": "2026-02",
+        "clientes": 2,
+        "contratos": 5,
+        "clientes_acumulados": 23
+      },
+      {
+        "mes": "2026-03",
+        "clientes": 1,
+        "contratos": 2,
+        "clientes_acumulados": 24
+      },
+      {
+        "mes": "2026-04",
+        "clientes": 2,
+        "contratos": 5,
+        "clientes_acumulados": 26
+      },
+      {
+        "mes": "2026-05",
+        "clientes": 2,
+        "contratos": 3,
+        "clientes_acumulados": 28
+      },
+      {
+        "mes": "2026-06",
+        "clientes": 1,
+        "contratos": 2,
+        "clientes_acumulados": 29
+      },
+      {
+        "mes": "2026-07",
+        "clientes": 0,
+        "contratos": 0,
+        "clientes_acumulados": 29
+      },
+      {
+        "mes": "2026-08",
+        "clientes": 2,
+        "contratos": 3,
+        "clientes_acumulados": 31
+      }
+    ],
+    "por_ano": [
+      {
+        "ano": 2025,
+        "clientes": 19,
+        "contratos": 36,
+        "meses_cobertos": 11,
+        "media_clientes_mes": 1.7272727272727273,
+        "faturamento_novos": 38690000.0
+      },
+      {
+        "ano": 2026,
+        "clientes": 12,
+        "contratos": 23,
+        "meses_cobertos": 8,
+        "media_clientes_mes": 1.5,
+        "faturamento_novos": 31820000.0
+      }
+    ]
+  },
+  "testes": {
+    "normalidade_faturamento": {
+      "teste": "Shapiro-Wilk",
+      "variavel": "faturamento",
+      "aplicavel": true,
+      "n": 31,
+      "estatistica": 0.8438542057111331,
+      "p_valor": 0.0003758254081454889,
+      "rejeita_h0": true,
+      "conclusao": "O faturamento não segue distribuição normal (p = 0,0004 < 0,05); a mediana representa melhor o cliente típico do que a média, e testes não paramétricos são os indicados."
+    },
+    "normalidade_log_faturamento": {
+      "teste": "Shapiro-Wilk",
+      "variavel": "log do faturamento",
+      "aplicavel": true,
+      "n": 31,
+      "estatistica": 0.9602961601008378,
+      "p_valor": 0.2970705462686608,
+      "rejeita_h0": false,
+      "conclusao": "O log do faturamento segue distribuição normal (p = 0,297 ≥ 0,05); média e desvio padrão o descrevem bem."
+    },
+    "associacao_segmento_nivel": {
+      "teste": "Qui-quadrado de independência",
+      "variaveis": [
+        "segmento",
+        "nivel"
+      ],
+      "aplicavel": true,
+      "n": 31,
+      "estatistica": 15.874961843711842,
+      "graus_liberdade": 10,
+      "p_valor": 0.10326814310571056,
+      "v_cramer": 0.506011631954021,
+      "celulas_esperadas_abaixo_5_pct": 100.0,
+      "pressuposto_atendido": false,
+      "rejeita_h0": false,
+      "conclusao": "Não há evidência de associação entre segmento e nível (p = 0,103 ≥ 0,05; V de Cramér = 0,51). Atenção: 100% das células têm frequência esperada abaixo de 5, então o resultado é indicativo; com mais clientes na base o teste ganha força."
+    },
+    "correlacao_faturamento_servicos": {
+      "teste": "Correlação de Spearman",
+      "variaveis": [
+        "faturamento",
+        "qtd_servicos"
+      ],
+      "n": 31,
+      "rho": 0.83380212679861,
+      "p_valor": 5.723522822311946e-09,
+      "pearson_r": 0.7867049327965124,
+      "pearson_p_valor": 1.5413957636714574e-07,
+      "forca": "forte",
+      "rejeita_h0": true,
+      "conclusao": "Correlação positiva forte e significativa (ρ = 0,83, p < 0,0001): clientes que faturam mais tendem a contratar mais serviços."
+    },
+    "faturamento_entre_niveis": {
+      "teste": "Kruskal-Wallis",
+      "variaveis": [
+        "faturamento",
+        "nivel"
+      ],
+      "aplicavel": true,
+      "estatistica": 25.85685483870968,
+      "p_valor": 2.428037064703683e-06,
+      "rejeita_h0": true,
+      "conclusao": "O faturamento difere entre os níveis (p < 0,0001 < 0,05): a classificação A/B/C acompanha o porte financeiro do cliente."
+    }
+  }
+}

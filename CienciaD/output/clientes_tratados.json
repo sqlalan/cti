@@ -1,0 +1,526 @@
+[
+  {
+    "codigo": "CTI002",
+    "nome": "Comercial Vitória",
+    "consultor": "Carlos Lima",
+    "segmento": "Comércio",
+    "nivel": "B",
+    "faturamento": 780000.0,
+    "servicos": [
+      "Link Empresarial"
+    ],
+    "contratacao": "2025-02-03",
+    "cidade": "Hortolândia",
+    "uf": "SP",
+    "email": "",
+    "linha": 3
+  },
+  {
+    "codigo": "CTI003",
+    "nome": "Logística Rápida",
+    "consultor": "Ana Souza",
+    "segmento": "Serviços",
+    "nivel": "B",
+    "faturamento": 1250000.0,
+    "servicos": [
+      "Internet Dedicada",
+      "Backup"
+    ],
+    "contratacao": "2025-02-18",
+    "cidade": "Sumaré",
+    "uf": "SP",
+    "email": "",
+    "linha": 4
+  },
+  {
+    "codigo": "CTI004",
+    "nome": "Indústria Alfa",
+    "consultor": "Marcos Reis",
+    "segmento": "Indústria",
+    "nivel": "A",
+    "faturamento": 3100000.0,
+    "servicos": [
+      "MPLS",
+      "Firewall",
+      "Backup"
+    ],
+    "contratacao": "2025-03-05",
+    "cidade": "Campinas",
+    "uf": "SP",
+    "email": "",
+    "linha": 5
+  },
+  {
+    "codigo": "CTI005",
+    "nome": "Clínica Bem Estar",
+    "consultor": "Carla Mendes",
+    "segmento": "Saúde",
+    "nivel": "C",
+    "faturamento": 420000.0,
+    "servicos": [
+      "Link Empresarial"
+    ],
+    "contratacao": "2025-03-14",
+    "cidade": "Paulínia",
+    "uf": "SP",
+    "email": "",
+    "linha": 6
+  },
+  {
+    "codigo": "CTI006",
+    "nome": "Mercado Central",
+    "consultor": "Carlos Lima",
+    "segmento": "Comércio",
+    "nivel": "C",
+    "faturamento": 550000.0,
+    "servicos": [
+      "Internet Dedicada"
+    ],
+    "contratacao": "2025-04-02",
+    "cidade": "Hortolândia",
+    "uf": "SP",
+    "email": "",
+    "linha": 7
+  },
+  {
+    "codigo": "CTI007",
+    "nome": "Tecnologia Sigma",
+    "consultor": "Marcos Reis",
+    "segmento": "Tecnologia",
+    "nivel": "A",
+    "faturamento": 2750000.0,
+    "servicos": [
+      "Internet Dedicada",
+      "Cloud",
+      "Firewall"
+    ],
+    "contratacao": "2025-04-21",
+    "cidade": "Campinas",
+    "uf": "SP",
+    "email": "",
+    "linha": 8
+  },
+  {
+    "codigo": "CTI008",
+    "nome": "Escola Saber Mais",
+    "consultor": "Carla Mendes",
+    "segmento": "Educação",
+    "nivel": "B",
+    "faturamento": 890000.0,
+    "servicos": [
+      "Link Empresarial",
+      "Backup"
+    ],
+    "contratacao": "2025-05-09",
+    "cidade": "Sumaré",
+    "uf": "SP",
+    "email": "",
+    "linha": 9
+  },
+  {
+    "codigo": "CTI009",
+    "nome": "Construtora Nova Era",
+    "consultor": "Ana Souza",
+    "segmento": "Serviços",
+    "nivel": "A",
+    "faturamento": 4200000.0,
+    "servicos": [
+      "MPLS",
+      "Internet Dedicada"
+    ],
+    "contratacao": "2025-05-28",
+    "cidade": "Campinas",
+    "uf": "SP",
+    "email": "",
+    "linha": 10
+  },
+  {
+    "codigo": "CTI010",
+    "nome": "Auto Peças Joao",
+    "consultor": "Carlos Lima",
+    "segmento": "Comércio",
+    "nivel": "B",
+    "faturamento": 990000.0,
+    "servicos": [
+      "Internet Dedicada"
+    ],
+    "contratacao": "2025-06-11",
+    "cidade": "Hortolândia",
+    "uf": "SP",
+    "email": "",
+    "linha": 11
+  },
+  {
+    "codigo": "CTI011",
+    "nome": "Farmácia Popular Mais",
+    "consultor": "Carla Mendes",
+    "segmento": "Comércio",
+    "nivel": "C",
+    "faturamento": 610000.0,
+    "servicos": [
+      "Link Empresarial"
+    ],
+    "contratacao": "2025-06-25",
+    "cidade": "Campinas",
+    "uf": "SP",
+    "email": "",
+    "linha": 12
+  },
+  {
+    "codigo": "CTI012",
+    "nome": "Fábrica Delta",
+    "consultor": "Marcos Reis",
+    "segmento": "Indústria",
+    "nivel": "A",
+    "faturamento": 5100000.0,
+    "servicos": [
+      "MPLS",
+      "Firewall",
+      "Cloud"
+    ],
+    "contratacao": "2025-07-07",
+    "cidade": "Paulínia",
+    "uf": "SP",
+    "email": "",
+    "linha": 13
+  },
+  {
+    "codigo": "CTI013",
+    "nome": "Restaurante Sabor & Cia",
+    "consultor": "Ana Souza",
+    "segmento": "Serviços",
+    "nivel": "C",
+    "faturamento": 390000.0,
+    "servicos": [
+      "Link Empresarial"
+    ],
+    "contratacao": "2025-07-19",
+    "cidade": "Campinas",
+    "uf": "SP",
+    "email": "",
+    "linha": 14
+  },
+  {
+    "codigo": "CTI014",
+    "nome": "Distribuidora Oeste",
+    "consultor": "Carlos Lima",
+    "segmento": "Serviços",
+    "nivel": "B",
+    "faturamento": 1320000.0,
+    "servicos": [
+      "Internet Dedicada",
+      "Backup"
+    ],
+    "contratacao": "2025-08-04",
+    "cidade": "Sumaré",
+    "uf": "SP",
+    "email": "",
+    "linha": 15
+  },
+  {
+    "codigo": "CTI015",
+    "nome": "Hospital Vida",
+    "consultor": "Carla Mendes",
+    "segmento": "Saúde",
+    "nivel": "A",
+    "faturamento": 6900000.0,
+    "servicos": [
+      "Internet Dedicada",
+      "Firewall",
+      "Backup"
+    ],
+    "contratacao": "2025-08-23",
+    "cidade": "Campinas",
+    "uf": "SP",
+    "email": "",
+    "linha": 16
+  },
+  {
+    "codigo": "CTI016",
+    "nome": "Indústria Ômega",
+    "consultor": "Marcos Reis",
+    "segmento": "Indústria",
+    "nivel": "A",
+    "faturamento": 3850000.0,
+    "servicos": [
+      "MPLS",
+      "Cloud"
+    ],
+    "contratacao": "2025-09-12",
+    "cidade": "Hortolândia",
+    "uf": "SP",
+    "email": "",
+    "linha": 17
+  },
+  {
+    "codigo": "CTI017",
+    "nome": "Loja Estação",
+    "consultor": "Carlos Lima",
+    "segmento": "Comércio",
+    "nivel": "C",
+    "faturamento": 470000.0,
+    "servicos": [
+      "Link Empresarial"
+    ],
+    "contratacao": "2025-09-29",
+    "cidade": "Campinas",
+    "uf": "SP",
+    "email": "",
+    "linha": 18
+  },
+  {
+    "codigo": "CTI018",
+    "nome": "Consultoria Prisma",
+    "consultor": "Ana Souza",
+    "segmento": "Serviços",
+    "nivel": "B",
+    "faturamento": 1170000.0,
+    "servicos": [
+      "Internet Dedicada",
+      "Cloud"
+    ],
+    "contratacao": "2025-10-10",
+    "cidade": "Paulínia",
+    "uf": "SP",
+    "email": "",
+    "linha": 19
+  },
+  {
+    "codigo": "CTI019",
+    "nome": "Faculdade Horizonte",
+    "consultor": "Carla Mendes",
+    "segmento": "Educação",
+    "nivel": "A",
+    "faturamento": 2300000.0,
+    "servicos": [
+      "Internet Dedicada",
+      "Backup",
+      "Firewall"
+    ],
+    "contratacao": "2025-10-31",
+    "cidade": "Campinas",
+    "uf": "SP",
+    "email": "",
+    "linha": 20
+  },
+  {
+    "codigo": "CTI020",
+    "nome": "E-commerce Box",
+    "consultor": "Marcos Reis",
+    "segmento": "Tecnologia",
+    "nivel": "B",
+    "faturamento": 1650000.0,
+    "servicos": [
+      "Cloud",
+      "Firewall"
+    ],
+    "contratacao": "2025-11-17",
+    "cidade": "Sumaré",
+    "uf": "SP",
+    "email": "",
+    "linha": 21
+  },
+  {
+    "codigo": "CTI021",
+    "nome": "Móveis Ideal",
+    "consultor": "Ana Souza",
+    "segmento": "Indústria",
+    "nivel": "B",
+    "faturamento": 1420000.0,
+    "servicos": [
+      "Internet Dedicada"
+    ],
+    "contratacao": "2026-01-08",
+    "cidade": "Hortolândia",
+    "uf": "SP",
+    "email": "",
+    "linha": 22
+  },
+  {
+    "codigo": "CTI022",
+    "nome": "Supermercado União",
+    "consultor": "Carlos Lima",
+    "segmento": "Comércio",
+    "nivel": "A",
+    "faturamento": 3400000.0,
+    "servicos": [
+      "MPLS",
+      "Backup"
+    ],
+    "contratacao": "2026-01-26",
+    "cidade": "Campinas",
+    "uf": "SP",
+    "email": "",
+    "linha": 23
+  },
+  {
+    "codigo": "CTI023",
+    "nome": "Laboratório Diagnóstico",
+    "consultor": "Carla Mendes",
+    "segmento": "Saúde",
+    "nivel": "B",
+    "faturamento": 1980000.0,
+    "servicos": [
+      "Internet Dedicada",
+      "Firewall"
+    ],
+    "contratacao": "2026-02-12",
+    "cidade": "Paulínia",
+    "uf": "SP",
+    "email": "",
+    "linha": 24
+  },
+  {
+    "codigo": "CTI024",
+    "nome": "Software Nova Geração",
+    "consultor": "Marcos Reis",
+    "segmento": "Tecnologia",
+    "nivel": "A",
+    "faturamento": 4600000.0,
+    "servicos": [
+      "Cloud",
+      "Firewall",
+      "Backup"
+    ],
+    "contratacao": "2026-02-27",
+    "cidade": "Campinas",
+    "uf": "SP",
+    "email": "",
+    "linha": 25
+  },
+  {
+    "codigo": "CTI025",
+    "nome": "Transportes Caminho",
+    "consultor": "Ana Souza",
+    "segmento": "Serviços",
+    "nivel": "B",
+    "faturamento": 1520000.0,
+    "servicos": [
+      "MPLS",
+      "Internet Dedicada"
+    ],
+    "contratacao": "2026-03-16",
+    "cidade": "Sumaré",
+    "uf": "SP",
+    "email": "",
+    "linha": 26
+  },
+  {
+    "codigo": "CTI026",
+    "nome": "Magazine Sol",
+    "consultor": "Carlos Lima",
+    "segmento": "Comércio",
+    "nivel": "C",
+    "faturamento": 680000.0,
+    "servicos": [
+      "Link Empresarial"
+    ],
+    "contratacao": "2026-04-02",
+    "cidade": "Hortolândia",
+    "uf": "SP",
+    "email": "",
+    "linha": 27
+  },
+  {
+    "codigo": "CTI027",
+    "nome": "Indústria Prime",
+    "consultor": "Marcos Reis",
+    "segmento": "Indústria",
+    "nivel": "A",
+    "faturamento": 7200000.0,
+    "servicos": [
+      "MPLS",
+      "Firewall",
+      "Cloud",
+      "Backup"
+    ],
+    "contratacao": "2026-04-21",
+    "cidade": "Campinas",
+    "uf": "SP",
+    "email": "",
+    "linha": 28
+  },
+  {
+    "codigo": "CTI028",
+    "nome": "Centro Educacional Futuro",
+    "consultor": "Carla Mendes",
+    "segmento": "Educação",
+    "nivel": "B",
+    "faturamento": 1080000.0,
+    "servicos": [
+      "Internet Dedicada",
+      "Backup"
+    ],
+    "contratacao": "2026-05-06",
+    "cidade": "Campinas",
+    "uf": "SP",
+    "email": "",
+    "linha": 29
+  },
+  {
+    "codigo": "CTI029",
+    "nome": "Serviços Integrados Max",
+    "consultor": "Ana Souza",
+    "segmento": "Serviços",
+    "nivel": "B",
+    "faturamento": 930000.0,
+    "servicos": [
+      "Internet Dedicada"
+    ],
+    "contratacao": "2026-05-25",
+    "cidade": "Paulínia",
+    "uf": "SP",
+    "email": "",
+    "linha": 30
+  },
+  {
+    "codigo": "CTI030",
+    "nome": "Rede Farma",
+    "consultor": "Carla Mendes",
+    "segmento": "Saúde",
+    "nivel": "A",
+    "faturamento": 2850000.0,
+    "servicos": [
+      "MPLS",
+      "Firewall"
+    ],
+    "contratacao": "2026-06-09",
+    "cidade": "Campinas",
+    "uf": "SP",
+    "email": "",
+    "linha": 31
+  },
+  {
+    "codigo": "CTI034",
+    "nome": "Loja Ponto Certo",
+    "consultor": "Carlos Lima",
+    "segmento": "Comércio",
+    "nivel": "B",
+    "faturamento": 710000.0,
+    "servicos": [
+      "Internet Dedicada"
+    ],
+    "contratacao": "2026-08-03",
+    "cidade": "Campinas",
+    "uf": "SP",
+    "email": "",
+    "linha": 35
+  },
+  {
+    "codigo": "CTI035",
+    "nome": "Fábrica Nacional",
+    "consultor": "Ana Souza",
+    "segmento": "Indústria",
+    "nivel": "A",
+    "faturamento": 5450000.0,
+    "servicos": [
+      "MPLS",
+      "Firewall"
+    ],
+    "contratacao": "2026-08-17",
+    "cidade": "Paulínia",
+    "uf": "SP",
+    "email": "",
+    "linha": 36
+  }
+]
