@@ -114,7 +114,7 @@ class PlanilhaControllerTests {
 		byte[] csv = "codigo;nome;consultor\nCTI900;Cliente;Ana\n".getBytes(StandardCharsets.UTF_8);
 
 		enviar("incompleta.csv", csv).andExpect(status().isUnprocessableContent())
-			.andExpect(jsonPath("$.title").value("Coluna obrigatoria ausente"))
+			.andExpect(jsonPath("$.mensagem").value(org.hamcrest.Matchers.startsWith("Coluna obrigatória ausente")))
 			.andExpect(jsonPath("$.coluna").value(org.hamcrest.Matchers.containsString("Segmento")));
 
 		List<Telemetria> falhas = telemetriaRepository.findAll()
@@ -127,25 +127,25 @@ class PlanilhaControllerTests {
 	@Test
 	void arquivoCorrompidoDevolve400() throws Exception {
 		enviar("falso.xlsx", "isto nao e um excel".getBytes(StandardCharsets.UTF_8)).andExpect(status().isBadRequest())
-			.andExpect(jsonPath("$.title").value("Arquivo Excel invalido"));
+			.andExpect(jsonPath("$.mensagem").exists());
 	}
 
 	@Test
 	void formatoNaoAceitoNemChegaAoPython() throws Exception {
 		enviar("notas.txt", "qualquer".getBytes(StandardCharsets.UTF_8)).andExpect(status().isBadRequest())
-			.andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString(".txt")));
+			.andExpect(jsonPath("$.mensagem").value(org.hamcrest.Matchers.containsString(".txt")));
 	}
 
 	@Test
 	void arquivoVazioDevolve400() throws Exception {
 		enviar("vazia.xlsx", new byte[0]).andExpect(status().isBadRequest())
-			.andExpect(jsonPath("$.detail").value("O arquivo enviado esta vazio"));
+			.andExpect(jsonPath("$.mensagem").value("O arquivo enviado está vazio"));
 	}
 
 	@Test
 	void pedidoSemArquivoDevolve400() throws Exception {
 		this.mockMvc.perform(multipart("/api/planilhas")).andExpect(status().isBadRequest())
-			.andExpect(jsonPath("$.title").value("Arquivo ausente"));
+			.andExpect(jsonPath("$.mensagem").value(org.hamcrest.Matchers.containsString("campo 'arquivo'")));
 	}
 
 }

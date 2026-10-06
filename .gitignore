@@ -25,3 +25,6 @@ Thumbs.db
 __pycache__/
 *.pyc
 .venv/
+
+# Credenciais locais do back-end (GUIA 1): nunca no Git
+application-local.properties

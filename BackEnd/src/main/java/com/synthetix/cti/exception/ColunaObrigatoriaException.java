@@ -8,7 +8,7 @@ public class ColunaObrigatoriaException extends RuntimeException {
 	private final String coluna;
 
 	public ColunaObrigatoriaException(String coluna) {
-		super("Coluna obrigatoria ausente na planilha: " + coluna);
+		super("Coluna obrigatória ausente na planilha: " + coluna);
 		this.coluna = coluna;
 	}
 

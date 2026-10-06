@@ -1,0 +1,25 @@
+# Modelo do application-local.properties (GUIA 1 da disciplina).
+#
+# 1. Copie este arquivo para application-local.properties, na mesma pasta.
+# 2. Troque os valores pelos do SEU banco no Azure.
+# 3. Rode com o perfil local:
+#      Windows:      .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=local"
+#      Linux/macOS:  ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+#
+# O application-local.properties tem SENHAS e esta no .gitignore: nunca vai para o Git.
+# Este modelo (.exemplo) pode ir, porque nao tem dado real.
+
+DB_HOST=meuservidor.postgres.database.azure.com
+DB_PORT=5432
+DB_NAME=postgres
+# No Flexible Server o usuario e so o nome, sem @servidor.
+DB_USER=pgadmin
+DB_PASSWORD=TroqueEstaSenha
+# O Azure exige conexao criptografada.
+DB_SSLMODE=require
+
+# Chave que assina o token do login (32+ caracteres). Gere a sua, por exemplo:
+#   node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"
+JWT_SECRET=COLE_AQUI_A_CHAVE_GERADA
+
+CORS_ORIGIN=http://localhost:5173

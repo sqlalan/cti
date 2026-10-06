@@ -2,6 +2,7 @@ package com.synthetix.cti;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -11,13 +12,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.jayway.jsonpath.JsonPath;
 import com.synthetix.cti.model.Consultor;
+import com.synthetix.cti.model.Usuario;
 import com.synthetix.cti.repository.ConsultorRepository;
 import com.synthetix.cti.repository.UsuarioRepository;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -48,6 +52,108 @@ class UsuarioControllerTests {
 	}
 
 	@Test
+	void senhaPrecisaDeLetrasENumerosEDe8A72Caracteres() throws Exception {
+		for (String senha : List.of("abcdefgh", "12345678", "a1", "a1".repeat(37))) {
+			this.mockMvc
+				.perform(post("/api/usuarios").contentType(MediaType.APPLICATION_JSON).content("""
+						{"nome":"Beto","email":"beto@exemplo.com","senha":"%s","consultor":"Beto Reis"}
+						""".formatted(senha)))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.mensagem").value("Dados inválidos"))
+				.andExpect(jsonPath("$.campos.senha").value("A senha deve ter de 8 a 72 caracteres, com letras e números"));
+		}
+		assertThat(usuarioRepository.findByEmailIgnoreCase("beto@exemplo.com")).isEmpty();
+	}
+
+	@Test
+	void senhaAcentuadaQuePassaDe72BytesDevolve400ENao500() throws Exception {
+		// 42 caracteres, mas 82 bytes: o BCrypt recusaria com erro.
+		String senha = "a1" + "á".repeat(40);
+		this.mockMvc
+			.perform(post("/api/usuarios").contentType(MediaType.APPLICATION_JSON).content("""
+					{"nome":"Caio","email":"caio.acento@exemplo.com","senha":"%s","consultor":"Caio Acento"}
+					""".formatted(senha)))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.campos.senha").value(org.hamcrest.Matchers.containsString("BCrypt")));
+	}
+
+	@Test
+	void emailEhGravadoEmMinusculasEMaiusculasNaoCriamOutraConta() throws Exception {
+		this.mockMvc
+			.perform(post("/api/usuarios").contentType(MediaType.APPLICATION_JSON).content("""
+					{"nome":"Joana","email":"Joana@Exemplo.COM","senha":"segredo123","consultor":"Joana Prado"}
+					"""))
+			.andExpect(status().isCreated())
+			.andExpect(jsonPath("$.email").value("joana@exemplo.com"));
+
+		this.mockMvc
+			.perform(post("/api/usuarios").contentType(MediaType.APPLICATION_JSON).content("""
+					{"nome":"Joana 2","email":"JOANA@exemplo.com","senha":"segredo123","consultor":"Joana Dois"}
+					"""))
+			.andExpect(status().isConflict())
+			.andExpect(jsonPath("$.mensagem").value("E-mail já cadastrado"));
+
+		this.mockMvc
+			.perform(post("/api/usuarios/login").contentType(MediaType.APPLICATION_JSON).content("""
+					{"email":"JOANA@EXEMPLO.COM","senha":"segredo123"}
+					"""))
+			.andExpect(status().isOk());
+	}
+
+	@Test
+	void senhaVaiParaOBancoComoBcryptPuro() throws Exception {
+		cadastrar("kiko@exemplo.com");
+		String hash = usuarioRepository.findByEmailIgnoreCase("kiko@exemplo.com").orElseThrow().getSenha();
+		// O que o GUIA 3 confere no DBeaver: comeca com $2a$10$ e tem 60 caracteres.
+		assertThat(hash).startsWith("$2a$10$").hasSize(60);
+	}
+
+	@Test
+	void hashAntigoComPrefixoContinuaEntrando() throws Exception {
+		Usuario antigo = new Usuario();
+		antigo.setNome("Lia");
+		antigo.setEmail("lia@exemplo.com");
+		antigo.setSenha(PasswordEncoderFactories.createDelegatingPasswordEncoder().encode("segredo123"));
+		usuarioRepository.save(antigo);
+		assertThat(antigo.getSenha()).startsWith("{bcrypt}");
+
+		this.mockMvc
+			.perform(post("/api/usuarios/login").contentType(MediaType.APPLICATION_JSON).content("""
+					{"email":"lia@exemplo.com","senha":"segredo123"}
+					"""))
+			.andExpect(status().isOk());
+	}
+
+	@Test
+	void meDevolveQuemEstaLogadoPeloToken() throws Exception {
+		cadastrar("mel@exemplo.com");
+		String token = JsonPath.read(this.mockMvc
+			.perform(post("/api/usuarios/login").contentType(MediaType.APPLICATION_JSON).content("""
+					{"email":"mel@exemplo.com","senha":"segredo123"}
+					"""))
+			.andReturn()
+			.getResponse()
+			.getContentAsString(), "$.token");
+
+		this.mockMvc.perform(get("/api/usuarios/me").header("Authorization", "Bearer " + token))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.email").value("mel@exemplo.com"))
+			.andExpect(jsonPath("$.senha").doesNotExist());
+		this.mockMvc.perform(get("/api/usuarios/me")).andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void mensagensDeValidacaoSaemEmPortuguesMesmoComNavegadorEmIngles() throws Exception {
+		this.mockMvc
+			.perform(post("/api/clientes").with(user("ana"))
+				.header("Accept-Language", "en-US")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{\"codigo\":\"\"}"))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.campos.codigo").value("não deve estar em branco"));
+	}
+
+	@Test
 	void matriculaOpcionalEUnicaEntreConsultores() throws Exception {
 		this.mockMvc
 			.perform(post("/api/usuarios").contentType(MediaType.APPLICATION_JSON).content("""
@@ -63,7 +169,7 @@ class UsuarioControllerTests {
 					 "matricula":"CT-777"}
 					"""))
 			.andExpect(status().isConflict())
-			.andExpect(jsonPath("$.title").value("Matricula duplicada"));
+			.andExpect(jsonPath("$.mensagem").value("Matrícula já pertence a outro consultor: CT-777"));
 	}
 
 	@Test
@@ -149,7 +255,7 @@ class UsuarioControllerTests {
 					{"email":"caio@exemplo.com","senha":"errada123"}
 					"""))
 			.andExpect(status().isUnauthorized())
-			.andExpect(jsonPath("$.detail").value("E-mail ou senha invalidos"));
+			.andExpect(jsonPath("$.mensagem").value("E-mail ou senha inválidos"));
 	}
 
 	@Test
@@ -159,7 +265,7 @@ class UsuarioControllerTests {
 					{"email":"ninguem@exemplo.com","senha":"segredo123"}
 					"""))
 			.andExpect(status().isUnauthorized())
-			.andExpect(jsonPath("$.detail").value("E-mail ou senha invalidos"));
+			.andExpect(jsonPath("$.mensagem").value("E-mail ou senha inválidos"));
 	}
 
 	@Test

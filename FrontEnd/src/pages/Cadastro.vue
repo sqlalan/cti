@@ -17,8 +17,9 @@ function problemaNoFormulario() {
   if (!form.nome.trim() || !form.email.trim() || !form.consultor.trim() || !form.senha) {
     return 'Preencha todos os campos.'
   }
-  if (form.senha.length < 8) {
-    return 'A senha precisa ter pelo menos 8 caracteres.'
+  // Mesma regra do back-end (UsuarioRequest): 8 a 72 caracteres, com letras e números.
+  if (!/^(?=.*[A-Za-z])(?=.*\d).{8,72}$/.test(form.senha)) {
+    return 'A senha deve ter de 8 a 72 caracteres, com letras e números.'
   }
   if (form.senha !== form.confirmacao) {
     return 'As senhas não conferem.'
@@ -109,7 +110,7 @@ const classeRotulo = 'mt-5 block text-sm font-medium text-ink-900 dark:text-mist
               v-model="form.senha"
               :type="mostrarSenha ? 'text' : 'password'"
               autocomplete="new-password"
-              placeholder="Mínimo de 8 caracteres"
+              placeholder="8 a 72, com letras e números"
             />
             <button
               class="absolute inset-y-0 right-0 mt-2 px-4 text-xs font-semibold text-brand-800 dark:text-brand-300 hover:text-brand-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"

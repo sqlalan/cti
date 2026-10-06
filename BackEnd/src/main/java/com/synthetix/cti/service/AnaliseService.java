@@ -48,7 +48,7 @@ public class AnaliseService {
 	}
 
 	private Analise buscarEntidade(Long id) {
-		return repository.findById(id).orElseThrow(() -> new RecursoNaoEncontradoException("Analise", id));
+		return repository.findById(id).orElseThrow(() -> new RecursoNaoEncontradoException("análise", id));
 	}
 
 	private Analise ultimaEntidade() {

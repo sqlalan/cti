@@ -17,6 +17,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -56,7 +57,7 @@ public class SecurityConfig {
 	}
 
 	/**
-	 * Chave HMAC que assina os tokens. Sem JWT_SEGREDO gera uma aleatoria: seguro, mas todo mundo
+	 * Chave HMAC que assina os tokens. Sem JWT_SECRET gera uma aleatoria: seguro, mas todo mundo
 	 * precisa entrar de novo quando a API reinicia.
 	 */
 	@Bean
@@ -65,11 +66,11 @@ public class SecurityConfig {
 		if (StringUtils.hasText(segredo)) {
 			bytes = segredo.getBytes(StandardCharsets.UTF_8);
 			if (bytes.length < 32) {
-				throw new IllegalStateException("JWT_SEGREDO precisa ter pelo menos 32 caracteres (256 bits)");
+				throw new IllegalStateException("JWT_SECRET precisa ter pelo menos 32 caracteres (256 bits)");
 			}
 		}
 		else {
-			log.warn("JWT_SEGREDO nao definido: usando chave aleatoria; os tokens deixam de valer quando a API reinicia");
+			log.warn("JWT_SECRET nao definido: usando chave aleatoria; os tokens deixam de valer quando a API reinicia");
 			bytes = new byte[32];
 			new SecureRandom().nextBytes(bytes);
 		}
@@ -101,9 +102,30 @@ public class SecurityConfig {
 		return source;
 	}
 
+	/**
+	 * Grava BCrypt puro ("$2a$10$...", 60 caracteres), como o guia confere no banco. Hash antigo
+	 * com prefixo ("{bcrypt}$2a$10$...") continua entrando: quem se cadastrou antes nao perde a conta.
+	 */
 	@Bean
 	PasswordEncoder passwordEncoder() {
-		return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+		BCryptPasswordEncoder bcrypt = new BCryptPasswordEncoder();
+		PasswordEncoder comPrefixo = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+		return new PasswordEncoder() {
+
+			@Override
+			public String encode(CharSequence senha) {
+				return bcrypt.encode(senha);
+			}
+
+			@Override
+			public boolean matches(CharSequence senha, String hash) {
+				if (hash == null) {
+					return false;
+				}
+				return hash.startsWith("{") ? comPrefixo.matches(senha, hash) : bcrypt.matches(senha, hash);
+			}
+
+		};
 	}
 
 }

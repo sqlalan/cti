@@ -71,7 +71,14 @@ cd BackEnd
 ./mvnw spring-boot:run
 ```
 
-Sem variáveis de ambiente, ele procura um PostgreSQL em `localhost:5432`, banco `cti`, usuário e senha `postgres`. As tabelas são criadas sozinhas na primeira execução. Para subir um banco assim com Docker:
+Para usar o banco da Azure, copie `BackEnd/src/main/resources/application-local.properties.exemplo` para `application-local.properties` (o arquivo fica fora do Git), preencha com os dados do servidor e rode com o perfil `local`:
+
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local                 # Linux/macOS/Git Bash
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=local"           # Windows (PowerShell)
+```
+
+Sem perfil nem variáveis de ambiente, ele procura um PostgreSQL em `localhost:5432`, banco `cti`, usuário e senha `postgres`. As tabelas são criadas sozinhas na primeira execução. Para subir um banco assim com Docker:
 
 ```bash
 docker run -d --name cti-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=cti -p 5432:5432 postgres:17
@@ -92,13 +99,13 @@ Abra `/cadastro`, crie a conta de consultor e envie a planilha de exemplo [`Fron
 | Variável | Onde | Para quê | Padrão |
 | --- | --- | --- | --- |
 | `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Back-end | Conexão com o PostgreSQL | `localhost`, `5432`, `cti`, `postgres`, `postgres` |
-| `DB_SSLMODE` | Back-end | Use `require` em banco na nuvem | `prefer` |
-| `JWT_SEGREDO` | Back-end | Chave que assina o token de login. **Obrigatória em produção**, com 32 caracteres ou mais. | Aleatória a cada inicialização |
+| `DB_SSLMODE` | Back-end | Use `require` no Azure e em qualquer banco na nuvem | `prefer` |
+| `JWT_SECRET` | Back-end | Chave que assina o token de login. **Obrigatória em produção**, com 32 caracteres ou mais. (`JWT_SEGREDO` também é aceito.) | Aleatória a cada inicialização |
 | `JWT_VALIDADE` | Back-end | Por quanto tempo o login vale | `8h` |
-| `CORS_ORIGENS` | Back-end | Endereços do front que podem chamar a API (separados por vírgula) | `http://localhost:5173` |
+| `CORS_ORIGIN` | Back-end | Endereços do front que podem chamar a API, separados por vírgula. (`CORS_ORIGENS` também é aceito.) | `http://localhost:5173` |
 | `PYTHON_CMD` | Back-end | Executável do Python | `py` no Windows, `python3` nos outros |
 | `PYTHON_SCRIPT` | Back-end | Caminho do `main.py` | `../CienciaD/main.py` |
-| `VITE_API_URL` | Front-end | Endereço da API, terminando em `/api` | `http://localhost:8080/api` |
+| `VITE_API_URL` | Front-end | Endereço da API. Com ou sem `/api` no final: o front acrescenta quando falta. | `http://localhost:8080` |
 
 ## API
 
@@ -106,8 +113,9 @@ Todas as rotas, menos o cadastro e o login, exigem o header `Authorization: Bear
 
 | Verbo | Rota | O que faz |
 | --- | --- | --- |
-| POST | `/api/usuarios` | Cadastro do consultor (nome, e-mail, senha, consultor na planilha, matrícula opcional) |
+| POST | `/api/usuarios` | Cadastro do consultor: nome, e-mail, senha (8 a 72 caracteres, com letras e números), consultor na planilha e matrícula opcional. O e-mail é gravado em minúsculas. |
 | POST | `/api/usuarios/login` | Login. Devolve `{ token, expiraEm, usuario }` |
+| GET | `/api/usuarios/me` | Quem está logado, lido do próprio token |
 | GET, PUT, DELETE | `/api/usuarios`, `/api/usuarios/{id}` | Consultar, alterar e remover usuários |
 | POST | `/api/planilhas` | Upload da planilha (multipart, campo `arquivo`). Trata, analisa e grava. |
 | GET | `/api/indicadores` | Estatísticas da última planilha (frequências, medidas, testes, contratações por mês) |
@@ -119,7 +127,7 @@ Todas as rotas, menos o cadastro e o login, exigem o header `Authorization: Bear
 | PATCH | `/api/contratos/{id}/cancelamento` | Cancela o contrato, que continua no histórico |
 | DELETE | `/api/contratos/{id}` | Remove o contrato |
 
-Os erros seguem o formato padrão `ProblemDetail`, com `status`, `title` e `detail`:
+Os erros vêm no formato `{ "mensagem": "..." }`. A validação traz também `campos`, com a mensagem de cada campo recusado:
 
 | Status | Quando acontece |
 | --- | --- |

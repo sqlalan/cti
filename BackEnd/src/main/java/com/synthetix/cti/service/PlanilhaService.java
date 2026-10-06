@@ -62,13 +62,13 @@ public class PlanilhaService {
 
 	private String validar(MultipartFile arquivo, String nome) {
 		if (arquivo == null || arquivo.isEmpty()) {
-			throw new ExcelInvalidoException("O arquivo enviado esta vazio");
+			throw new ExcelInvalidoException("O arquivo enviado está vazio");
 		}
 		String extensao = StringUtils.getFilenameExtension(nome);
 		extensao = extensao == null ? "" : "." + extensao.toLowerCase(Locale.ROOT);
 		if (!FORMATOS.contains(extensao)) {
 			throw new ExcelInvalidoException(
-					"Formato " + (extensao.isEmpty() ? "desconhecido" : extensao) + " nao aceito; envie .xlsx, .xls ou .csv");
+					"Formato " + (extensao.isEmpty() ? "desconhecido" : extensao) + " não aceito; envie .xlsx, .xls ou .csv");
 		}
 		return extensao;
 	}
@@ -83,7 +83,7 @@ public class PlanilhaService {
 			return importacao.importar(nome, resultado);
 		}
 		catch (IOException ex) {
-			throw new ProcessamentoPlanilhaException("Nao foi possivel salvar o arquivo recebido", ex);
+			throw new ProcessamentoPlanilhaException("Não foi possível salvar o arquivo recebido", ex);
 		}
 		finally {
 			apagar(pasta);
@@ -120,7 +120,7 @@ public class PlanilhaService {
 			return Files.createTempDirectory("cti-planilha-");
 		}
 		catch (IOException ex) {
-			throw new ProcessamentoPlanilhaException("Nao foi possivel criar a pasta de trabalho", ex);
+			throw new ProcessamentoPlanilhaException("Não foi possível criar a pasta de trabalho", ex);
 		}
 	}
 

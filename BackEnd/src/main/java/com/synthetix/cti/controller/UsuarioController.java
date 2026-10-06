@@ -9,6 +9,8 @@ import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,6 +33,12 @@ public class UsuarioController {
 	@GetMapping
 	public List<UsuarioDTO> listar() {
 		return service.listar();
+	}
+
+	// Quem esta logado: o e-mail vem do proprio token ("sub"), nunca da URL.
+	@GetMapping("/me")
+	public UsuarioDTO me(@AuthenticationPrincipal Jwt token) {
+		return service.logado(token.getSubject());
 	}
 
 	@GetMapping("/{id}")

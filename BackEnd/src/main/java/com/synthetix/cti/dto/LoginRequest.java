@@ -8,8 +8,8 @@ import jakarta.validation.constraints.NotBlank;
  */
 public record LoginRequest(
 
-		@NotBlank @Email String email,
+		@NotBlank(message = "Informe o e-mail") @Email(message = "E-mail inválido") String email,
 
-		@NotBlank String senha) {
+		@NotBlank(message = "Informe a senha") String senha) {
 
 }

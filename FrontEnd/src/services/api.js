@@ -1,9 +1,16 @@
 import axios from 'axios'
 
 // Endereço do Spring Boot. Em produção vem de VITE_API_URL (ex.: no painel da
-// Vercel); sem ela, usa o back-end rodando na máquina.
+// Vercel); sem ela, usa o back-end rodando na máquina. As rotas da API ficam
+// em /api: o guia da disciplina escreve VITE_API_URL=http://localhost:8080,
+// então o /api é acrescentado quando falta, e as duas formas funcionam.
+function enderecoDaApi(configurado) {
+  const base = (configurado || 'http://localhost:8080').replace(/\/+$/, '')
+  return base.endsWith('/api') ? base : `${base}/api`
+}
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
+  baseURL: enderecoDaApi(import.meta.env.VITE_API_URL),
 })
 
 // O token mora no localStorage, mas quem decide o que fazer com ele é a store
@@ -36,7 +43,7 @@ api.interceptors.response.use(
   },
 )
 
-// O back-end responde erro no formato ProblemDetail: { title, detail, campos }.
+// O back-end responde erro como { mensagem, campos? } (formato do guia).
 // Esta função tira dali a frase que a tela mostra.
 export function mensagemDeErro(erro) {
   const dados = erro.response?.data
@@ -46,5 +53,5 @@ export function mensagemDeErro(erro) {
   if (dados?.campos) {
     return Object.values(dados.campos)[0]
   }
-  return dados?.detail || 'Algo deu errado. Tente de novo.'
+  return dados?.mensagem || 'Algo deu errado. Tente de novo.'
 }

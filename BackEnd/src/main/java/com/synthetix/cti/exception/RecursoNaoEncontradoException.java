@@ -6,7 +6,7 @@ package com.synthetix.cti.exception;
 public class RecursoNaoEncontradoException extends RuntimeException {
 
 	public RecursoNaoEncontradoException(String recurso, Object id) {
-		super(recurso + " nao encontrado: " + id);
+		super("Não existe " + recurso + " com id " + id);
 	}
 
 	public RecursoNaoEncontradoException(String mensagem) {

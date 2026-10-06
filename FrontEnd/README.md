@@ -31,7 +31,7 @@ não na raiz do repositório — rodar `npm run dev` na raiz falha com `ENOENT`.
 | `/relatorio` | Relatórios | Análise da carteira carregada, com filtros e exportação CSV (**exige login**) |
 | `/dashboard` | Dashboard | Gráficos por segmento, nível A/B/C e evolução de contratações, insights e testes da última planilha, lidos de `/api/indicadores` (**exige login**) |
 
-O endereço da API vem de `VITE_API_URL` (padrão `http://localhost:8080/api`).
+O endereço da API vem de `VITE_API_URL` (padrão `http://localhost:8080`; o `/api` é acrescentado quando falta).
 
 ## Fluxo do upload
 
@@ -103,7 +103,7 @@ O Vue **não acessa o PostgreSQL diretamente**: quem grava no banco é o Spring 
   A senha nunca é guardada.
 - **`src/router/index.js`**: Upload, Dashboard e Relatório exigem login.
 
-Variável de ambiente: `VITE_API_URL` (padrão `http://localhost:8080/api`). Na Vercel,
+Variável de ambiente: `VITE_API_URL` (padrão `http://localhost:8080`, com ou sem `/api`). Na Vercel,
 defina-a no painel e publique de novo, porque ela entra no código no momento do build.
 
 ## Aviso de segurança da dependência `xlsx`

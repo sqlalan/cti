@@ -119,11 +119,11 @@ public class ClienteService {
 	}
 
 	private Contrato buscarContrato(Long id) {
-		return contratoRepository.findById(id).orElseThrow(() -> new RecursoNaoEncontradoException("Contrato", id));
+		return contratoRepository.findById(id).orElseThrow(() -> new RecursoNaoEncontradoException("contrato", id));
 	}
 
 	private Cliente buscarEntidade(Long id) {
-		return clienteRepository.findById(id).orElseThrow(() -> new RecursoNaoEncontradoException("Cliente", id));
+		return clienteRepository.findById(id).orElseThrow(() -> new RecursoNaoEncontradoException("cliente", id));
 	}
 
 }

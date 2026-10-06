@@ -7,9 +7,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
-	Optional<Usuario> findByEmail(String email);
+	// IgnoreCase: contas gravadas antes da padronizacao podem ter maiusculas no e-mail.
+	Optional<Usuario> findByEmailIgnoreCase(String email);
 
-	boolean existsByEmail(String email);
+	boolean existsByEmailIgnoreCase(String email);
 
 	Optional<Usuario> findByConsultor(Consultor consultor);
 

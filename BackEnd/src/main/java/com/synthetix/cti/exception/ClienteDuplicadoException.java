@@ -8,7 +8,7 @@ public class ClienteDuplicadoException extends RuntimeException {
 	private final String codigo;
 
 	public ClienteDuplicadoException(String codigo) {
-		super("Ja existe um cliente com o codigo CTI " + codigo);
+		super("Já existe um cliente com o código CTI " + codigo);
 		this.codigo = codigo;
 	}
 

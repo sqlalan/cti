@@ -53,7 +53,7 @@ public class AnalisadorPython implements AnalisadorPlanilha {
 	@Override
 	public ResultadoAnalise analisar(Path planilha, Path pastaSaida) {
 		if (!Files.isRegularFile(script)) {
-			throw new ProcessamentoPlanilhaException("Script de analise nao encontrado em " + script);
+			throw new ProcessamentoPlanilhaException("Script de análise não encontrado em " + script);
 		}
 		JsonNode resumo = executar(planilha, pastaSaida);
 
@@ -74,7 +74,7 @@ public class AnalisadorPython implements AnalisadorPlanilha {
 					}), ler(pastaSaida.resolve("indicadores.json")), ler(pastaSaida.resolve("problemas.json")));
 		}
 		catch (JacksonException ex) {
-			throw new ProcessamentoPlanilhaException("Resultado da analise em formato inesperado", ex);
+			throw new ProcessamentoPlanilhaException("Resultado da análise em formato inesperado", ex);
 		}
 	}
 
@@ -95,21 +95,21 @@ public class AnalisadorPython implements AnalisadorPlanilha {
 			processo = construtor.start();
 		}
 		catch (IOException ex) {
-			throw new ProcessamentoPlanilhaException("Nao foi possivel iniciar o Python (comando '" + comando
-					+ "'). Defina PYTHON_CMD com o executavel correto.", ex);
+			throw new ProcessamentoPlanilhaException("Não foi possível iniciar o Python (comando '" + comando
+					+ "'). Defina PYTHON_CMD com o executável correto.", ex);
 		}
 
 		try {
 			if (!processo.waitFor(tempoLimite.toMillis(), TimeUnit.MILLISECONDS)) {
 				processo.destroyForcibly();
 				throw new ProcessamentoPlanilhaException(
-						"A analise passou de " + tempoLimite.toSeconds() + " segundos e foi interrompida");
+						"A análise passou de " + tempoLimite.toSeconds() + " segundos e foi interrompida");
 			}
 		}
 		catch (InterruptedException ex) {
 			processo.destroyForcibly();
 			Thread.currentThread().interrupt();
-			throw new ProcessamentoPlanilhaException("Analise interrompida", ex);
+			throw new ProcessamentoPlanilhaException("Análise interrompida", ex);
 		}
 
 		try {
@@ -121,8 +121,8 @@ public class AnalisadorPython implements AnalisadorPlanilha {
 		catch (JacksonException ex) {
 			// cai na mensagem abaixo, que traz o stderr do Python
 		}
-		throw new ProcessamentoPlanilhaException("O script terminou com codigo " + processo.exitValue()
-				+ " sem resumo valido. Erro: " + ultimasLinhas(stderr));
+		throw new ProcessamentoPlanilhaException("O script terminou com código " + processo.exitValue()
+				+ " sem resumo válido. Erro: " + ultimasLinhas(stderr));
 	}
 
 	private String colunas(JsonNode resumo) {

@@ -62,7 +62,7 @@ class ClienteControllerTests {
 			.perform(post("/api/clientes").contentType(MediaType.APPLICATION_JSON)
 				.content(cliente("cti-200", "A", "10")))
 			.andExpect(status().isConflict())
-			.andExpect(jsonPath("$.title").value("Cliente duplicado"))
+			.andExpect(jsonPath("$.mensagem").value(org.hamcrest.Matchers.startsWith("Já existe um cliente com o código CTI")))
 			.andExpect(jsonPath("$.codigo").value("CTI-200"));
 	}
 
