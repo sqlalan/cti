@@ -12,16 +12,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.jayway.jsonpath.JsonPath;
 import com.synthetix.cti.model.Consultor;
+import com.synthetix.cti.model.Perfil;
 import com.synthetix.cti.model.Usuario;
 import com.synthetix.cti.repository.ConsultorRepository;
 import com.synthetix.cti.repository.UsuarioRepository;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -37,6 +43,9 @@ class UsuarioControllerTests {
 
 	@Autowired
 	private UsuarioRepository usuarioRepository;
+
+	@Autowired
+	private JwtAuthenticationConverter jwtAuthenticationConverter;
 
 	@Test
 	void criaUsuarioSemAutenticacao() throws Exception {
@@ -122,6 +131,49 @@ class UsuarioControllerTests {
 					{"email":"lia@exemplo.com","senha":"segredo123"}
 					"""))
 			.andExpect(status().isOk());
+	}
+
+	@Test
+	void cadastroNasceComPerfilUser() throws Exception {
+		this.mockMvc
+			.perform(post("/api/usuarios").contentType(MediaType.APPLICATION_JSON).content("""
+					{"nome":"Nina","email":"nina@exemplo.com","senha":"segredo123","consultor":"Nina Rocha"}
+					"""))
+			.andExpect(status().isCreated())
+			.andExpect(jsonPath("$.perfil").value("USER"));
+	}
+
+	@Test
+	void adminDefinidoNoBancoRecebeOPerfilNoTokenENoMe() throws Exception {
+		cadastrar("otto@exemplo.com");
+		Usuario otto = usuarioRepository.findByEmailIgnoreCase("otto@exemplo.com").orElseThrow();
+		// O GUIA promove pelo DBeaver: UPDATE usuarios SET perfil = 'ADMIN' WHERE email = '...'
+		otto.setPerfil(Perfil.ADMIN);
+		usuarioRepository.save(otto);
+
+		String token = JsonPath.read(this.mockMvc
+			.perform(post("/api/usuarios/login").contentType(MediaType.APPLICATION_JSON).content("""
+					{"email":"otto@exemplo.com","senha":"segredo123"}
+					"""))
+			.andExpect(jsonPath("$.usuario.perfil").value("ADMIN"))
+			.andReturn()
+			.getResponse()
+			.getContentAsString(), "$.token");
+
+		String corpoDoToken = new String(Base64.getUrlDecoder().decode(token.split("\\.")[1]), StandardCharsets.UTF_8);
+		assertThat(corpoDoToken).contains("\"perfil\":\"ADMIN\"");
+		this.mockMvc.perform(get("/api/usuarios/me").header("Authorization", "Bearer " + token))
+			.andExpect(jsonPath("$.perfil").value("ADMIN"));
+	}
+
+	@Test
+	void perfilDoTokenViraRoleNoSpringSecurity() {
+		Jwt token = Jwt.withTokenValue("x").header("alg", "HS256").subject("a@a.com").claim("perfil", "ADMIN").build();
+		// O Spring Security 7 acrescenta FACTOR_BEARER (como a pessoa entrou); aqui interessa so o perfil.
+		assertThat(jwtAuthenticationConverter.convert(token).getAuthorities())
+			.extracting(GrantedAuthority::getAuthority)
+			.filteredOn(autoridade -> autoridade.startsWith("ROLE_"))
+			.containsExactly("ROLE_ADMIN");
 	}
 
 	@Test

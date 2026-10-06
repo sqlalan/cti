@@ -2,6 +2,7 @@ package com.synthetix.cti.model;
 
 import jakarta.persistence.*;
 import java.time.Instant;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Table(name = "usuarios")
@@ -27,6 +28,12 @@ public class Usuario {
 
 	@Column(nullable = false)
 	private boolean ativo = true;
+
+	// Default no banco: usuarios gravados antes desta coluna existir viram USER.
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, length = 20)
+	@ColumnDefault("'USER'")
+	private Perfil perfil = Perfil.USER;
 
 	@Column(name = "criado_em", nullable = false, updatable = false)
 	private Instant criadoEm;
@@ -76,6 +83,14 @@ public class Usuario {
 
 	public void setConsultor(Consultor consultor) {
 		this.consultor = consultor;
+	}
+
+	public Perfil getPerfil() {
+		return perfil;
+	}
+
+	public void setPerfil(Perfil perfil) {
+		this.perfil = perfil;
 	}
 
 	public boolean isAtivo() {

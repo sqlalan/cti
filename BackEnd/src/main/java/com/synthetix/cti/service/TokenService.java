@@ -14,7 +14,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 
 /**
- * Emite o JWT do login. O "sub" e o e-mail do usuario; nome e consultor vao junto para o front.
+ * Emite o JWT do login. O "sub" e o e-mail do usuario; nome, perfil e consultor vao junto.
  */
 @Service
 public class TokenService {
@@ -36,7 +36,8 @@ public class TokenService {
 			.issuedAt(agora)
 			.expiresAt(expiraEm)
 			.subject(usuario.email())
-			.claim("nome", usuario.nome());
+			.claim("nome", usuario.nome())
+			.claim("perfil", usuario.perfil().name());
 		if (usuario.consultor() != null) {
 			claims.claim("consultor", usuario.consultor());
 		}

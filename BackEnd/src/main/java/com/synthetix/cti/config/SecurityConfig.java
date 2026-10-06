@@ -26,6 +26,8 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.util.StringUtils;
 import org.springframework.web.cors.CorsConfiguration;
@@ -90,7 +92,21 @@ public class SecurityConfig {
 		return decoder;
 	}
 
-	// Origens do Front-end (Vite local, Vercel...) separadas por virgula em CORS_ORIGENS.
+	/**
+	 * O claim "perfil" do token vira ROLE_USER ou ROLE_ADMIN, como o getAuthorities() do guia.
+	 * Nenhuma rota exige perfil ainda; quando precisar, basta .hasRole("ADMIN") na regra.
+	 */
+	@Bean
+	JwtAuthenticationConverter jwtAuthenticationConverter() {
+		JwtGrantedAuthoritiesConverter perfis = new JwtGrantedAuthoritiesConverter();
+		perfis.setAuthoritiesClaimName("perfil");
+		perfis.setAuthorityPrefix("ROLE_");
+		JwtAuthenticationConverter conversor = new JwtAuthenticationConverter();
+		conversor.setJwtGrantedAuthoritiesConverter(perfis);
+		return conversor;
+	}
+
+	// Origens do Front-end (Vite local, Vercel...) separadas por virgula em CORS_ORIGIN.
 	@Bean
 	CorsConfigurationSource corsConfigurationSource(@Value("${cti.cors.origens}") List<String> origens) {
 		CorsConfiguration config = new CorsConfiguration();

@@ -111,6 +111,14 @@ Abra `/cadastro`, crie a conta de consultor e envie a planilha de exemplo [`Fron
 
 Todas as rotas, menos o cadastro e o login, exigem o header `Authorization: Bearer <token>`.
 
+Todo usuário tem um **perfil**, `USER` ou `ADMIN`, que vai dentro do token. O cadastro sempre cria `USER`. Para promover alguém, use o banco (por exemplo, no DBeaver):
+
+```sql
+UPDATE usuarios SET perfil = 'ADMIN' WHERE email = 'pessoa@empresa.com';
+```
+
+Por enquanto nenhuma rota é exclusiva de `ADMIN`. O perfil já chega ao Spring Security como `ROLE_USER` ou `ROLE_ADMIN`, então restringir uma rota é só acrescentar `.hasRole("ADMIN")` à regra no `SecurityConfig`. A pessoa precisa entrar de novo depois da promoção, para receber um token com o perfil novo.
+
 | Verbo | Rota | O que faz |
 | --- | --- | --- |
 | POST | `/api/usuarios` | Cadastro do consultor: nome, e-mail, senha (8 a 72 caracteres, com letras e números), consultor na planilha e matrícula opcional. O e-mail é gravado em minúsculas. |

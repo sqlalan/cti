@@ -27,9 +27,11 @@ public @interface CabeNoBcrypt {
 
 	class Validador implements ConstraintValidator<CabeNoBcrypt, String> {
 
+		// Acima de 72 caracteres quem reclama e o @Pattern; dois erros no mesmo campo saem em ordem
+		// incerta e a tela mostraria ora um, ora outro.
 		@Override
 		public boolean isValid(String senha, ConstraintValidatorContext contexto) {
-			return senha == null || senha.getBytes(StandardCharsets.UTF_8).length <= 72;
+			return senha == null || senha.length() > 72 || senha.getBytes(StandardCharsets.UTF_8).length <= 72;
 		}
 
 	}
