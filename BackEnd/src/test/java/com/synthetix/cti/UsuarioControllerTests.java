@@ -48,6 +48,25 @@ class UsuarioControllerTests {
 	}
 
 	@Test
+	void matriculaOpcionalEUnicaEntreConsultores() throws Exception {
+		this.mockMvc
+			.perform(post("/api/usuarios").contentType(MediaType.APPLICATION_JSON).content("""
+					{"nome":"Helena","email":"helena@exemplo.com","senha":"segredo123","consultor":"Helena Dias",
+					 "matricula":" ct-777 "}
+					"""))
+			.andExpect(status().isCreated())
+			.andExpect(jsonPath("$.matricula").value("CT-777"));
+
+		this.mockMvc
+			.perform(post("/api/usuarios").contentType(MediaType.APPLICATION_JSON).content("""
+					{"nome":"Igor","email":"igor@exemplo.com","senha":"segredo123","consultor":"Igor Melo",
+					 "matricula":"CT-777"}
+					"""))
+			.andExpect(status().isConflict())
+			.andExpect(jsonPath("$.title").value("Matricula duplicada"));
+	}
+
+	@Test
 	void consultorExistenteEhReaproveitadoPeloNome() throws Exception {
 		cadastrar("duda@exemplo.com");
 		Consultor consultor = consultorRepository.findByNomeIgnoreCase("duda@exemplo.com").orElseThrow();

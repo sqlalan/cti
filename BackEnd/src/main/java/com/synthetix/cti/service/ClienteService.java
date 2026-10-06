@@ -97,9 +97,15 @@ public class ClienteService {
 	}
 
 	@Transactional
+	public ContratoDTO cancelarContrato(Long contratoId) {
+		Contrato contrato = buscarContrato(contratoId);
+		contrato.cancelar();
+		return ContratoDTO.de(contrato);
+	}
+
+	@Transactional
 	public void removerContrato(Long contratoId) {
-		Contrato contrato = contratoRepository.findById(contratoId)
-			.orElseThrow(() -> new RecursoNaoEncontradoException("Contrato", contratoId));
+		Contrato contrato = buscarContrato(contratoId);
 		contrato.getCliente().removerContrato(contrato);
 		contratoRepository.delete(contrato);
 	}
@@ -110,6 +116,10 @@ public class ClienteService {
 		cliente.setFaturamentoAnual(request.faturamentoAnual());
 		cliente.setCidade(request.cidade());
 		cliente.setUf(request.uf());
+	}
+
+	private Contrato buscarContrato(Long id) {
+		return contratoRepository.findById(id).orElseThrow(() -> new RecursoNaoEncontradoException("Contrato", id));
 	}
 
 	private Cliente buscarEntidade(Long id) {

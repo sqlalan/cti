@@ -65,6 +65,7 @@ public class UsuarioService {
 		usuario.setEmail(request.email());
 		usuario.setSenha(passwordEncoder.encode(request.senha()));
 		usuario.setConsultor(consultorLivre(request.consultor(), null));
+		catalogo.definirMatricula(usuario.getConsultor(), request.matricula());
 		return UsuarioDTO.de(repository.save(usuario));
 	}
 
@@ -78,6 +79,7 @@ public class UsuarioService {
 		usuario.setEmail(request.email());
 		usuario.setSenha(passwordEncoder.encode(request.senha()));
 		usuario.setConsultor(consultorLivre(request.consultor(), id));
+		catalogo.definirMatricula(usuario.getConsultor(), request.matricula());
 		return UsuarioDTO.de(repository.save(usuario));
 	}
 

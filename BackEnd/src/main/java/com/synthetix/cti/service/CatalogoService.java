@@ -1,9 +1,11 @@
 package com.synthetix.cti.service;
 
+import com.synthetix.cti.exception.MatriculaDuplicadaException;
 import com.synthetix.cti.model.Consultor;
 import com.synthetix.cti.model.Servico;
 import com.synthetix.cti.repository.ConsultorRepository;
 import com.synthetix.cti.repository.ServicoRepository;
+import java.util.Locale;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +29,22 @@ public class CatalogoService {
 	public Consultor consultorPorNome(String nome) {
 		return consultorRepository.findByNomeIgnoreCase(nome.trim())
 			.orElseGet(() -> consultorRepository.save(new Consultor(nome)));
+	}
+
+	/**
+	 * Matricula em branco mantem a atual; preenchida, nao pode ser de outro consultor.
+	 */
+	public void definirMatricula(Consultor consultor, String matricula) {
+		if (matricula == null || matricula.isBlank()) {
+			return;
+		}
+		String normalizada = matricula.trim().toUpperCase(Locale.ROOT);
+		consultorRepository.findByMatricula(normalizada)
+			.filter(outro -> !outro.getId().equals(consultor.getId()))
+			.ifPresent(outro -> {
+				throw new MatriculaDuplicadaException(normalizada);
+			});
+		consultor.setMatricula(normalizada);
 	}
 
 	public Servico servicoPorNome(String nome) {

@@ -54,6 +54,36 @@ class ModeloDominioTests {
 	}
 
 	@Test
+	void contratoNasceAtivoECancelarSoMudaOStatus() {
+		Cliente cliente = new Cliente("CTI-1", "Cliente", new Consultor("Ana"));
+		Contrato contrato = cliente.contratar(new Servico("MPLS"), LocalDate.of(2025, 3, 2));
+		assertThat(contrato.getStatus()).isEqualTo(StatusContrato.ATIVO);
+
+		contrato.cancelar();
+
+		assertThat(contrato.isAtivo()).isFalse();
+		assertThat(cliente.getContratos()).containsExactly(contrato);
+	}
+
+	@Test
+	void categoriaDoServicoVemDoNome() {
+		assertThat(new Servico("Internet Dedicada").getCategoria()).isEqualTo(CategoriaServico.CONECTIVIDADE);
+		assertThat(new Servico("  mpls ").getCategoria()).isEqualTo(CategoriaServico.CONECTIVIDADE);
+		assertThat(new Servico("Firewall").getCategoria()).isEqualTo(CategoriaServico.SEGURANCA);
+		assertThat(new Servico("Cloud").getCategoria()).isEqualTo(CategoriaServico.NUVEM);
+		assertThat(new Servico("Telefonia IP").getCategoria()).isEqualTo(CategoriaServico.OUTROS);
+	}
+
+	@Test
+	void matriculaEmBrancoViraNula() {
+		Consultor consultor = new Consultor("Ana");
+		consultor.setMatricula("  ");
+		assertThat(consultor.getMatricula()).isNull();
+		consultor.setMatricula(" ct-001 ");
+		assertThat(consultor.getMatricula()).isEqualTo("CT-001");
+	}
+
+	@Test
 	void subclassesDeInsightHerdamDaBase() {
 		List<Insight> insights = List.of(new InsightSegmento("Industria", 3, new BigDecimal("900")),
 				new InsightFaturamento(FaixaFaturamento.MICRO, 2, new BigDecimal("500")));

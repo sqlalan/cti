@@ -6,7 +6,8 @@ import jakarta.validation.constraints.Size;
 
 /**
  * Dados aceitos na criacao e na atualizacao de um usuario. O consultor e informado pelo nome, como
- * vem na planilha; se ainda nao existir, e cadastrado.
+ * vem na planilha; se ainda nao existir, e cadastrado. A matricula do consultor
+ * e opcional.
  */
 public record UsuarioRequest(
 
@@ -16,6 +17,8 @@ public record UsuarioRequest(
 
 		@NotBlank @Size(min = 8, max = 100) String senha,
 
-		@NotBlank @Size(max = 120) String consultor) {
+		@NotBlank @Size(max = 120) String consultor,
+
+		@Size(max = 20) String matricula) {
 
 }

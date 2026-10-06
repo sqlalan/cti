@@ -103,11 +103,18 @@ class ClienteControllerTests {
 				.content("{\"servico\":\"Firewall\",\"dataContratacao\":\"2025-01-15\"}"))
 			.andExpect(status().isCreated())
 			.andExpect(jsonPath("$.servico").value("Firewall"))
+			.andExpect(jsonPath("$.categoria").value("SEGURANCA"))
+			.andExpect(jsonPath("$.status").value("ATIVO"))
 			.andExpect(jsonPath("$.clienteCodigo").value("CTI-400"))
 			.andReturn()
 			.getResponse()
 			.getContentAsString();
 		long contratoId = ((Number) JsonPath.read(corpo, "$.id")).longValue();
+
+		this.mockMvc.perform(patch("/api/contratos/" + contratoId + "/cancelamento"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value("CANCELADO"));
+		this.mockMvc.perform(patch("/api/contratos/99999/cancelamento")).andExpect(status().isNotFound());
 
 		this.mockMvc.perform(get("/api/clientes/" + id + "/contratos"))
 			.andExpect(status().isOk())

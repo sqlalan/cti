@@ -1,8 +1,10 @@
 package com.synthetix.cti.controller;
 
+import com.synthetix.cti.dto.ContratoDTO;
 import com.synthetix.cti.service.ClienteService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,6 +17,12 @@ public class ContratoController {
 
 	public ContratoController(ClienteService service) {
 		this.service = service;
+	}
+
+	// PATCH: muda so o status; o contrato continua no historico.
+	@PatchMapping("/{id}/cancelamento")
+	public ContratoDTO cancelar(@PathVariable Long id) {
+		return service.cancelarContrato(id);
 	}
 
 	@DeleteMapping("/{id}")

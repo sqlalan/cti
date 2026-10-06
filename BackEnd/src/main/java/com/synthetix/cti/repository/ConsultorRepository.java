@@ -8,4 +8,6 @@ public interface ConsultorRepository extends JpaRepository<Consultor, Long> {
 
 	Optional<Consultor> findByNomeIgnoreCase(String nome);
 
+	Optional<Consultor> findByMatricula(String matricula);
+
 }

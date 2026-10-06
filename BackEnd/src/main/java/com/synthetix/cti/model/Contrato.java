@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Table(name = "contratos")
@@ -26,6 +27,12 @@ public class Contrato {
 
 	@Column(name = "data_contratacao", nullable = false)
 	private LocalDate dataContratacao;
+
+	// Default no banco: contratos gravados antes desta coluna existir continuam ativos.
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, length = 20)
+	@ColumnDefault("'ATIVO'")
+	private StatusContrato status = StatusContrato.ATIVO;
 
 	// Contrato 1 -- N Insight
 	@OneToMany(mappedBy = "contrato", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -62,6 +69,22 @@ public class Contrato {
 
 	public void setDataContratacao(LocalDate dataContratacao) {
 		this.dataContratacao = dataContratacao;
+	}
+
+	public StatusContrato getStatus() {
+		return status;
+	}
+
+	public boolean isAtivo() {
+		return status == StatusContrato.ATIVO;
+	}
+
+	/**
+	 * O contrato cancelado continua no historico (conta na evolucao de contratacoes); so muda o
+	 * status. Cancelar de novo nao faz nada.
+	 */
+	public void cancelar() {
+		this.status = StatusContrato.CANCELADO;
 	}
 
 	public List<Insight> getInsights() {

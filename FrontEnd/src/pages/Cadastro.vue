@@ -3,7 +3,7 @@ import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
 
-const form = reactive({ nome: '', email: '', consultor: '', senha: '', confirmacao: '' })
+const form = reactive({ nome: '', email: '', consultor: '', matricula: '', senha: '', confirmacao: '' })
 const mensagem = ref('')
 const mostrarSenha = ref(false)
 const enviando = ref(false)
@@ -35,6 +35,7 @@ async function cadastrar() {
     nome: form.nome.trim(),
     email: form.email.trim(),
     consultor: form.consultor.trim(),
+    matricula: form.matricula.trim(),
     senha: form.senha,
   })
   enviando.value = false
@@ -94,6 +95,11 @@ const classeRotulo = 'mt-5 block text-sm font-medium text-ink-900 dark:text-mist
           <p class="mt-1.5 text-xs text-ink-600 dark:text-mist-400" id="consultor-ajuda">
             Exatamente como está na coluna de consultor. Maiúsculas não importam.
           </p>
+
+          <label :class="classeRotulo" for="matricula">
+            Matrícula <span class="font-normal text-ink-600 dark:text-mist-400">(opcional)</span>
+          </label>
+          <input :class="classeCampo" id="matricula" v-model="form.matricula" type="text" autocomplete="off" maxlength="20" placeholder="CT-001" />
 
           <label :class="classeRotulo" for="senha">Senha</label>
           <div class="relative">

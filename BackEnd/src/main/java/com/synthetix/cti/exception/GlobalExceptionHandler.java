@@ -44,6 +44,11 @@ public class GlobalExceptionHandler {
 		return problema(HttpStatus.CONFLICT, "E-mail duplicado", ex.getMessage());
 	}
 
+	@ExceptionHandler(MatriculaDuplicadaException.class)
+	public ProblemDetail matriculaDuplicada(MatriculaDuplicadaException ex) {
+		return problema(HttpStatus.CONFLICT, "Matricula duplicada", ex.getMessage());
+	}
+
 	@ExceptionHandler(ConsultorJaVinculadoException.class)
 	public ProblemDetail consultorJaVinculado(ConsultorJaVinculadoException ex) {
 		return problema(HttpStatus.CONFLICT, "Consultor ja vinculado", ex.getMessage());
