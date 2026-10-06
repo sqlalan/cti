@@ -31,7 +31,7 @@ Planilha Excel ──▶ Vue 3 (Front-end) ──▶ Spring Boot (API REST) ─�
 | Pasta | Conteúdo | Disciplina |
 | --- | --- | --- |
 | [`FrontEnd/`](FrontEnd/) | Vue 3, Vite, Tailwind, Pinia, Vue Router e Axios | Frameworks Front-end |
-| [`BackEnd/`](BackEnd/) | Java 25 e Spring Boot 4 (Web MVC, Data JPA, Security com JWT, Validation) | Desenvolvimento Back-end |
+| [`BackEnd/`](BackEnd/) | Java 21 e Spring Boot 4 (Web MVC, Data JPA, Security com JWT, Validation) | Desenvolvimento Back-end |
 | [`CienciaD/`](CienciaD/) | Python com Pandas, SciPy e Matplotlib: limpeza, estatística, gráficos e insights | Ciência de Dados |
 | [`database/`](database/) | `schema.sql`: a estrutura do banco no PostgreSQL | Back-end / Nuvem |
 
@@ -50,7 +50,7 @@ O back-end segue as camadas vistas em aula:
 ## Como rodar na sua máquina
 
 **Pré-requisitos:**
-- Java 25;
+- JDK 21 ou mais novo (o 25 também serve);
 - Node.js 22 ou mais novo;
 - Python 3.10 ou mais novo;
 - um PostgreSQL.
