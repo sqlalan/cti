@@ -6,6 +6,7 @@ import Cadastro from '../pages/Cadastro.vue'
 import Dashboard from '../pages/Dashboard.vue'
 import Upload from '../pages/Upload.vue'
 import Relatorio from '../pages/Relatorio.vue'
+import NaoEncontrada from '../pages/NaoEncontrada.vue'
 import { useAuthStore } from '../stores/authStore'
 
 // Os caminhos só existem aqui. O resto do app navega pelo NOME da rota
@@ -37,6 +38,10 @@ const routes = [
   // Mantidos para não quebrar link salvo, favorito ou o que já foi publicado.
   { path: '/sidebar', redirect: { name: 'upload' } },
   { path: '/sidebar/:tela', redirect: (to) => `/${to.params.tela}` },
+
+  // Por último: qualquer endereço que não casou acima. Sem isto a tela ficava
+  // preta, porque o RouterView não tinha o que desenhar.
+  { path: '/:caminho(.*)*', name: 'nao-encontrada', component: NaoEncontrada },
 ]
 
 const router = createRouter({

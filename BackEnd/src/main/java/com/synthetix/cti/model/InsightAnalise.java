@@ -39,6 +39,11 @@ public class InsightAnalise extends Insight {
 	}
 
 	@Override
+	public String getOrigem() {
+		return "ANALISE";
+	}
+
+	@Override
 	public String gerarResumo() {
 		return texto;
 	}

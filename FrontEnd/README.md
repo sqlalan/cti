@@ -25,10 +25,13 @@ não na raiz do repositório — rodar `npm run dev` na raiz falha com `ENOENT`.
 | Rota | Tela | O que faz |
 | --- | --- | --- |
 | `/` | Home | Página institucional |
-| `/login` | Login | Formulário de acesso (**sem autenticação ainda**) |
-| `/sidebar/upload` | Upload | Recebe a planilha, trata e mostra a prévia |
-| `/sidebar/relatorio` | Relatórios | Análise da carteira carregada, com filtros e exportação CSV |
-| `/sidebar/dashboard` | Dashboard | Indicadores de processamento (**dados de exemplo**) |
+| `/login` | Login | Entra com e-mail e senha conferidos na API; guarda o token (JWT) |
+| `/cadastro` | Cadastro | O consultor cria a própria conta e já entra |
+| `/upload` | Upload | Prévia e validação no navegador; o envio vai para `POST /api/planilhas` (**exige login**) |
+| `/relatorio` | Relatórios | Análise da carteira carregada, com filtros e exportação CSV (**exige login**) |
+| `/dashboard` | Dashboard | Gráficos por segmento, nível A/B/C e evolução de contratações, insights e testes da última planilha, lidos de `/api/indicadores` (**exige login**) |
+
+O endereço da API vem de `VITE_API_URL` (padrão `http://localhost:8080/api`).
 
 ## Fluxo do upload
 
@@ -69,92 +72,39 @@ para alguém decidir se vira cadastro novo.
 | Arquivo | Para quê |
 | --- | --- |
 | `src/dados/esquemaPlanilha.js` | Colunas, apelidos, dicionários e regras de tratamento |
-| `src/stores/uploadStore.js` | Leitura do arquivo, estado e **ponto de integração com a API** |
+| `src/stores/uploadStore.js` | Leitura do arquivo, estado e envio para a API |
 | `src/pages/Upload.vue` | Tela de envio e prévia |
 | `src/pages/Relatorio.vue` | Relatórios e exportação |
 | `src/style.css` | Tokens de cor, sombra e animação (Tailwind v4 `@theme`) |
-| `src/dados/painel.js` | Dados de exemplo do Dashboard — trocar por API |
+| `src/pages/Dashboard.vue` | Gráficos, insights e testes da última planilha (dados da API) |
+| `src/services/api.js` | Axios, token e mensagens de erro da API |
 
 Coluna nova é editar só o `ESQUEMA` em `esquemaPlanilha.js`: a prévia, a
 exportação e as tabelas percorrem essa lista.
 
-## Próxima etapa: backend e Azure
-
-**Nada sai da máquina ainda.** O envio é simulado.
+## Integração com o back-end
 
 ```
-Hoje    Planilha → Vue Upload → Pinia → Tratamento → Prévia
-Depois  Planilha → Vue Upload → Pinia → Axios → Spring Boot → PostgreSQL (Azure)
+Planilha → Vue Upload (prévia no navegador) → Axios → Spring Boot → Python → PostgreSQL
+                                                          ↓
+                              Dashboard ← GET /api/indicadores e /api/analises/ultima
 ```
 
-O Vue **não acessa o PostgreSQL diretamente**. Quem grava no banco é o Spring Boot.
+O Vue **não acessa o PostgreSQL diretamente**: quem grava no banco é o Spring Boot.
 
-O ponto de integração é a função `enviar()` em `src/stores/uploadStore.js`, marcada
-com `--- TROQUE DAQUI ---`. O `FormData` já está montado com o arquivo original e
-a contagem de linhas. Falta decidir com o backend:
+- **`src/services/api.js`**: instância do Axios. Põe o token em cada pedido e, se a API
+  responder 401 com token, encerra a sessão e volta ao login. Também traduz o erro
+  `ProblemDetail` da API na frase mostrada na tela (`mensagemDeErro`).
+- **`enviar()` em `src/stores/uploadStore.js`**: manda o **arquivo original** para
+  `POST /api/planilhas`. O servidor trata tudo de novo no Python, porque dado que vem
+  do navegador pode ter sido adulterado. A prévia daqui serve para a pessoa corrigir a
+  planilha antes de enviar.
+- **`src/stores/authStore.js`**: login, cadastro e o token (JWT) no `localStorage`.
+  A senha nunca é guardada.
+- **`src/router/index.js`**: Upload, Dashboard e Relatório exigem login.
 
-- **Enviar o arquivo original** e reprocessar no Java com Apache POI — o
-  tratamento do navegador vira só pré-visualização; ou
-- **Enviar as linhas já tratadas** (`JSON.stringify(dados)`) — menos trabalho no
-  servidor, mas ele **ainda precisa revalidar**: dado que chega do navegador é
-  dado que o usuário pode ter adulterado.
-
-O arquivo futuro é `src/services/api.js`:
-
-```js
-import axios from 'axios'
-
-export const api = axios.create({
-  // Nunca fixe o host: no build para o Azure isto aponta para a máquina errada.
-  baseURL: import.meta.env.VITE_API_URL ?? '/api',
-})
-```
-
-### Quatro pedras no caminho, já visíveis no backend atual
-
-Verificadas em `BackEnd/src/main/java/com/synthetix/cti/config/SecurityConfig.java`
-e `application.properties`.
-
-**1. CORS não está configurado.** O Vue roda em `:5173` e o Spring em `:8080` —
-origens diferentes. O navegador bloqueia o POST antes mesmo de sair. É o primeiro
-erro que vai aparecer. Em desenvolvimento, o caminho limpo é o proxy do Vite, que
-faz o navegador falar só com `:5173`:
-
-```js
-// vite.config.js
-export default defineConfig({
-  plugins: [vue(), tailwindcss()],
-  server: {
-    proxy: { '/api': { target: 'http://localhost:8080', changeOrigin: true } },
-  },
-})
-```
-
-Em produção, se front e back ficarem em domínios distintos no Azure, aí sim o
-Spring precisa liberar CORS de verdade.
-
-**2. Tudo exige autenticação.** O `SecurityConfig` tem
-`.anyRequest().authenticated()` com `httpBasic`. Um `POST /api/upload` sem
-credencial volta **401**, e o `WWW-Authenticate: Basic` faz o navegador abrir
-aquele popup nativo de senha — surpresa ruim no meio de uma demonstração. Ou
-libere a rota de upload, ou mande credencial/token pelo Axios.
-
-**3. O limite de upload não bate.** Esta tela aceita até 25 MB, mas o padrão do
-Spring Boot é **1 MB por arquivo** e 10 MB por requisição. Uma planilha de 5 MB
-morre com `MaxUploadSizeExceededException`. Alinhe os dois lados:
-
-```properties
-spring.servlet.multipart.max-file-size=25MB
-spring.servlet.multipart.max-request-size=30MB
-```
-
-**4. O comentário do CSRF fica desatualizado.** Ele diz "API stateless consumida
-por clientes nao-browser" — e a partir da integração o cliente passa a ser um
-navegador. Com Basic + stateless, manter o CSRF desligado continua defensável,
-mas a justificativa escrita ali deixa de valer.
-
-Também ficam para esta etapa: autenticação de verdade (hoje o login e o botão
-Sair só navegam), persistência no PostgreSQL e a publicação no Azure.
+Variável de ambiente: `VITE_API_URL` (padrão `http://localhost:8080/api`). Na Vercel,
+defina-a no painel e publique de novo, porque ela entra no código no momento do build.
 
 ## Aviso de segurança da dependência `xlsx`
 

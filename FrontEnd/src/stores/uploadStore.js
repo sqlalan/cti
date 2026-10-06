@@ -9,6 +9,7 @@ import {
   tratarLinhas,
 } from '../dados/esquemaPlanilha'
 import { useNotificacoesStore } from './notificacoes'
+import { api, mensagemDeErro } from '../services/api'
 
 export const FORMATOS = ['.xlsx', '.xls', '.csv']
 export const TAMANHO_MAXIMO = 25 * 1024 * 1024
@@ -110,6 +111,10 @@ export const useUploadStore = defineStore('upload', () => {
   // Motivo do último problema do ARQUIVO (formato, leitura, envio). Problema
   // de LINHA mora em dadosInvalidos.
   const falha = ref('')
+
+  // Resposta do servidor ao envio: contagens, clientes novos/atualizados e os
+  // insights gerados. A prévia acima é do navegador; isto é o que foi gravado.
+  const analise = ref(null)
 
   // A notificação em curso, para a etapa seguinte reescrever o mesmo cartão em
   // vez de empilhar outro. Fora do state porque não é dado de tela.
@@ -257,6 +262,7 @@ export const useUploadStore = defineStore('upload', () => {
     abasIgnoradas.value = []
     estado.value = 'vazio'
     falha.value = ''
+    analise.value = null
   }
 
   /**
@@ -385,53 +391,49 @@ export const useUploadStore = defineStore('upload', () => {
   }
 
   // -------------------------------------------------------------------------
-  // Ponto de integração com o Spring Boot. Está montado, só não dispara: a
-  // chamada HTTP vai morar num service em src/services/ e esta action só o
-  // chama. Falta decidir o corpo — o arquivo original (FormData abaixo) ou as
-  // linhas já tratadas. Em qualquer caso o servidor revalida: dado que vem do
-  // navegador é dado que o usuário pode ter adulterado.
+  // Envio ao Spring Boot (POST /api/planilhas). Vai o arquivo original, não as
+  // linhas tratadas aqui: o servidor trata de novo no Python, porque dado que
+  // vem do navegador é dado que o usuário pode ter adulterado. A prévia serve
+  // para a pessoa corrigir a planilha antes; quem grava é o servidor.
   // -------------------------------------------------------------------------
   async function enviar() {
     if (!podeEnviar.value) return false
 
     estado.value = 'enviando'
     falha.value = ''
+    analise.value = null
 
-    const enviadas = quantidadeValidas.value
     const notificacao = abrirOperacao(
-      'Enviando para o servidor…',
-      `${linhas(enviadas)} · ${nomeArquivo.value}`,
+      'Enviando e analisando…',
+      `${nomeArquivo.value} · o servidor trata a planilha e calcula os indicadores`,
     )
 
     const corpo = new FormData()
     corpo.append('arquivo', arquivo.value, nomeArquivo.value)
-    corpo.append('dataUpload', dataUpload.value.toISOString())
-    corpo.append('linhasValidas', String(enviadas))
-    corpo.append('linhasComErro', String(quantidadeInvalidas.value))
 
     try {
-      // --- TROQUE DAQUI ---
-      // const resposta = await fetch('/api/planilhas', { method: 'POST', body: corpo })
-      // if (!resposta.ok) throw new Error(`o servidor respondeu ${resposta.status}`)
-      await new Promise((resolve) => setTimeout(resolve, 900))
-      // --- ATÉ AQUI ---
-
+      const { data } = await api.post('/planilhas', corpo)
+      analise.value = data
       estado.value = 'enviado'
+
       notificacoes.atualizar(notificacao, {
         tipo: 'sucesso',
-        titulo: 'Envio concluído',
-        texto: `${linhas(enviadas)} de ${nomeArquivo.value} chegaram ao servidor.`,
+        titulo: 'Planilha processada',
+        texto:
+          `${linhas(data.linhasValidas)} gravadas: ${data.clientesCriados} cliente(s) novo(s) e ` +
+          `${data.clientesAtualizados} atualizado(s). Os insights já estão no Dashboard.`,
       })
 
       return true
     } catch (erro) {
+      const mensagem = mensagemDeErro(erro)
       estado.value = 'falha'
-      falha.value = `Falha ao enviar: ${erro.message}`
+      falha.value = `Falha ao enviar: ${mensagem}`
 
       notificacoes.atualizar(notificacao, {
         tipo: 'erro',
         titulo: 'Falha no envio',
-        texto: `${erro.message}. A planilha continua carregada — dá para tentar de novo sem selecionar o arquivo outra vez.`,
+        texto: `${mensagem} A planilha continua carregada — dá para tentar de novo sem selecionar o arquivo outra vez.`,
       })
 
       return false
@@ -453,6 +455,7 @@ export const useUploadStore = defineStore('upload', () => {
     abasIgnoradas,
     estado,
     falha,
+    analise,
     // getters
     quantidadeLinhas,
     quantidadeValidas,

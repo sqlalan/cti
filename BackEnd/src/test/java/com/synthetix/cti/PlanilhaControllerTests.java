@@ -101,7 +101,9 @@ class PlanilhaControllerTests {
 			.andExpect(jsonPath("$.testes.normalidade_faturamento.teste").value("Shapiro-Wilk"));
 		this.mockMvc.perform(get("/api/insights"))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$[?(@.categoria == 'QUALIDADE')].texto").exists());
+			.andExpect(jsonPath("$[?(@.categoria == 'QUALIDADE')].texto").exists())
+			.andExpect(jsonPath("$[?(@.categoria == 'QUALIDADE')].origem").value("ANALISE"))
+			.andExpect(jsonPath("$[?(@.titulo == 'Segmento Indústria')].origem").value("RESUMO"));
 		this.mockMvc.perform(get("/api/analises/ultima"))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.linhasValidas").value(31));

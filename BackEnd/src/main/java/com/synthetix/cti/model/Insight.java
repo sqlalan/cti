@@ -54,6 +54,14 @@ public abstract class Insight {
 
 	public abstract String getTitulo();
 
+	/**
+	 * RESUMO: numeros agregados pelo Java (por segmento, por faixa). A subclasse com texto da analise
+	 * sobrescreve.
+	 */
+	public String getOrigem() {
+		return "RESUMO";
+	}
+
 	public Long getId() {
 		return id;
 	}

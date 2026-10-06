@@ -102,13 +102,9 @@ async function entrar() {
             </button>
           </div>
 
-          <!-- "Manter conectado" saiu: pela aula o login sempre persiste no
-               localStorage, e uma caixa que não muda nada engana quem marca. -->
-          <div class="mt-5 flex justify-end">
-            <a class="text-sm font-medium text-brand-800 dark:text-brand-300 hover:text-brand-500" href="#">
-              Esqueci minha senha
-            </a>
-          </div>
+          <!-- "Manter conectado" e "Esqueci minha senha" saíram: o login sempre
+               persiste e não há recuperação de senha; controle que não faz nada
+               engana quem clica. -->
 
           <p
             class="mt-6 rounded border border-warn-500 bg-warn-500/10 dark:bg-warn-500/15 px-4 py-3 text-sm text-ink-900 dark:text-mist-100"

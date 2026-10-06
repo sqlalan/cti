@@ -4,7 +4,7 @@ import CartaoGrafico from '../components/graficos/CartaoGrafico.vue'
 import GraficoArea from '../components/graficos/GraficoArea.vue'
 import GraficoBarras from '../components/graficos/GraficoBarras.vue'
 import { NIVEIS } from '../dados/esquemaPlanilha'
-import { formatarData } from '../dados/painel'
+import { CORES_NIVEL, formatarData } from '../dados/painel'
 import { useUploadStore } from '../stores/uploadStore'
 
 // O relatório lê a mesma planilha que o Upload carregou. É o que o store existe
@@ -91,12 +91,6 @@ const porNivel = computed(() =>
     return { rotulo: nivel, clientes: doNivel.length, faturamento: somar(doNivel) }
   }),
 )
-
-const CORES_NIVEL = {
-  A: 'bg-nivel-a-600 dark:bg-nivel-a-400',
-  B: 'bg-nivel-b-600 dark:bg-nivel-b-400',
-  C: 'bg-nivel-c-600 dark:bg-nivel-c-400',
-}
 
 // Contratações agrupadas por mês. Meses sem contrato entram com zero: pular o
 // mês vazio encurtaria o eixo e faria a série parecer contínua onde não é.

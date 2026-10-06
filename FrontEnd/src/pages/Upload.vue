@@ -475,16 +475,50 @@ const grupos = computed(() => {
           <circle cx="12" cy="12" r="9" />
           <path d="m8.5 12 2.5 2.5 4.5-5" />
         </svg>
-        Enviado
+        Processada pelo servidor
       </p>
     </div>
-  </template>
 
-  <p
-    class="mt-8 rounded border border-warn-500 bg-warn-500/10 px-4 py-3 text-sm text-ink-900 dark:bg-warn-500/15 dark:text-mist-100"
-    role="status"
-  >
-    O envio ainda não sai da máquina: o ponto de integração está marcado em
-    <code class="text-xs">enviar()</code>, em <code class="text-xs">src/stores/uploadStore.js</code>.
-  </p>
+    <!-- O que o SERVIDOR gravou. Pode diferir da prévia acima se a planilha
+         trouxer algo que só o tratamento em Python recusa. -->
+    <section
+      class="mt-4 rounded border border-ok-600/40 bg-ok-600/5 p-5 dark:border-ok-400/40 dark:bg-ok-400/10"
+      v-if="planilha.estado === 'enviado' && planilha.analise"
+      role="status"
+    >
+      <h2 class="text-sm font-semibold text-ink-900 dark:text-mist-100">Resultado no servidor</h2>
+      <dl class="mt-3 grid gap-3 text-sm sm:grid-cols-4">
+        <div>
+          <dt class="text-ink-600 dark:text-mist-300">Linhas gravadas</dt>
+          <dd class="text-lg font-semibold tabular-nums text-ink-900 dark:text-mist-100">
+            {{ inteiro(planilha.analise.linhasValidas) }}
+          </dd>
+        </div>
+        <div>
+          <dt class="text-ink-600 dark:text-mist-300">Recusadas</dt>
+          <dd class="text-lg font-semibold tabular-nums text-ink-900 dark:text-mist-100">
+            {{ inteiro(planilha.analise.linhasRejeitadas) }}
+          </dd>
+        </div>
+        <div>
+          <dt class="text-ink-600 dark:text-mist-300">Clientes novos</dt>
+          <dd class="text-lg font-semibold tabular-nums text-ink-900 dark:text-mist-100">
+            {{ inteiro(planilha.analise.clientesCriados) }}
+          </dd>
+        </div>
+        <div>
+          <dt class="text-ink-600 dark:text-mist-300">Clientes atualizados</dt>
+          <dd class="text-lg font-semibold tabular-nums text-ink-900 dark:text-mist-100">
+            {{ inteiro(planilha.analise.clientesAtualizados) }}
+          </dd>
+        </div>
+      </dl>
+      <RouterLink
+        class="mt-4 inline-flex rounded bg-brand-800 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+        :to="{ name: 'dashboard' }"
+      >
+        Ver gráficos e insights
+      </RouterLink>
+    </section>
+  </template>
 </template>
