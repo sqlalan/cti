@@ -35,7 +35,7 @@ Planilha Excel ──▶ Vue 3 (Front-end) ──▶ Spring Boot (API REST) ─�
 | [`CienciaD/`](CienciaD/) | Python com Pandas, SciPy e Matplotlib: limpeza, estatística, gráficos e insights | Ciência de Dados |
 | [`database/`](database/) | `schema.sql`: a estrutura do banco no PostgreSQL | Back-end / Nuvem |
 
-O back-end segue as camadas vistas em aula:
+O código do back-end fica em `BackEnd/src/main/java/br/com/cti/insights/` e segue as camadas vistas em aula:
 
 | Pacote | Papel |
 | --- | --- |

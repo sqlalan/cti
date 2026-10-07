@@ -8,11 +8,11 @@
 		<version>4.1.1</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.synthetix</groupId>
+	<groupId>br.com.cti</groupId>
 	<artifactId>cti-api</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>cti-api</name>
-	<description>API de usuarios do projeto CTI</description>
+	<description>API do Sistema CTI Insights</description>
 	<properties>
 		<!-- 21 (LTS): roda em quem segue o guia da disciplina (JDK 17+) e em JDK mais novo, como o 25. -->
 		<java.version>21</java.version>

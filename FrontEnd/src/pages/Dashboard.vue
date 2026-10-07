@@ -80,7 +80,7 @@ const insights = computed(() => analise.value.insights.filter((i) => i.origem ==
 
 const testes = computed(() => Object.values(ind.value.testes).filter((t) => t.aplicavel !== false))
 
-const ROTULO_CATEGORIA = {
+const ROTULO_TIPO = {
   SEGMENTO: 'Segmento',
   FATURAMENTO: 'Faturamento',
   SERVICO: 'Serviços',
@@ -248,10 +248,10 @@ const ROTULO_CATEGORIA = {
       <ul class="mt-4 grid gap-3 md:grid-cols-2">
         <li class="rounded border border-ink-200 p-4 dark:border-night-700" v-for="insight in insights" :key="insight.id">
           <p class="text-xs font-medium uppercase tracking-wide text-brand-800 dark:text-brand-300">
-            {{ ROTULO_CATEGORIA[insight.categoria] ?? insight.categoria }}
+            {{ ROTULO_TIPO[insight.tipo] ?? insight.tipo }}
           </p>
           <h3 class="mt-1 text-sm font-semibold text-ink-900 dark:text-mist-100">{{ insight.titulo }}</h3>
-          <p class="mt-1 text-sm leading-relaxed text-ink-600 dark:text-mist-300">{{ insight.texto }}</p>
+          <p class="mt-1 text-sm leading-relaxed text-ink-600 dark:text-mist-300">{{ insight.descricao }}</p>
         </li>
       </ul>
     </section>
