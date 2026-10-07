@@ -12,7 +12,7 @@ import insights
 from limpeza import carregar
 
 RAIZ = Path(__file__).resolve().parents[1]
-PLANILHA = RAIZ.parent / "FrontEnd" / "planilhas-exemplo" / "CTI_Insights_modelo_upload_aula.xlsx"
+PLANILHA = RAIZ.parent / "FrontEnd" / "planilhas-exemplo" / "dados.xlsx"
 
 
 class Medidas(unittest.TestCase):

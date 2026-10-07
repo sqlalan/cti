@@ -92,7 +92,7 @@ npm install
 npm run dev
 ```
 
-Abra `/cadastro`, crie a conta de consultor e envie a planilha de exemplo [`FrontEnd/planilhas-exemplo/CTI_Insights_modelo_upload_aula.xlsx`](FrontEnd/planilhas-exemplo/).
+Abra `/cadastro`, crie a conta de consultor e envie a planilha de exemplo [`FrontEnd/planilhas-exemplo/dados.xlsx`](FrontEnd/planilhas-exemplo/).
 
 ### Variáveis de ambiente
 

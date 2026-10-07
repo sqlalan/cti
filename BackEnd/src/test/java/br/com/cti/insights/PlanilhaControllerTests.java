@@ -39,7 +39,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 @EnabledIf("pythonDisponivel")
 class PlanilhaControllerTests {
 
-	private static final Path PLANILHA_MODELO = Path.of("../FrontEnd/planilhas-exemplo/CTI_Insights_modelo_upload_aula.xlsx");
+	private static final Path PLANILHA_MODELO = Path.of("../FrontEnd/planilhas-exemplo/dados.xlsx");
 
 	@Autowired
 	private MockMvc mockMvc;

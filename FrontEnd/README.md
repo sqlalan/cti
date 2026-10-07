@@ -139,7 +139,7 @@ separação sob daltonismo e contraste) — não ajuste no olho.
 
 ## Planilha de exemplo
 
-`planilhas-exemplo/CTI_Insights_modelo_upload_aula.xlsx` é o modelo da aula.
+`planilhas-exemplo/dados.xlsx` é a planilha modelo fornecida pela professora.
 A pasta fica fora de `src/` e de `public/`, então nada dali entra no build.
 
 O arquivo tem 6 abas; a aplicação lê **só a primeira** (`upload_clientes`) e

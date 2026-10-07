@@ -15,7 +15,7 @@ O Spring Boot chama estes scripts pelo `ProcessBuilder` depois do upload. També
 ```bash
 cd CienciaD
 py -m pip install -r requirements.txt        # no Linux/Mac: python3 -m pip ...
-py main.py ../FrontEnd/planilhas-exemplo/CTI_Insights_modelo_upload_aula.xlsx
+py main.py ../FrontEnd/planilhas-exemplo/dados.xlsx
 ```
 
 Opções:
