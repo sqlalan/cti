@@ -66,7 +66,7 @@ public class UsuarioService {
 		usuario.setNome(request.nome());
 		usuario.setEmail(email);
 		usuario.setSenha(passwordEncoder.encode(request.senha()));
-		usuario.setConsultor(consultorLivre(request.consultor(), null));
+		usuario.setConsultor(consultorLivre(nomeDoConsultor(request), null));
 		catalogo.definirMatricula(usuario.getConsultor(), request.matricula());
 		return UsuarioDTO.de(repository.save(usuario));
 	}
@@ -81,7 +81,7 @@ public class UsuarioService {
 		usuario.setNome(request.nome());
 		usuario.setEmail(email);
 		usuario.setSenha(passwordEncoder.encode(request.senha()));
-		usuario.setConsultor(consultorLivre(request.consultor(), id));
+		usuario.setConsultor(consultorLivre(nomeDoConsultor(request), id));
 		catalogo.definirMatricula(usuario.getConsultor(), request.matricula());
 		return UsuarioDTO.de(repository.save(usuario));
 	}
@@ -110,6 +110,11 @@ public class UsuarioService {
 	// "Ana@Email.com " e "ana@email.com" sao o mesmo login.
 	private static String normalizar(String email) {
 		return email.trim().toLowerCase(Locale.ROOT);
+	}
+
+	// Cada usuario e um consultor: sem "consultor" no pedido, o proprio nome e o da planilha.
+	private static String nomeDoConsultor(UsuarioRequest request) {
+		return request.consultor() == null || request.consultor().isBlank() ? request.nome() : request.consultor();
 	}
 
 	// Mesmo criterio da planilha: acha pelo nome ou cadastra. Cada consultor tem um usuario so.

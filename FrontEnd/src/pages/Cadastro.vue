@@ -3,7 +3,7 @@ import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
 
-const form = reactive({ nome: '', email: '', consultor: '', matricula: '', senha: '', confirmacao: '' })
+const form = reactive({ nome: '', email: '', matricula: '', senha: '', confirmacao: '' })
 const mensagem = ref('')
 const mostrarSenha = ref(false)
 const enviando = ref(false)
@@ -14,7 +14,7 @@ const auth = useAuthStore()
 // Só o que o back-end não tem como checar (confirmação) ou que poupa uma ida ao
 // servidor. As regras de verdade (e-mail único, um usuário por consultor) são do Service.
 function problemaNoFormulario() {
-  if (!form.nome.trim() || !form.email.trim() || !form.consultor.trim() || !form.senha) {
+  if (!form.nome.trim() || !form.email.trim() || !form.senha) {
     return 'Preencha todos os campos.'
   }
   // Mesma regra do back-end (UsuarioRequest): 8 a 72 caracteres, com letras e números.
@@ -35,7 +35,6 @@ async function cadastrar() {
   mensagem.value = await auth.cadastrar({
     nome: form.nome.trim(),
     email: form.email.trim(),
-    consultor: form.consultor.trim(),
     matricula: form.matricula.trim(),
     senha: form.senha,
   })
@@ -80,22 +79,24 @@ const classeRotulo = 'mt-5 block text-sm font-medium text-ink-900 dark:text-mist
 
         <h1 class="mt-8 text-2xl font-bold text-ink-900 dark:text-mist-100 lg:mt-0">Criar conta</h1>
         <p class="mt-2 text-sm text-ink-600 dark:text-mist-300">
-          Cada consultor tem uma conta. Use seu nome como aparece na planilha.
+          Cada consultor tem uma conta, ligada aos seus clientes na planilha.
         </p>
 
         <!-- Sem `required`, como no Login: as mensagens vêm de um lugar só. -->
         <form class="mt-6" @submit.prevent="cadastrar">
-          <label class="block text-sm font-medium text-ink-900 dark:text-mist-100" for="nome">Seu nome</label>
-          <input :class="classeCampo" id="nome" v-model="form.nome" type="text" autocomplete="name" placeholder="Ana Lima" />
+          <!-- Um campo só: cada consultor é um usuário, e o nome dele É o da
+               planilha. O servidor usa este nome para achar o consultor. -->
+          <label class="block text-sm font-medium text-ink-900 dark:text-mist-100" for="nome">
+            Seu nome (como aparece na planilha)
+          </label>
+          <input :class="classeCampo" id="nome" v-model="form.nome" type="text" autocomplete="name" placeholder="Ana Souza" aria-describedby="nome-ajuda" />
+          <p class="mt-1.5 text-xs text-ink-600 dark:text-mist-400" id="nome-ajuda">
+            Escreva exatamente como está na coluna consultor da planilha. É por esse nome que o
+            sistema liga você aos seus clientes. Maiúsculas não importam.
+          </p>
 
           <label :class="classeRotulo" for="email">E-mail</label>
           <input :class="classeCampo" id="email" v-model="form.email" type="email" autocomplete="email" placeholder="voce@empresa.com" />
-
-          <label :class="classeRotulo" for="consultor">Consultor na planilha</label>
-          <input :class="classeCampo" id="consultor" v-model="form.consultor" type="text" autocomplete="off" placeholder="Ana Lima" aria-describedby="consultor-ajuda" />
-          <p class="mt-1.5 text-xs text-ink-600 dark:text-mist-400" id="consultor-ajuda">
-            Exatamente como está na coluna de consultor. Maiúsculas não importam.
-          </p>
 
           <label :class="classeRotulo" for="matricula">
             Matrícula <span class="font-normal text-ink-600 dark:text-mist-400">(opcional)</span>

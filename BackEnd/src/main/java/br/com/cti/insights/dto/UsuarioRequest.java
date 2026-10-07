@@ -7,8 +7,9 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 /**
- * Dados aceitos na criacao e na atualizacao de um usuario. O consultor e informado pelo nome, como
- * vem na planilha; se ainda nao existir, e cadastrado. A matricula do consultor e opcional.
+ * Dados aceitos na criacao e na atualizacao de um usuario. Cada usuario e um consultor: sem
+ * "consultor", vale o proprio nome, que deve ser o da planilha. Consultor que ainda nao existe e
+ * cadastrado. A matricula e opcional.
  */
 public record UsuarioRequest(
 
@@ -21,7 +22,7 @@ public record UsuarioRequest(
 		@Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d).{8,72}$",
 				message = "A senha deve ter de 8 a 72 caracteres, com letras e números") String senha,
 
-		@NotBlank(message = "Informe o consultor como aparece na planilha")
+		// opcional: vazio = o proprio nome
 		@Size(max = 120, message = "Consultor com no máximo 120 caracteres") String consultor,
 
 		@Size(max = 20, message = "Matrícula com no máximo 20 caracteres") String matricula) {

@@ -121,7 +121,7 @@ Por enquanto nenhuma rota é exclusiva de `ADMIN`. O perfil já chega ao Spring 
 
 | Verbo | Rota | O que faz |
 | --- | --- | --- |
-| POST | `/api/usuarios` | Cadastro do consultor: nome, e-mail, senha (8 a 72 caracteres, com letras e números), consultor na planilha e matrícula opcional. O e-mail é gravado em minúsculas. |
+| POST | `/api/usuarios` | Cadastro do consultor: nome (o mesmo da coluna consultor da planilha), e-mail, senha (8 a 72 caracteres, com letras e números) e matrícula opcional. `consultor` só é preciso se for diferente do nome. O e-mail é gravado em minúsculas. |
 | POST | `/api/usuarios/login` | Login. Devolve `{ token, expiraEm, usuario }` |
 | GET | `/api/usuarios/me` | Quem está logado, lido do próprio token |
 | GET, PUT, DELETE | `/api/usuarios`, `/api/usuarios/{id}` | Consultar, alterar e remover usuários |

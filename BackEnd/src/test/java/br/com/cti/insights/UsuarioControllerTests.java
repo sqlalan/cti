@@ -61,6 +61,29 @@ class UsuarioControllerTests {
 	}
 
 	@Test
+	void semConsultorOProprioNomeEhOConsultor() throws Exception {
+		// JSON do GUIA 1 (TESTE 1), sem o campo consultor.
+		this.mockMvc
+			.perform(post("/api/usuarios").contentType(MediaType.APPLICATION_JSON).content("""
+					{"nome":"Paula Reis","email":"paula@exemplo.com","senha":"Senha1234"}
+					"""))
+			.andExpect(status().isCreated())
+			.andExpect(jsonPath("$.nome").value("Paula Reis"))
+			.andExpect(jsonPath("$.consultor").value("Paula Reis"));
+	}
+
+	@Test
+	void nomeDoCadastroLigaAoConsultorQueJaVeioDaPlanilha() throws Exception {
+		consultorRepository.save(new Consultor("Rita Campos"));
+		this.mockMvc
+			.perform(post("/api/usuarios").contentType(MediaType.APPLICATION_JSON).content("""
+					{"nome":"rita campos","email":"rita@exemplo.com","senha":"Senha1234"}
+					"""))
+			.andExpect(status().isCreated())
+			.andExpect(jsonPath("$.consultor").value("Rita Campos"));
+	}
+
+	@Test
 	void senhaPrecisaDeLetrasENumerosEDe8A72Caracteres() throws Exception {
 		for (String senha : List.of("abcdefgh", "12345678", "a1", "a1".repeat(37))) {
 			this.mockMvc
