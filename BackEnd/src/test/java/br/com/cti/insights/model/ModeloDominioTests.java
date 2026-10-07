@@ -76,6 +76,19 @@ class ModeloDominioTests {
 	}
 
 	@Test
+	void settersDasListasSubstituemOConteudo() {
+		Cliente cliente = new Cliente("CTI-1", "Cliente", new Consultor("Ana"));
+		Contrato primeiro = cliente.contratar(new Servico("MPLS"), LocalDate.of(2025, 3, 2));
+		Contrato outro = new Contrato();
+
+		cliente.setContratos(List.of(outro));
+		assertThat(cliente.getContratos()).containsExactly(outro).doesNotContain(primeiro);
+
+		cliente.setContratos(null);
+		assertThat(cliente.getContratos()).isEmpty();
+	}
+
+	@Test
 	void insightTemTipoEDescricao() {
 		Insight insight = new InsightSegmento("Industria", 3, new BigDecimal("900"));
 		assertThat(insight.getTipo()).isEqualTo("SEGMENTO");

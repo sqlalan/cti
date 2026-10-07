@@ -1,5 +1,6 @@
 package br.com.cti.insights;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -8,7 +9,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import br.com.cti.insights.model.Cliente;
+import br.com.cti.insights.repository.ClienteRepository;
 import com.jayway.jsonpath.JsonPath;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,6 +20,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -24,6 +29,12 @@ class ClienteControllerTests {
 
 	@Autowired
 	private MockMvc mockMvc;
+
+	@Autowired
+	private ClienteRepository clienteRepository;
+
+	@Autowired
+	private TransactionTemplate transacao;
 
 	private static String cliente(String codigo, String nivel, String faturamento) {
 		return """
@@ -92,6 +103,25 @@ class ClienteControllerTests {
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.nivel").value("A"))
 			.andExpect(jsonPath("$.faturamentoAnual").value(500000000));
+	}
+
+	@Test
+	void setterDaListaDeContratosFuncionaNoBanco() throws Exception {
+		long id = criar("CTI-500");
+		this.mockMvc
+			.perform(post("/api/clientes/" + id + "/contratos").contentType(MediaType.APPLICATION_JSON)
+				.content("{\"servico\":\"MPLS\",\"dataInicio\":\"2025-03-01\"}"))
+			.andExpect(status().isCreated());
+
+		// Trocar a lista de um cliente ja salvo nao pode dar erro de orphanRemoval no Hibernate.
+		transacao.executeWithoutResult(estado -> {
+			Cliente cliente = clienteRepository.findById(id).orElseThrow();
+			assertThat(cliente.getContratos()).hasSize(1);
+			cliente.setContratos(List.of());
+			clienteRepository.flush();
+		});
+
+		this.mockMvc.perform(get("/api/clientes/" + id + "/contratos")).andExpect(jsonPath("$.length()").value(0));
 	}
 
 	@Test

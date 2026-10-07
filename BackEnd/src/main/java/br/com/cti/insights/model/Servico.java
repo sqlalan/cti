@@ -82,4 +82,12 @@ public class Servico {
 		return Collections.unmodifiableList(contratos);
 	}
 
+	// Lado mappedBy: muda so a lista em memoria; no banco o vinculo e o servico_id do contrato.
+	public void setContratos(List<Contrato> contratos) {
+		this.contratos.clear();
+		if (contratos != null) {
+			this.contratos.addAll(contratos);
+		}
+	}
+
 }

@@ -168,8 +168,23 @@ public class Cliente {
 		return Collections.unmodifiableList(contratos);
 	}
 
+	// Copia para a lista existente: com orphanRemoval o Hibernate recusa trocar a lista por outra.
+	public void setContratos(List<Contrato> contratos) {
+		this.contratos.clear();
+		if (contratos != null) {
+			this.contratos.addAll(contratos);
+		}
+	}
+
 	public List<Insight> getInsights() {
 		return Collections.unmodifiableList(insights);
+	}
+
+	public void setInsights(List<Insight> insights) {
+		this.insights.clear();
+		if (insights != null) {
+			this.insights.addAll(insights);
+		}
 	}
 
 }

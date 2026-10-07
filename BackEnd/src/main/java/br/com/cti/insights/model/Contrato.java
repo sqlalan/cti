@@ -97,4 +97,12 @@ public class Contrato {
 		return Collections.unmodifiableList(insights);
 	}
 
+	// Copia para a lista existente: com orphanRemoval o Hibernate recusa trocar a lista por outra.
+	public void setInsights(List<Insight> insights) {
+		this.insights.clear();
+		if (insights != null) {
+			this.insights.addAll(insights);
+		}
+	}
+
 }

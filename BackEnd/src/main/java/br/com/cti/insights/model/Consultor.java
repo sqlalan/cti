@@ -59,12 +59,19 @@ public class Consultor {
 		this.matricula = matricula == null || matricula.isBlank() ? null : matricula.trim().toUpperCase(Locale.ROOT);
 	}
 
-	/**
-	 * Somente leitura: o vinculo e feito por {@link Cliente#setConsultor(Consultor)}, que mantem os
-	 * dois lados da relacao coerentes.
-	 */
 	public List<Cliente> getClientes() {
 		return Collections.unmodifiableList(clientes);
+	}
+
+	/**
+	 * Lado mappedBy: muda so a lista em memoria. No banco o vinculo e o consultor_id do cliente,
+	 * gravado por {@link Cliente#setConsultor(Consultor)}.
+	 */
+	public void setClientes(List<Cliente> clientes) {
+		this.clientes.clear();
+		if (clientes != null) {
+			this.clientes.addAll(clientes);
+		}
 	}
 
 	void adicionarCliente(Cliente cliente) {
