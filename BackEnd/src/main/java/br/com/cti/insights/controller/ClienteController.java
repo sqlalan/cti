@@ -1,6 +1,6 @@
 package br.com.cti.insights.controller;
 
-import br.com.cti.insights.dto.ClienteDTO;
+import br.com.cti.insights.dto.ClienteRespostaDTO;
 import br.com.cti.insights.dto.ClienteRequest;
 import br.com.cti.insights.dto.ContratoDTO;
 import br.com.cti.insights.dto.ContratoRequest;
@@ -31,28 +31,28 @@ public class ClienteController {
 	}
 
 	@GetMapping
-	public List<ClienteDTO> listar() {
+	public List<ClienteRespostaDTO> listar() {
 		return service.listar();
 	}
 
 	@GetMapping("/{id}")
-	public ClienteDTO buscar(@PathVariable Long id) {
+	public ClienteRespostaDTO buscar(@PathVariable Long id) {
 		return service.buscar(id);
 	}
 
 	@PostMapping
-	public ResponseEntity<ClienteDTO> criar(@Valid @RequestBody ClienteRequest request) {
-		ClienteDTO criado = service.criar(request);
+	public ResponseEntity<ClienteRespostaDTO> criar(@Valid @RequestBody ClienteRequest request) {
+		ClienteRespostaDTO criado = service.criar(request);
 		return ResponseEntity.created(URI.create("/api/clientes/" + criado.id())).body(criado);
 	}
 
 	@PutMapping("/{id}")
-	public ClienteDTO substituir(@PathVariable Long id, @Valid @RequestBody ClienteRequest request) {
+	public ClienteRespostaDTO substituir(@PathVariable Long id, @Valid @RequestBody ClienteRequest request) {
 		return service.substituir(id, request);
 	}
 
 	@PatchMapping("/{id}/nivel")
-	public ClienteDTO atualizarNivel(@PathVariable Long id, @Valid @RequestBody NivelRequest request) {
+	public ClienteRespostaDTO atualizarNivel(@PathVariable Long id, @Valid @RequestBody NivelRequest request) {
 		return service.atualizarNivel(id, request.nivel());
 	}
 

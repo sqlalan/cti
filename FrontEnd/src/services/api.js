@@ -43,12 +43,16 @@ api.interceptors.response.use(
   },
 )
 
-// O back-end responde erro como { mensagem, campos? } (formato do guia).
-// Esta função tira dali a frase que a tela mostra.
+// O back-end responde erro como { mensagem, erro?, campo?, campos? }: "erro" é o
+// detalhe (o primeiro campo recusado, ou a regra do Service), "mensagem" o
+// resumo. Esta função tira dali a frase que a tela mostra.
 export function mensagemDeErro(erro) {
   const dados = erro.response?.data
   if (!erro.response) {
     return 'Não foi possível falar com o servidor. Tente de novo em instantes.'
+  }
+  if (dados?.erro) {
+    return dados.erro
   }
   if (dados?.campos) {
     return Object.values(dados.campos)[0]

@@ -27,7 +27,7 @@ não na raiz do repositório — rodar `npm run dev` na raiz falha com `ENOENT`.
 | `/` | Home | Página institucional |
 | `/login` | Login | Entra com e-mail e senha conferidos na API; guarda o token (JWT) |
 | `/cadastro` | Cadastro | O consultor cria a própria conta e já entra |
-| `/upload` | Upload | Prévia e validação no navegador; o envio vai para `POST /api/planilhas` (**exige login**) |
+| `/upload` | Upload | Prévia e validação no navegador; depois (1) as linhas aprovadas vão em JSON para `POST /api/clientes/validar` e (2) o arquivo vai para `POST /api/planilhas` (**exige login**) |
 | `/relatorio` | Relatórios | Análise da carteira carregada, com filtros e exportação CSV (**exige login**) |
 | `/dashboard` | Dashboard | Gráficos por segmento, nível A/B/C e evolução de contratações, insights e testes da última planilha, lidos de `/api/indicadores` (**exige login**) |
 
@@ -95,7 +95,10 @@ O Vue **não acessa o PostgreSQL diretamente**: quem grava no banco é o Spring 
 - **`src/services/api.js`**: instância do Axios. Põe o token em cada pedido e, se a API
   responder 401 com token, encerra a sessão e volta ao login. Também traduz o erro
   `ProblemDetail` da API na frase mostrada na tela (`mensagemDeErro`).
-- **`enviar()` em `src/stores/uploadStore.js`**: manda o **arquivo original** para
+- **`validarNoServidor()` em `src/stores/uploadStore.js`**: etapa 1. Manda as linhas que o
+  Pinia aprovou, em JSON (`ClienteDTO`), para `POST /api/clientes/validar`. O servidor valida de
+  novo e padroniza; se recusar, a tela diz a linha da planilha e o motivo.
+- **`enviar()` em `src/stores/uploadStore.js`**: etapa 2, liberada só depois da 1. Manda o **arquivo original** para
   `POST /api/planilhas`. O servidor trata tudo de novo no Python, porque dado que vem
   do navegador pode ter sido adulterado. A prévia daqui serve para a pessoa corrigir a
   planilha antes de enviar.

@@ -32,6 +32,31 @@ function extensao(nome) {
   return ponto === -1 ? '' : nome.slice(ponto).toLowerCase()
 }
 
+// Data local em aaaa-mm-dd. toISOString() converteria para UTC e, no Brasil,
+// meia-noite de 15/01 viraria 14/01 no servidor.
+function dataIso(data) {
+  if (!(data instanceof Date)) return null
+  const mes = String(data.getMonth() + 1).padStart(2, '0')
+  const dia = String(data.getDate()).padStart(2, '0')
+  return `${data.getFullYear()}-${mes}-${dia}`
+}
+
+// Uma linha já tratada → o ClienteDTO do back-end (campos da aula de validação).
+function paraClienteDTO(registro) {
+  return {
+    codigoCliente: registro.codigo,
+    nomeCliente: registro.nome,
+    consultor: registro.consultor,
+    segmento: registro.segmento,
+    nivelCliente: registro.nivel,
+    faturamentoAnual: registro.faturamento,
+    servicosContratados: registro.servicos.join(';'),
+    dataContratacao: dataIso(registro.contratacao),
+    cidade: registro.cidade || '',
+    uf: registro.uf || '',
+  }
+}
+
 /**
  * Lê o arquivo e devolve a matriz crua (primeira linha = cabeçalho).
  *
@@ -115,6 +140,11 @@ export const useUploadStore = defineStore('upload', () => {
   // Resposta do servidor ao envio: contagens, clientes novos/atualizados e os
   // insights gerados. A prévia acima é do navegador; isto é o que foi gravado.
   const analise = ref(null)
+
+  // Segunda validação, no Spring Boot (POST /api/clientes/validar): o Pinia
+  // manda as linhas aprovadas em JSON e o servidor valida de novo e padroniza.
+  // { status: 'validando' | 'aprovado' | 'recusado', clientes, mensagem }
+  const validacaoServidor = ref(null)
 
   // A notificação em curso, para a etapa seguinte reescrever o mesmo cartão em
   // vez de empilhar outro. Fora do state porque não é dado de tela.
@@ -240,8 +270,16 @@ export const useUploadStore = defineStore('upload', () => {
 
   // 'falha' entra porque, com dados na tela, ela só pode ter vindo do envio.
   // Sem isto o botão travava justo quando a mensagem convida a tentar de novo.
+  const podeValidar = computed(
+    () =>
+      temDados.value &&
+      (estado.value === 'pronto' || estado.value === 'falha') &&
+      validacaoServidor.value?.status !== 'validando',
+  )
+
+  // O arquivo só segue para análise depois que o servidor aprovou as linhas.
   const podeEnviar = computed(
-    () => temDados.value && (estado.value === 'pronto' || estado.value === 'falha'),
+    () => podeValidar.value && validacaoServidor.value?.status === 'aprovado',
   )
 
   // ---------------------------------------------------------------------------
@@ -263,6 +301,7 @@ export const useUploadStore = defineStore('upload', () => {
     estado.value = 'vazio'
     falha.value = ''
     analise.value = null
+    validacaoServidor.value = null
   }
 
   /**
@@ -391,6 +430,46 @@ export const useUploadStore = defineStore('upload', () => {
   }
 
   // -------------------------------------------------------------------------
+  // Validação no Spring Boot (POST /api/clientes/validar): só as linhas que o
+  // Pinia aprovou, em JSON, no formato do ClienteDTO do back-end. O servidor
+  // não confia na tela: valida de novo, confere código repetido e padroniza.
+  // -------------------------------------------------------------------------
+  async function validarNoServidor() {
+    if (!podeValidar.value) return false
+
+    validacaoServidor.value = { status: 'validando', clientes: [], mensagem: '' }
+    const notificacao = abrirOperacao(
+      'Validando no servidor…',
+      `${linhas(quantidadeValidas.value)} aprovadas no navegador`,
+    )
+
+    try {
+      const { data } = await api.post('/clientes/validar', dadosValidos.value.map(paraClienteDTO))
+      validacaoServidor.value = { status: 'aprovado', clientes: data, mensagem: '' }
+      notificacoes.atualizar(notificacao, {
+        tipo: 'sucesso',
+        titulo: 'Servidor aprovou a planilha',
+        texto: `${linhas(data.length)} validadas e padronizadas pelo Spring Boot.`,
+      })
+      return true
+    } catch (erro) {
+      const mensagem = explicarRecusa(erro)
+      validacaoServidor.value = { status: 'recusado', clientes: [], mensagem }
+      notificacoes.atualizar(notificacao, { tipo: 'erro', titulo: 'Servidor recusou a planilha', texto: mensagem })
+      return false
+    }
+  }
+
+  // "posicao" é o item da lista enviada (1 = o primeiro); a pessoa procura a
+  // linha do Excel, que cada registro guarda desde a leitura.
+  function explicarRecusa(erro) {
+    const dados = erro.response?.data
+    if (!dados?.posicao) return mensagemDeErro(erro)
+    const linhaExcel = dadosValidos.value[dados.posicao - 1]?.linha
+    return linhaExcel ? `Linha ${linhaExcel} da planilha: ${dados.erro}` : dados.erro
+  }
+
+  // -------------------------------------------------------------------------
   // Envio ao Spring Boot (POST /api/planilhas). Vai o arquivo original, não as
   // linhas tratadas aqui: o servidor trata de novo no Python, porque dado que
   // vem do navegador é dado que o usuário pode ter adulterado. A prévia serve
@@ -456,6 +535,7 @@ export const useUploadStore = defineStore('upload', () => {
     estado,
     falha,
     analise,
+    validacaoServidor,
     // getters
     quantidadeLinhas,
     quantidadeValidas,
@@ -474,11 +554,13 @@ export const useUploadStore = defineStore('upload', () => {
     statusValidacao,
     temDados,
     resumo,
+    podeValidar,
     podeEnviar,
     // actions
     limpar,
     validarDados,
     carregar,
+    validarNoServidor,
     enviar,
   }
 })

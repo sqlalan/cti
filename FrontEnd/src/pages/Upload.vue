@@ -448,14 +448,27 @@ const grupos = computed(() => {
       </p>
     </section>
 
+    <!-- Duas etapas, como na aula de validação: o Pinia já validou na tela; o
+         servidor valida de novo (JSON → DTO → Service) e só então o arquivo
+         segue para a análise. -->
     <div class="mt-6 flex flex-wrap items-center gap-3">
+      <button
+        class="rounded border border-brand-800 px-6 py-3 text-sm font-semibold text-brand-800 transition-colors hover:bg-brand-800 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-brand-300 dark:text-brand-300 dark:hover:bg-brand-300 dark:hover:text-night-950"
+        type="button"
+        :disabled="!planilha.podeValidar"
+        @click="planilha.validarNoServidor()"
+      >
+        {{ planilha.validacaoServidor?.status === 'validando' ? 'Validando…' : '1. Validar no servidor' }}
+      </button>
+
       <button
         class="rounded bg-brand-800 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
         type="button"
         :disabled="!planilha.podeEnviar"
+        :title="planilha.validacaoServidor?.status === 'aprovado' ? '' : 'Disponível depois que o servidor aprovar as linhas'"
         @click="planilha.enviar()"
       >
-        {{ planilha.estado === 'enviando' ? 'Enviando…' : 'Enviar para o servidor' }}
+        {{ planilha.estado === 'enviando' ? 'Enviando…' : '2. Processar e gerar insights' }}
       </button>
 
       <p
@@ -478,6 +491,23 @@ const grupos = computed(() => {
         Processada pelo servidor
       </p>
     </div>
+
+    <p
+      class="mt-3 text-sm font-medium text-ok-600 dark:text-ok-400"
+      v-if="planilha.validacaoServidor?.status === 'aprovado'"
+      role="status"
+    >
+      {{ inteiro(planilha.validacaoServidor.clientes.length) }}
+      {{ planilha.validacaoServidor.clientes.length === 1 ? 'linha validada' : 'linhas validadas' }}
+      e padronizadas pelo servidor.
+    </p>
+    <p
+      class="mt-3 rounded border border-warn-500 bg-warn-500/10 px-4 py-3 text-sm text-ink-900 dark:bg-warn-500/15 dark:text-mist-100"
+      v-else-if="planilha.validacaoServidor?.status === 'recusado'"
+      role="alert"
+    >
+      O servidor recusou a planilha: {{ planilha.validacaoServidor.mensagem }}
+    </p>
 
     <!-- O que o SERVIDOR gravou. Pode diferir da prévia acima se a planilha
          trouxer algo que só o tratamento em Python recusa. -->

@@ -39,12 +39,12 @@ O código do back-end fica em `BackEnd/src/main/java/br/com/cti/insights/` e seg
 
 | Pacote | Papel |
 | --- | --- |
-| `controller` | Porta HTTP. Recebe o JSON ou o arquivo e devolve a resposta com o status certo. |
+| `controller` | Porta HTTP. Recebe o JSON ou o arquivo e devolve a resposta com o status certo. Aqui também fica o `ErroHandler`, que transforma cada erro numa resposta JSON clara. |
 | `service` | Regras de negócio: e-mail único, login, importação da planilha. |
 | `repository` | Acesso ao banco com Spring Data JPA. |
 | `model` | Entidades: `Cliente`, `Consultor`, `Contrato`, `Servico`, `Insight` (com subclasses), `Telemetria`, `Analise` e `Usuario`. |
-| `dto` | O que entra e sai da API. A senha nunca sai. |
-| `exception` | Exceções próprias (`ExcelInvalidoException`, `ColunaObrigatoriaException`, `ClienteDuplicadoException`...) e o `GlobalExceptionHandler`, que transforma cada uma numa resposta clara. |
+| `dto` | O que entra e sai da API, com as validações declarativas (`@NotBlank`, `@Positive`, `@Pattern`...). `ClienteDTO` é uma linha da planilha; os `...RespostaDTO` são o que a API devolve. A senha nunca sai. |
+| `exception` | Exceções próprias (`ExcelInvalidoException`, `ColunaObrigatoriaException`, `ClienteDuplicadoException`...) tratadas pelo `ErroHandler`. |
 | `analise` | A chamada ao script Python. |
 
 ## Como rodar na sua máquina
@@ -125,6 +125,7 @@ Por enquanto nenhuma rota é exclusiva de `ADMIN`. O perfil já chega ao Spring 
 | POST | `/api/usuarios/login` | Login. Devolve `{ token, expiraEm, usuario }` |
 | GET | `/api/usuarios/me` | Quem está logado, lido do próprio token |
 | GET, PUT, DELETE | `/api/usuarios`, `/api/usuarios/{id}` | Consultar, alterar e remover usuários |
+| POST | `/api/clientes/validar` | Recebe em JSON as linhas que o Pinia aprovou, valida de novo (DTO + `ClienteValidacaoService`: código repetido e padronização) e devolve a lista padronizada. Não grava e não chama Python. |
 | POST | `/api/planilhas` | Upload da planilha (multipart, campo `arquivo`). Trata, analisa e grava. |
 | GET | `/api/indicadores` | Estatísticas da última planilha (frequências, medidas, testes, contratações por mês) |
 | GET | `/api/insights` | Insights da última planilha |
@@ -135,7 +136,7 @@ Por enquanto nenhuma rota é exclusiva de `ADMIN`. O perfil já chega ao Spring 
 | PATCH | `/api/contratos/{id}/cancelamento` | Cancela o contrato, que continua no histórico |
 | DELETE | `/api/contratos/{id}` | Remove o contrato |
 
-Os erros vêm no formato `{ "mensagem": "..." }`. A validação traz também `campos`, com a mensagem de cada campo recusado:
+Os erros vêm no formato `{ "mensagem": "..." }`. Na validação vêm também `campo` e `erro` (o primeiro problema), `posicao` (o item da lista, quando o corpo é uma lista) e `campos` (todos). Uma regra do Service vem como `{ "mensagem": "Regra de validação não atendida", "erro": "Código repetido na planilha: CTI001" }`:
 
 | Status | Quando acontece |
 | --- | --- |
