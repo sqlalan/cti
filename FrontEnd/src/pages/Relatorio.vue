@@ -1,67 +1,17 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
-import { formatarNumero } from '../components/graficos/escala'
-import { TIPOS_AVISO, TIPOS_ERRO } from '../dados/esquemaPlanilha'
-import { api, mensagemDeErro } from '../services/api'
+import HistoricoProcessamentos from '../components/HistoricoProcessamentos.vue'
 import { useUploadStore } from '../stores/uploadStore'
 
 // Relatório do PROCESSAMENTO dos dados. A visão comercial da carteira mora no
-// Dashboard; aqui fica o que aconteceu com a planilha:
+// Dashboard; aqui fica o que aconteceu com as planilhas:
 //  - a validação da planilha carregada nesta sessão, lida do Pinia (é o que o
 //    store existe para resolver: o dado atravessa a navegação do Upload até
 //    aqui sem passar por prop nem por URL);
-//  - o último processamento gravado no servidor e o histórico de envios, que
-//    continuam disponíveis depois de recarregar a página.
+//  - o que o servidor gravou de cada envio (HistoricoProcessamentos), que
+//    continua disponível depois de recarregar a página.
 const planilha = useUploadStore()
 
-// carregando → pronto | vazio (nenhuma planilha processada) | erro
-const estadoServidor = ref('carregando')
-const erroServidor = ref('')
-const ultima = ref(null) // GET /api/analises/ultima
-const qualidade = ref(null) // GET /api/indicadores → qualidade (o tratamento em Python)
-const historico = ref([]) // GET /api/analises
-
-async function carregarServidor() {
-  estadoServidor.value = 'carregando'
-  erroServidor.value = ''
-  try {
-    const [analise, indicadores, envios] = await Promise.all([
-      api.get('/analises/ultima'),
-      api.get('/indicadores'),
-      api.get('/analises'),
-    ])
-    ultima.value = analise.data
-    qualidade.value = indicadores.data.qualidade
-    historico.value = envios.data
-    estadoServidor.value = 'pronto'
-  } catch (falha) {
-    // 404 aqui não é erro: só quer dizer que ninguém enviou planilha ainda.
-    if (falha.response?.status === 404) {
-      estadoServidor.value = 'vazio'
-    } else {
-      erroServidor.value = mensagemDeErro(falha)
-      estadoServidor.value = 'erro'
-    }
-  }
-}
-
-onMounted(carregarServidor)
-
-// O Python usa os mesmos tipos de erro e de tratamento do navegador, então os
-// quadros do servidor saem com os mesmos rótulos dos quadros do Pinia.
-const quadroServidor = computed(() => [
-  ...TIPOS_ERRO.map(({ tipo, rotulo }) => ({ tipo, rotulo, quantidade: qualidade.value.erros_por_tipo?.[tipo] ?? 0 })),
-  { tipo: 'validos', rotulo: 'Registros válidos', quantidade: qualidade.value.linhas_validas },
-])
-
-const tratamentosServidor = computed(() =>
-  TIPOS_AVISO.map(({ tipo, rotulo }) => ({ tipo, rotulo, quantidade: qualidade.value.avisos_por_tipo?.[tipo] ?? 0 })),
-)
-
 const inteiro = (valor) => valor.toLocaleString('pt-BR')
-const porcento = (valor) => `${formatarNumero(valor, 1)}%`
-const dataHora = (iso) =>
-  new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
 // Cor no quadro de validação: verde só na linha dos válidos, vermelho na de
 // erro que realmente aconteceu, cinza no zero. Pintar o zero de vermelho
@@ -219,7 +169,7 @@ function quantidadeCor(item) {
         {{ planilha.quantidadeInvalidas === 1 ? 'registro' : 'registros' }}.
       </p>
 
-      <div class="mt-3 max-h-96 overflow-auto">
+      <div class="mt-3 max-h-96 overflow-auto print:max-h-none print:overflow-visible">
         <table class="w-full min-w-2xl text-left text-sm">
           <thead class="sticky top-0 bg-white dark:bg-night-900">
             <tr class="border-b border-ink-200 dark:border-night-700">
@@ -267,7 +217,7 @@ function quantidadeCor(item) {
        descrição) não existe: ele nasce da leitura no navegador. O que foi
        gravado no servidor continua logo abaixo. -->
   <section
-    class="mt-8 flex flex-col items-start gap-3 rounded border border-ink-200 bg-white p-5 sm:flex-row sm:items-center sm:justify-between dark:border-night-700 dark:bg-night-900"
+    class="mt-8 flex flex-col items-start gap-3 print:hidden rounded border border-ink-200 bg-white p-5 sm:flex-row sm:items-center sm:justify-between dark:border-night-700 dark:bg-night-900"
     v-else
   >
     <div>
@@ -285,172 +235,5 @@ function quantidadeCor(item) {
     </RouterLink>
   </section>
 
-  <!-- =====================================================================
-       O que o servidor gravou. Vem do banco, então sobrevive a recarregar a
-       página e mostra também envios feitos em outro computador.
-       ===================================================================== -->
-  <section class="mt-10">
-    <h2 class="text-lg font-semibold text-ink-900 dark:text-mist-100">Último processamento no servidor</h2>
-    <p class="mt-1 text-sm text-ink-600 dark:text-mist-300">
-      O servidor trata a planilha de novo em Python antes de gravar, então estes números podem diferir da
-      prévia do navegador.
-    </p>
-
-    <p class="mt-4 text-sm text-ink-600 dark:text-mist-300" v-if="estadoServidor === 'carregando'" role="status">
-      Carregando…
-    </p>
-
-    <p
-      class="mt-4 rounded border border-ink-200 bg-white px-4 py-3 text-sm text-ink-600 dark:border-night-700 dark:bg-night-900 dark:text-mist-300"
-      v-else-if="estadoServidor === 'vazio'"
-    >
-      Nenhuma planilha foi processada ainda.
-    </p>
-
-    <div
-      class="mt-4 rounded border border-erro-600 bg-erro-600/5 p-4 text-sm dark:border-erro-400 dark:bg-erro-400/10"
-      v-else-if="estadoServidor === 'erro'"
-      role="alert"
-    >
-      <p class="text-ink-900 dark:text-mist-100">Não foi possível consultar o servidor: {{ erroServidor }}</p>
-      <button
-        class="mt-3 rounded border border-ink-200 px-4 py-2 font-semibold text-brand-800 transition-colors hover:border-brand-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 dark:border-night-700 dark:text-brand-300"
-        type="button"
-        @click="carregarServidor"
-      >
-        Tentar de novo
-      </button>
-    </div>
-
-    <template v-else>
-      <dl
-        class="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded border border-ink-200 bg-ink-200 sm:grid-cols-4 dark:border-night-700 dark:bg-night-700"
-      >
-        <div class="bg-white px-4 py-3 dark:bg-night-900">
-          <dt class="text-xs text-ink-600 dark:text-mist-300">Arquivo</dt>
-          <dd class="mt-1 truncate text-sm font-semibold text-ink-900 dark:text-mist-100" :title="ultima.arquivo">
-            {{ ultima.arquivo }}
-          </dd>
-        </div>
-        <div class="bg-white px-4 py-3 dark:bg-night-900">
-          <dt class="text-xs text-ink-600 dark:text-mist-300">Processado em</dt>
-          <dd class="mt-1 text-sm font-semibold tabular-nums text-ink-900 dark:text-mist-100">
-            {{ dataHora(ultima.geradoEm) }}
-          </dd>
-        </div>
-        <div class="bg-white px-4 py-3 dark:bg-night-900">
-          <dt class="text-xs text-ink-600 dark:text-mist-300">Linhas lidas</dt>
-          <dd class="mt-1 text-sm font-semibold tabular-nums text-ink-900 dark:text-mist-100">
-            {{ inteiro(ultima.linhasLidas) }}
-          </dd>
-        </div>
-        <div class="bg-white px-4 py-3 dark:bg-night-900">
-          <dt class="text-xs text-ink-600 dark:text-mist-300">Aproveitamento</dt>
-          <dd class="mt-1 text-sm font-semibold tabular-nums text-ink-900 dark:text-mist-100">
-            {{ porcento(qualidade.percentual_aproveitado) }}
-          </dd>
-        </div>
-        <div class="bg-white px-4 py-3 dark:bg-night-900">
-          <dt class="text-xs text-ink-600 dark:text-mist-300">Linhas gravadas</dt>
-          <dd class="mt-1 text-sm font-semibold tabular-nums text-ok-600 dark:text-ok-400">
-            {{ inteiro(ultima.linhasValidas) }}
-          </dd>
-        </div>
-        <div class="bg-white px-4 py-3 dark:bg-night-900">
-          <dt class="text-xs text-ink-600 dark:text-mist-300">Linhas recusadas</dt>
-          <dd
-            class="mt-1 text-sm font-semibold tabular-nums"
-            :class="ultima.linhasRejeitadas ? 'text-erro-600 dark:text-erro-400' : 'text-ink-900 dark:text-mist-100'"
-          >
-            {{ inteiro(ultima.linhasRejeitadas) }}
-          </dd>
-        </div>
-        <div class="bg-white px-4 py-3 dark:bg-night-900">
-          <dt class="text-xs text-ink-600 dark:text-mist-300">Clientes novos</dt>
-          <dd class="mt-1 text-sm font-semibold tabular-nums text-ink-900 dark:text-mist-100">
-            {{ inteiro(ultima.clientesCriados) }}
-          </dd>
-        </div>
-        <div class="bg-white px-4 py-3 dark:bg-night-900">
-          <dt class="text-xs text-ink-600 dark:text-mist-300">Clientes atualizados</dt>
-          <dd class="mt-1 text-sm font-semibold tabular-nums text-ink-900 dark:text-mist-100">
-            {{ inteiro(ultima.clientesAtualizados) }}
-          </dd>
-        </div>
-      </dl>
-
-      <div class="mt-4 grid gap-4 lg:grid-cols-2">
-        <div class="rounded border border-ink-200 bg-white p-5 dark:border-night-700 dark:bg-night-900">
-          <h3 class="text-sm font-semibold text-ink-900 dark:text-mist-100">Validação no servidor</h3>
-          <table class="mt-3 w-full text-left text-sm">
-            <thead>
-              <tr class="border-b border-ink-200 dark:border-night-700">
-                <th class="py-2 pr-4 font-medium text-ink-600 dark:text-mist-300" scope="col">Verificação</th>
-                <th class="py-2 text-right font-medium text-ink-600 dark:text-mist-300" scope="col">Quantidade</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr class="border-b border-ink-200 last:border-0 dark:border-night-700" v-for="item in quadroServidor" :key="item.tipo">
-                <td class="py-2 pr-4 text-ink-900 dark:text-mist-100">{{ item.rotulo }}</td>
-                <td class="py-2 text-right font-semibold tabular-nums" :class="quantidadeCor(item)">
-                  {{ inteiro(item.quantidade) }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="rounded border border-ink-200 bg-white p-5 dark:border-night-700 dark:bg-night-900">
-          <h3 class="text-sm font-semibold text-ink-900 dark:text-mist-100">Tratamentos aplicados no servidor</h3>
-          <table class="mt-3 w-full text-left text-sm">
-            <thead>
-              <tr class="border-b border-ink-200 dark:border-night-700">
-                <th class="py-2 pr-4 font-medium text-ink-600 dark:text-mist-300" scope="col">Tratamento</th>
-                <th class="py-2 text-right font-medium text-ink-600 dark:text-mist-300" scope="col">Quantidade</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr class="border-b border-ink-200 last:border-0 dark:border-night-700" v-for="item in tratamentosServidor" :key="item.tipo">
-                <td class="py-2 pr-4 text-ink-900 dark:text-mist-100">{{ item.rotulo }}</td>
-                <td
-                  class="py-2 text-right font-semibold tabular-nums"
-                  :class="item.quantidade ? 'text-alerta-600 dark:text-alerta-400' : 'text-ink-400 dark:text-mist-500'"
-                >
-                  {{ inteiro(item.quantidade) }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <section class="mt-10 min-w-0">
-        <h2 class="text-lg font-semibold text-ink-900 dark:text-mist-100">Histórico de processamentos</h2>
-        <p class="mt-1 text-sm text-ink-600 dark:text-mist-300">Planilhas enviadas, da mais recente para a mais antiga.</p>
-
-        <div class="mt-4 overflow-x-auto rounded border border-ink-200 bg-white p-5 dark:border-night-700 dark:bg-night-900">
-          <table class="w-full min-w-136 text-left text-sm">
-            <thead>
-              <tr class="border-b border-ink-200 dark:border-night-700">
-                <th class="py-2 pr-4 font-medium text-ink-600 dark:text-mist-300" scope="col">Arquivo</th>
-                <th class="py-2 pr-4 font-medium text-ink-600 dark:text-mist-300" scope="col">Processado em</th>
-                <th class="py-2 pr-4 text-right font-medium text-ink-600 dark:text-mist-300" scope="col">Lidas</th>
-                <th class="py-2 pr-4 text-right font-medium text-ink-600 dark:text-mist-300" scope="col">Gravadas</th>
-                <th class="py-2 text-right font-medium text-ink-600 dark:text-mist-300" scope="col">Recusadas</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr class="border-b border-ink-200 last:border-0 dark:border-night-700" v-for="envio in historico" :key="envio.id">
-                <td class="py-2.5 pr-4 text-ink-900 dark:text-mist-100">{{ envio.arquivo }}</td>
-                <td class="py-2.5 pr-4 text-ink-600 dark:text-mist-300">{{ dataHora(envio.geradoEm) }}</td>
-                <td class="py-2.5 pr-4 text-right tabular-nums text-ink-900 dark:text-mist-100">{{ inteiro(envio.linhasLidas) }}</td>
-                <td class="py-2.5 pr-4 text-right tabular-nums text-ink-900 dark:text-mist-100">{{ inteiro(envio.linhasValidas) }}</td>
-                <td class="py-2.5 text-right tabular-nums text-ink-900 dark:text-mist-100">{{ inteiro(envio.linhasRejeitadas) }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </template>
-  </section>
+  <HistoricoProcessamentos />
 </template>

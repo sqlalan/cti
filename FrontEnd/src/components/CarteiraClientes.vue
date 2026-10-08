@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import CartaoGrafico from './graficos/CartaoGrafico.vue'
 import GraficoBarras from './graficos/GraficoBarras.vue'
 import { NIVEIS } from '../dados/esquemaPlanilha'
+import { baixarCsv, hoje } from '../dados/exportar'
 import { CORES_NIVEL } from '../dados/painel'
 
 // A carteira gravada no banco (GET /api/clientes), recebida por props. Os
@@ -136,41 +137,8 @@ const COLUNAS_CSV = [
   ['uf', (r) => r.uf],
 ]
 
-// Célula que começa com = + - @ é executada como fórmula ao abrir o CSV no
-// Excel. Como o conteúdo veio de uma planilha enviada por terceiros, prefixar
-// com apóstrofo neutraliza a injeção sem alterar o que a pessoa lê.
-function protegerCelula(texto) {
-  const valor = String(texto ?? '')
-  const perigosa = /^[=+\-@\t\r]/.test(valor)
-  const escapada = (perigosa ? `'${valor}` : valor).replace(/"/g, '""')
-  return `"${escapada}"`
-}
-
 function exportarCsv() {
-  const linhas = [
-    COLUNAS_CSV.map(([titulo]) => protegerCelula(titulo)).join(';'),
-    ...ordenados.value.map((registro) =>
-      COLUNAS_CSV.map(([, obter]) => protegerCelula(obter(registro))).join(';'),
-    ),
-  ]
-
-  // BOM na frente para o Excel abrir em UTF-8; sem ele os acentos quebram.
-  const conteudo = new Blob(['﻿' + linhas.join('\r\n')], {
-    type: 'text/csv;charset=utf-8;',
-  })
-
-  const url = URL.createObjectURL(conteudo)
-  const ancora = document.createElement('a')
-  ancora.href = url
-  ancora.download = `carteira-clientes-${new Date().toISOString().slice(0, 10)}.csv`
-
-  // A âncora precisa estar no documento para o clique valer em alguns
-  // navegadores, e a URL do blob só pode ser revogada depois que o download
-  // começou — revogar na mesma volta do laço cancela o arquivo pela metade.
-  document.body.appendChild(ancora)
-  ancora.click()
-  ancora.remove()
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
+  baixarCsv(`carteira-clientes-${hoje()}.csv`, { colunas: COLUNAS_CSV, linhas: ordenados.value })
 }
 
 const classeCampo =
@@ -232,7 +200,7 @@ const classeCampo =
       </button>
 
       <button
-        class="ml-auto rounded border border-ink-200 px-4 py-1.5 text-sm font-medium text-brand-800 transition-colors hover:border-brand-500/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-night-700 dark:text-brand-300"
+        class="ml-auto rounded border print:hidden border-ink-200 px-4 py-1.5 text-sm font-medium text-brand-800 transition-colors hover:border-brand-500/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-night-700 dark:text-brand-300"
         type="button"
         :disabled="!filtrados.length"
         @click="exportarCsv"

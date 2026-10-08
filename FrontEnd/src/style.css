@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/* Tema escuro só na tela: no "Exportar PDF" (impressão) o texto claro do tema
+   escuro sumiria no papel branco. */
+@custom-variant dark (@media screen and (prefers-color-scheme: dark));
+
+@page {
+  margin: 12mm;
+}
+
 @theme {
   /* Marca — azul-marinho, matiz ~211deg (mesma família do matrix e dos botões) */
   --color-brand-900: #11365b; /* hero, fundo do matrix, rodapé */

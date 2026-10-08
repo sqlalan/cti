@@ -33,7 +33,7 @@ const TRACOS = {
        É polido de propósito — nada aqui é emergência a ponto de cortar a
        frase que o leitor está dizendo. -->
   <div
-    class="pointer-events-none fixed inset-x-4 bottom-4 z-50 flex flex-col gap-3 sm:inset-x-auto sm:top-4 sm:right-4 sm:bottom-auto sm:w-96"
+    class="pointer-events-none fixed print:hidden inset-x-4 bottom-4 z-50 flex flex-col gap-3 sm:inset-x-auto sm:top-4 sm:right-4 sm:bottom-auto sm:w-96"
     aria-live="polite"
     aria-relevant="additions"
     @mouseenter="notificacoes.pausar()"

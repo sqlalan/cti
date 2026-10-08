@@ -23,7 +23,7 @@ const idPainel = useId()
         <p class="mt-1 text-xs text-ink-600 dark:text-mist-300" v-if="descricao">{{ descricao }}</p>
       </div>
 
-      <div class="flex shrink-0 rounded border border-ink-200 p-0.5 dark:border-night-700" role="group" aria-label="Formato de exibição">
+      <div class="flex shrink-0 rounded border border-ink-200 p-0.5 print:hidden dark:border-night-700" role="group" aria-label="Formato de exibição">
         <button
           class="rounded px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
           :class="!mostrarTabela

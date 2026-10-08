@@ -27,7 +27,7 @@ function sair() {
 <template>
   <div class="flex min-h-screen bg-ink-100 dark:bg-night-950">
     <aside
-      class="fixed inset-y-0 left-0 z-30 flex w-64 shrink-0 flex-col border-r border-ink-200 bg-white p-6 transition-transform dark:border-night-700 dark:bg-night-900 lg:sticky lg:inset-y-auto lg:top-0 lg:h-screen lg:translate-x-0 lg:overflow-y-auto"
+      class="fixed inset-y-0 left-0 z-30 print:hidden flex w-64 shrink-0 flex-col border-r border-ink-200 bg-white p-6 transition-transform dark:border-night-700 dark:bg-night-900 lg:sticky lg:inset-y-auto lg:top-0 lg:h-screen lg:translate-x-0 lg:overflow-y-auto"
       :class="menuAberto ? 'translate-x-0' : '-translate-x-full'"
     >
       <RouterLink class="block" :to="{ name: 'home' }">
@@ -77,13 +77,13 @@ function sair() {
     </aside>
 
     <div
-      class="fixed inset-0 z-20 bg-black/40 lg:hidden"
+      class="fixed inset-0 z-20 print:hidden bg-black/40 lg:hidden"
       v-if="menuAberto"
       @click="menuAberto = false"
     ></div>
 
     <div class="flex min-w-0 flex-1 flex-col">
-      <header class="flex items-center gap-3 border-b border-ink-200 bg-white px-6 py-4 dark:border-night-700 dark:bg-night-900 lg:hidden">
+      <header class="flex items-center gap-3 print:hidden border-b border-ink-200 bg-white px-6 py-4 dark:border-night-700 dark:bg-night-900 lg:hidden">
         <button
           class="inline-flex h-11 w-11 items-center justify-center rounded text-brand-800 transition-colors hover:bg-ink-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 dark:text-brand-300 dark:hover:bg-night-800"
           type="button"
@@ -100,7 +100,7 @@ function sair() {
         <span class="font-bold text-brand-800 dark:text-brand-300">Synthetix</span>
       </header>
 
-      <main class="flex-1 px-6 py-8 lg:px-10">
+      <main class="flex-1 px-6 py-8 lg:px-10 print:p-0">
         <RouterView />
       </main>
     </div>
