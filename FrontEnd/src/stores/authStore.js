@@ -15,6 +15,9 @@ export const useAuthStore = defineStore('auth', {
     expiraEm: localStorage.getItem('cti_expira_em') || '',
     usuario: localStorage.getItem('cti_usuario') || '',
     consultor: localStorage.getItem('cti_consultor') || '',
+    // E-mail da conta recém-criada, para a tela de login já trazer preenchido.
+    // Fica só na memória: não é sessão, e some depois de lido.
+    contaCriada: '',
   }),
 
   // GETTERS = valores calculados do state. "Logado" é ter token dentro da
@@ -40,15 +43,16 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    // O próprio consultor cria a conta e já entra: o cadastro não devolve
-    // token, então o login vem logo em seguida com a mesma senha.
+    // O próprio consultor cria a conta, mas só entra pelo login: cadastro e
+    // autenticação ficam separados, e o token sai sempre de /usuarios/login.
     async cadastrar(dados) {
       try {
         await api.post('/usuarios', dados)
       } catch (erro) {
         return mensagemDeErro(erro)
       }
-      return this.login(dados.email, dados.senha)
+      this.contaCriada = dados.email
+      return ''
     },
 
     // Só o token e o que identifica a pessoa vão para o localStorage; a

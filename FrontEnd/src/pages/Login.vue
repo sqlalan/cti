@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/authStore'
 
@@ -7,11 +7,21 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 
-const email = ref('')
+// Vindo do cadastro: aviso de sucesso e e-mail preenchido. Lido uma vez só,
+// para o aviso não voltar numa próxima visita à tela.
+const contaCriada = auth.contaCriada
+auth.contaCriada = ''
+
+const email = ref(contaCriada)
 const senha = ref('')
+const campoSenha = ref(null)
 const mensagem = ref(
   route.query.sessao === 'expirada' ? 'Sua sessão expirou. Entre de novo para continuar.' : '',
 )
+
+onMounted(() => {
+  if (contaCriada) campoSenha.value?.focus()
+})
 const mostrarSenha = ref(false)
 const enviando = ref(false)
 
@@ -69,6 +79,15 @@ async function entrar() {
           Entre com as credenciais fornecidas pela sua empresa.
         </p>
 
+        <p
+          class="mt-6 flex items-start gap-2 rounded border border-ok-600/40 bg-ok-600/5 px-4 py-3 text-sm text-ink-900 dark:border-ok-400/40 dark:bg-ok-400/10 dark:text-mist-100"
+          v-if="contaCriada && !mensagem"
+          role="status"
+        >
+          <svg class="mt-0.5 h-4 w-4 shrink-0 text-ok-600 dark:text-ok-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="m8.5 12 2.5 2.5 4.5-5" /></svg>
+          Conta criada com sucesso. Entre com seu e-mail e senha.
+        </p>
+
         <!-- Sem `required` nos campos: a regra de campo vazio mora na store, e
              o navegador barrando antes dela esconderia a mensagem da aula e
              deixaria duas validações dizendo coisas diferentes. -->
@@ -88,6 +107,7 @@ async function entrar() {
             <input
               class="w-full rounded border border-ink-200 bg-white dark:border-night-700 dark:bg-night-900 py-2.5 pl-4 pr-24 text-sm text-ink-900 dark:text-mist-100 placeholder:text-ink-400 dark:placeholder:text-mist-500 focus:border-brand-500 focus:outline-2 focus:outline-offset-0 focus:outline-brand-500"
               id="senha"
+              ref="campoSenha"
               v-model="senha"
               :type="mostrarSenha ? 'text' : 'password'"
               autocomplete="current-password"

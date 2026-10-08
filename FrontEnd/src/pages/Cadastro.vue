@@ -40,7 +40,7 @@ async function cadastrar() {
   })
   enviando.value = false
   if (!mensagem.value) {
-    router.push({ name: 'upload' })
+    router.push({ name: 'login' })
   }
 }
 
