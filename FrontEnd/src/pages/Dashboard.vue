@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import CarteiraClientes from '../components/CarteiraClientes.vue'
 import CartaoGrafico from '../components/graficos/CartaoGrafico.vue'
 import CartaoIndicador from '../components/graficos/CartaoIndicador.vue'
 import GraficoArea from '../components/graficos/GraficoArea.vue'
@@ -8,25 +9,29 @@ import { formatarNumero } from '../components/graficos/escala'
 import { CORES_NIVEL, compactar, formatarData, mesParaData } from '../dados/painel'
 import { api, mensagemDeErro } from '../services/api'
 
+// Visão comercial da carteira, sempre a partir do que está gravado no banco.
+// O que diz respeito ao processamento (validação, histórico de envios) fica
+// na tela de Relatórios.
+
 // carregando → pronto | vazio (nenhuma planilha processada) | erro
 const estado = ref('carregando')
 const erro = ref('')
 const analise = ref(null) // GET /api/analises/ultima
 const ind = ref(null) // GET /api/indicadores: o indicadores.json do Python
-const historico = ref([]) // GET /api/analises
+const clientes = ref([]) // GET /api/clientes
 
 async function carregar() {
   estado.value = 'carregando'
   erro.value = ''
   try {
-    const [ultima, indicadores, envios] = await Promise.all([
+    const [ultima, indicadores, carteira] = await Promise.all([
       api.get('/analises/ultima'),
       api.get('/indicadores'),
-      api.get('/analises'),
+      api.get('/clientes'),
     ])
     analise.value = ultima.data
     ind.value = indicadores.data
-    historico.value = envios.data
+    clientes.value = carteira.data
     estado.value = 'pronto'
   } catch (falha) {
     // 404 aqui não é erro: só quer dizer que ninguém enviou planilha ainda.
@@ -256,7 +261,9 @@ const ROTULO_TIPO = {
       </ul>
     </section>
 
-    <section class="mt-4 min-w-0 rounded border border-ink-200 bg-white p-5 dark:border-night-700 dark:bg-night-900">
+    <CarteiraClientes :clientes="clientes" />
+
+    <section class="mt-8 min-w-0 rounded border border-ink-200 bg-white p-5 dark:border-night-700 dark:bg-night-900">
       <h2 class="text-sm font-semibold text-ink-900 dark:text-mist-100">Testes estatísticos</h2>
       <p class="mt-1 text-xs text-ink-600 dark:text-mist-300">Nível de significância de 5%.</p>
       <dl class="mt-4 grid gap-3">
@@ -267,32 +274,6 @@ const ROTULO_TIPO = {
           <dd class="text-sm text-ink-600 dark:text-mist-300">{{ teste.conclusao }}</dd>
         </div>
       </dl>
-    </section>
-
-    <section class="mt-4 min-w-0 rounded border border-ink-200 bg-white p-5 dark:border-night-700 dark:bg-night-900">
-      <h2 class="text-sm font-semibold text-ink-900 dark:text-mist-100">Últimos envios</h2>
-      <p class="mt-1 text-xs text-ink-600 dark:text-mist-300">Planilhas processadas e o resultado da validação.</p>
-
-      <div class="mt-4 overflow-x-auto">
-        <table class="w-full min-w-136 text-left text-sm">
-          <thead>
-            <tr class="border-b border-ink-200 dark:border-night-700">
-              <th class="py-2 pr-4 font-medium text-ink-600 dark:text-mist-300" scope="col">Arquivo</th>
-              <th class="py-2 pr-4 font-medium text-ink-600 dark:text-mist-300" scope="col">Processado em</th>
-              <th class="py-2 pr-4 text-right font-medium text-ink-600 dark:text-mist-300" scope="col">Gravadas</th>
-              <th class="py-2 text-right font-medium text-ink-600 dark:text-mist-300" scope="col">Recusadas</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="border-b border-ink-200 last:border-0 dark:border-night-700" v-for="envio in historico" :key="envio.id">
-              <td class="py-2.5 pr-4 text-ink-900 dark:text-mist-100">{{ envio.arquivo }}</td>
-              <td class="py-2.5 pr-4 text-ink-600 dark:text-mist-300">{{ dataHora(envio.geradoEm) }}</td>
-              <td class="py-2.5 pr-4 text-right tabular-nums text-ink-900 dark:text-mist-100">{{ formatarNumero(envio.linhasValidas) }}</td>
-              <td class="py-2.5 text-right tabular-nums text-ink-900 dark:text-mist-100">{{ formatarNumero(envio.linhasRejeitadas) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
     </section>
   </template>
 </template>
