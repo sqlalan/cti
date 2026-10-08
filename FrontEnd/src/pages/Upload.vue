@@ -1,7 +1,8 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { FORMATOS, TAMANHO_MAXIMO, formatarTamanho, useUploadStore } from '../stores/uploadStore'
 import { ESQUEMA, NIVEIS } from '../dados/esquemaPlanilha'
+import EtapasEnvio from '../components/EtapasEnvio.vue'
 
 const planilha = useUploadStore()
 
@@ -122,6 +123,84 @@ const grupos = computed(() => {
     },
   ]
 })
+
+// O processamento é uma chamada só (servidor + Python), sem porcentagem real.
+// O relógio mostra que ele segue andando.
+const agora = ref(Date.now())
+let relogio = null
+watch(
+  () => planilha.estado,
+  (estado) => {
+    clearInterval(relogio)
+    if (estado === 'enviando') {
+      agora.value = Date.now()
+      relogio = setInterval(() => (agora.value = Date.now()), 1000)
+    }
+  },
+  { immediate: true },
+)
+onBeforeUnmount(() => clearInterval(relogio))
+
+const tempo = (ms) => {
+  const segundos = Math.max(0, Math.floor(ms / 1000))
+  return `${Math.floor(segundos / 60)}:${String(segundos % 60).padStart(2, '0')}`
+}
+
+const plural = (quantidade, singular, varias) => `${inteiro(quantidade)} ${quantidade === 1 ? singular : varias}`
+
+// Falha com dados na tela só pode ter vindo do envio (a de leitura limpa tudo).
+const falhouEnvio = computed(() => planilha.estado === 'falha' && planilha.temDados)
+
+const etapas = computed(() => {
+  const servidor = planilha.validacaoServidor
+  const estado = planilha.estado
+
+  const leitura = planilha.temDados
+    ? { situacao: 'feito', detalhe: plural(planilha.quantidadeValidas, 'linha aproveitada', 'linhas aproveitadas') }
+    : { situacao: 'erro', detalhe: 'Nenhuma linha aproveitada' }
+
+  let validacao = { situacao: 'pendente', detalhe: '' }
+  if (servidor?.status === 'validando') validacao = { situacao: 'andamento', detalhe: 'Conferindo no Spring Boot…' }
+  else if (servidor?.status === 'aprovado') validacao = { situacao: 'feito', detalhe: plural(servidor.clientes.length, 'linha aprovada', 'linhas aprovadas') }
+  else if (servidor?.status === 'recusado') validacao = { situacao: 'erro', detalhe: 'Recusada — motivo abaixo' }
+
+  let processamento = { situacao: 'pendente', detalhe: servidor?.status === 'aprovado' ? 'Aguardando o seu comando' : '' }
+  if (estado === 'enviando') {
+    processamento = { situacao: 'andamento', detalhe: `Gravando e gerando insights… ${tempo(agora.value - planilha.inicioEnvio)}` }
+  } else if (estado === 'enviado') {
+    processamento = { situacao: 'feito', detalhe: plural(planilha.analise?.linhasValidas ?? 0, 'linha gravada', 'linhas gravadas') }
+  } else if (falhouEnvio.value) {
+    processamento = { situacao: 'erro', detalhe: 'Não concluído — motivo abaixo' }
+  }
+
+  const concluido =
+    estado === 'enviado'
+      ? { situacao: 'feito', detalhe: `Em ${tempo(planilha.duracaoEnvio ?? 0)} · insights no Dashboard` }
+      : { situacao: 'pendente', detalhe: '' }
+
+  return [
+    { titulo: 'Leitura', ...leitura },
+    { titulo: 'Validação no servidor', ...validacao },
+    { titulo: 'Processamento', ...processamento },
+    { titulo: 'Concluído', ...concluido },
+  ]
+})
+
+const ocupado = computed(
+  () => planilha.validacaoServidor?.status === 'validando' || planilha.estado === 'enviando',
+)
+
+// Com planilha grande o resultado nasce fora da tela; sem rolar até ele, a
+// pessoa não percebe que terminou.
+const resultado = ref(null)
+
+async function processar() {
+  if (!(await planilha.enviar())) return
+  await nextTick()
+  const reduzir = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  resultado.value?.scrollIntoView({ behavior: reduzir ? 'auto' : 'smooth', block: 'center' })
+  resultado.value?.focus({ preventScroll: true })
+}
 </script>
 
 <template>
@@ -175,7 +254,7 @@ const grupos = computed(() => {
 
   <p
     class="mt-4 flex items-start gap-2 rounded border border-warn-500 bg-warn-500/10 px-4 py-3 text-sm text-ink-900 dark:bg-warn-500/15 dark:text-mist-100"
-    v-if="planilha.falha"
+    v-if="planilha.falha && !falhouEnvio"
   >
     <svg
       class="mt-0.5 h-4 w-4 shrink-0 text-warn-500"
@@ -448,35 +527,74 @@ const grupos = computed(() => {
       </p>
     </section>
 
-    <!-- Duas etapas, como na aula de validação: o Pinia já validou na tela; o
-         servidor valida de novo (JSON → DTO → Service) e só então o arquivo
-         segue para a análise. -->
-    <div class="mt-6 flex flex-wrap items-center gap-3">
-      <button
-        class="rounded border border-brand-800 px-6 py-3 text-sm font-semibold text-brand-800 transition-colors hover:bg-brand-800 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-brand-300 dark:text-brand-300 dark:hover:bg-brand-300 dark:hover:text-night-950"
-        type="button"
-        :disabled="!planilha.podeValidar"
-        @click="planilha.validarNoServidor()"
-      >
-        {{ planilha.validacaoServidor?.status === 'validando' ? 'Validando…' : '1. Validar no servidor' }}
-      </button>
+    <!-- Duas validações, como na aula: o Pinia valida na tela e, logo depois da
+         leitura, o servidor valida de novo (JSON → DTO → Service). O botão só
+         libera quando o servidor aprovou. A barra mostra em que ponto está. -->
+    <EtapasEnvio class="mt-6" :etapas="etapas" />
 
+    <div class="mt-4 flex flex-wrap items-center gap-3">
       <button
-        class="rounded bg-brand-800 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
+        class="inline-flex items-center gap-2 rounded bg-brand-800 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
         type="button"
         :disabled="!planilha.podeEnviar"
-        :title="planilha.validacaoServidor?.status === 'aprovado' ? '' : 'Disponível depois que o servidor aprovar as linhas'"
-        @click="planilha.enviar()"
-      >
-        {{ planilha.estado === 'enviando' ? 'Enviando…' : '2. Processar e gerar insights' }}
-      </button>
-
-      <p
-        class="flex items-center gap-1.5 text-sm font-medium text-ok-600 dark:text-ok-400"
-        v-if="planilha.estado === 'enviado'"
+        :aria-busy="ocupado"
+        :title="planilha.podeEnviar || ocupado || planilha.estado === 'enviado' ? '' : 'Disponível depois que o servidor aprovar as linhas'"
+        @click="processar"
       >
         <svg
-          class="h-4 w-4 shrink-0"
+          class="h-4 w-4 shrink-0 animate-spin motion-reduce:animate-none"
+          v-if="ocupado"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <circle class="opacity-25" cx="12" cy="12" r="9" />
+          <path d="M21 12a9 9 0 0 0-9-9" stroke-linecap="round" />
+        </svg>
+        <template v-if="planilha.validacaoServidor?.status === 'validando'">Validando no servidor…</template>
+        <template v-else-if="planilha.estado === 'enviando'">Processando…</template>
+        <template v-else-if="planilha.estado === 'enviado'">Processada ✓</template>
+        <template v-else>Processar e gerar insights</template>
+      </button>
+    </div>
+
+    <p
+      class="mt-3 rounded border border-warn-500 bg-warn-500/10 px-4 py-3 text-sm text-ink-900 dark:bg-warn-500/15 dark:text-mist-100"
+      v-if="falhouEnvio"
+      role="alert"
+    >
+      {{ planilha.falha.replace(/\.?$/, '.') }} A planilha continua carregada — é só clicar em processar de novo.
+    </p>
+    <p
+      class="mt-3 rounded border border-warn-500 bg-warn-500/10 px-4 py-3 text-sm text-ink-900 dark:bg-warn-500/15 dark:text-mist-100"
+      v-else-if="planilha.validacaoServidor?.status === 'recusado'"
+      role="alert"
+    >
+      O servidor recusou a planilha: {{ planilha.validacaoServidor.mensagem }}
+      <button
+        class="ml-1 font-semibold text-brand-800 underline hover:text-brand-500 dark:text-brand-300"
+        type="button"
+        v-if="planilha.validacaoServidor.semResposta"
+        @click="planilha.validarNoServidor()"
+      >
+        Tentar de novo
+      </button>
+    </p>
+
+    <!-- O que o SERVIDOR gravou. Pode diferir da prévia acima se a planilha
+         trouxer algo que só o tratamento em Python recusa. -->
+    <section
+      class="mt-4 rounded border border-ok-600/40 bg-ok-600/5 p-5 focus:outline-none dark:border-ok-400/40 dark:bg-ok-400/10"
+      v-if="planilha.estado === 'enviado' && planilha.analise"
+      ref="resultado"
+      tabindex="-1"
+      role="status"
+    >
+      <div class="flex items-center gap-3">
+        <svg
+          class="h-8 w-8 shrink-0 text-ok-600 dark:text-ok-400"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -488,35 +606,13 @@ const grupos = computed(() => {
           <circle cx="12" cy="12" r="9" />
           <path d="m8.5 12 2.5 2.5 4.5-5" />
         </svg>
-        Processada pelo servidor
-      </p>
-    </div>
-
-    <p
-      class="mt-3 text-sm font-medium text-ok-600 dark:text-ok-400"
-      v-if="planilha.validacaoServidor?.status === 'aprovado'"
-      role="status"
-    >
-      {{ inteiro(planilha.validacaoServidor.clientes.length) }}
-      {{ planilha.validacaoServidor.clientes.length === 1 ? 'linha validada' : 'linhas validadas' }}
-      e padronizadas pelo servidor.
-    </p>
-    <p
-      class="mt-3 rounded border border-warn-500 bg-warn-500/10 px-4 py-3 text-sm text-ink-900 dark:bg-warn-500/15 dark:text-mist-100"
-      v-else-if="planilha.validacaoServidor?.status === 'recusado'"
-      role="alert"
-    >
-      O servidor recusou a planilha: {{ planilha.validacaoServidor.mensagem }}
-    </p>
-
-    <!-- O que o SERVIDOR gravou. Pode diferir da prévia acima se a planilha
-         trouxer algo que só o tratamento em Python recusa. -->
-    <section
-      class="mt-4 rounded border border-ok-600/40 bg-ok-600/5 p-5 dark:border-ok-400/40 dark:bg-ok-400/10"
-      v-if="planilha.estado === 'enviado' && planilha.analise"
-      role="status"
-    >
-      <h2 class="text-sm font-semibold text-ink-900 dark:text-mist-100">Resultado no servidor</h2>
+        <div>
+          <h2 class="text-base font-semibold text-ink-900 dark:text-mist-100">Planilha processada com sucesso</h2>
+          <p class="text-sm text-ink-600 dark:text-mist-300">
+            {{ planilha.nomeArquivo }} · gravada no banco em {{ tempo(planilha.duracaoEnvio ?? 0) }}
+          </p>
+        </div>
+      </div>
       <dl class="mt-3 grid gap-3 text-sm sm:grid-cols-4">
         <div>
           <dt class="text-ink-600 dark:text-mist-300">Linhas gravadas</dt>

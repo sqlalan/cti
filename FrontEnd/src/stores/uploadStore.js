@@ -140,10 +140,14 @@ export const useUploadStore = defineStore('upload', () => {
   // Resposta do servidor ao envio: contagens, clientes novos/atualizados e os
   // insights gerados. A prévia acima é do navegador; isto é o que foi gravado.
   const analise = ref(null)
+  // Quando o envio começou e quanto levou (ms), para a tela mostrar o tempo.
+  const inicioEnvio = ref(null)
+  const duracaoEnvio = ref(null)
 
-  // Segunda validação, no Spring Boot (POST /api/clientes/validar): o Pinia
-  // manda as linhas aprovadas em JSON e o servidor valida de novo e padroniza.
-  // { status: 'validando' | 'aprovado' | 'recusado', clientes, mensagem }
+  // Segunda validação, no Spring Boot (POST /api/clientes/validar), feita logo
+  // depois da leitura: o Pinia manda as linhas aprovadas em JSON e o servidor
+  // valida de novo e padroniza.
+  // { status: 'validando' | 'aprovado' | 'recusado', clientes, mensagem, semResposta }
   const validacaoServidor = ref(null)
 
   // A notificação em curso, para a etapa seguinte reescrever o mesmo cartão em
@@ -301,6 +305,8 @@ export const useUploadStore = defineStore('upload', () => {
     estado.value = 'vazio'
     falha.value = ''
     analise.value = null
+    inicioEnvio.value = null
+    duracaoEnvio.value = null
     validacaoServidor.value = null
   }
 
@@ -339,7 +345,8 @@ export const useUploadStore = defineStore('upload', () => {
     return false
   }
 
-  // Recebe o File, confere, lê e manda validar. true se sobrou dado válido.
+  // Recebe o File, confere, lê e manda validar aqui e no servidor. true se o
+  // servidor aprovou as linhas.
   async function carregar(entrada) {
     if (!entrada) {
       return recusar(
@@ -413,7 +420,8 @@ export const useUploadStore = defineStore('upload', () => {
         })
       }
 
-      return validas > 0
+      // Sem linha aproveitada não há o que mandar ao servidor.
+      return validas > 0 ? validarNoServidor() : false
     } catch (erro) {
       // Corrompido, protegido por senha ou que não é planilha estoura no SheetJS.
       estado.value = 'falha'
@@ -433,10 +441,14 @@ export const useUploadStore = defineStore('upload', () => {
   // Validação no Spring Boot (POST /api/clientes/validar): só as linhas que o
   // Pinia aprovou, em JSON, no formato do ClienteDTO do back-end. O servidor
   // não confia na tela: valida de novo, confere código repetido e padroniza.
+  // Roda sozinha ao fim de carregar(); a página só chama de novo quando o
+  // servidor não respondeu.
   // -------------------------------------------------------------------------
   async function validarNoServidor() {
     if (!podeValidar.value) return false
 
+    // Se a pessoa trocar de arquivo no meio, a resposta antiga é descartada.
+    const validando = arquivo.value
     validacaoServidor.value = { status: 'validando', clientes: [], mensagem: '' }
     const notificacao = abrirOperacao(
       'Validando no servidor…',
@@ -445,16 +457,25 @@ export const useUploadStore = defineStore('upload', () => {
 
     try {
       const { data } = await api.post('/clientes/validar', dadosValidos.value.map(paraClienteDTO))
+      if (arquivo.value !== validando) return false
       validacaoServidor.value = { status: 'aprovado', clientes: data, mensagem: '' }
+      // A notificação da leitura é substituída por esta, então as linhas de
+      // fora são lembradas aqui.
+      const deFora = quantidadeInvalidas.value
       notificacoes.atualizar(notificacao, {
-        tipo: 'sucesso',
+        tipo: deFora ? 'aviso' : 'sucesso',
         titulo: 'Servidor aprovou a planilha',
-        texto: `${linhas(data.length)} validadas e padronizadas pelo Spring Boot.`,
+        texto:
+          `${linhas(data.length)} validadas e padronizadas pelo Spring Boot.` +
+          (deFora ? ` ${linhas(deFora)} de fora — confira "Linhas com erro" na página.` : ''),
       })
       return true
     } catch (erro) {
+      if (arquivo.value !== validando) return false
       const mensagem = explicarRecusa(erro)
-      validacaoServidor.value = { status: 'recusado', clientes: [], mensagem }
+      // Sem resposta (servidor fora do ar) vale tentar de novo; recusa de
+      // regra só muda corrigindo a planilha.
+      validacaoServidor.value = { status: 'recusado', clientes: [], mensagem, semResposta: !erro.response }
       notificacoes.atualizar(notificacao, { tipo: 'erro', titulo: 'Servidor recusou a planilha', texto: mensagem })
       return false
     }
@@ -481,6 +502,8 @@ export const useUploadStore = defineStore('upload', () => {
     estado.value = 'enviando'
     falha.value = ''
     analise.value = null
+    inicioEnvio.value = Date.now()
+    duracaoEnvio.value = null
 
     const notificacao = abrirOperacao(
       'Enviando e analisando…',
@@ -493,6 +516,7 @@ export const useUploadStore = defineStore('upload', () => {
     try {
       const { data } = await api.post('/planilhas', corpo)
       analise.value = data
+      duracaoEnvio.value = Date.now() - inicioEnvio.value
       estado.value = 'enviado'
 
       notificacoes.atualizar(notificacao, {
@@ -535,6 +559,8 @@ export const useUploadStore = defineStore('upload', () => {
     estado,
     falha,
     analise,
+    inicioEnvio,
+    duracaoEnvio,
     validacaoServidor,
     // getters
     quantidadeLinhas,
