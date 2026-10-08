@@ -43,6 +43,11 @@ public class AnaliseService {
 		return ultimaEntidade().getIndicadores();
 	}
 
+	// Indicadores de qualquer envio, para o relatorio comparar uma planilha com a anterior.
+	public String indicadores(Long id) {
+		return buscarEntidade(id).getIndicadores();
+	}
+
 	public String problemas(Long id) {
 		return buscarEntidade(id).getProblemas();
 	}

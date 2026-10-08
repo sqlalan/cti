@@ -143,6 +143,23 @@ class PlanilhaControllerTests {
 	}
 
 	@Test
+	void indicadoresEProblemasDeCadaEnvioFicamGuardados() throws Exception {
+		byte[] planilha = Files.readAllBytes(PLANILHA_MODELO);
+		String primeiro = enviar("dados.xlsx", planilha).andReturn().getResponse().getHeader("Location");
+		enviar("dados.xlsx", planilha).andExpect(status().isCreated());
+
+		// O envio antigo continua consultavel depois do novo.
+		this.mockMvc.perform(get(primeiro + "/indicadores"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.qualidade.linhas_lidas").value(39))
+			.andExpect(jsonPath("$.faturamento.geral.soma").isNumber());
+		this.mockMvc.perform(get(primeiro + "/problemas"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.erros.length()").value(8));
+		this.mockMvc.perform(get("/api/analises/999999/indicadores")).andExpect(status().isNotFound());
+	}
+
+	@Test
 	void colunaObrigatoriaAusenteDevolve422ERegistraTelemetria() throws Exception {
 		byte[] csv = "codigo;nome;consultor\nCTI900;Cliente;Ana\n".getBytes(StandardCharsets.UTF_8);
 

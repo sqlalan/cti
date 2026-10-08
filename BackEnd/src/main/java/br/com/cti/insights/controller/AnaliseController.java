@@ -40,6 +40,11 @@ public class AnaliseController {
 		return service.buscar(id);
 	}
 
+	@GetMapping("/analises/{id}/indicadores")
+	public ResponseEntity<String> indicadores(@PathVariable Long id) {
+		return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(service.indicadores(id));
+	}
+
 	@GetMapping("/analises/{id}/problemas")
 	public ResponseEntity<String> problemas(@PathVariable Long id) {
 		return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(service.problemas(id));
