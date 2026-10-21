@@ -2,6 +2,7 @@
 --
 -- Rode UMA vez no banco que ja tem as tabelas antigas (clientes, contratos, consultores, servicos),
 -- ANTES de subir o backend novo. Os dados sao mantidos: usuarios continuam ligados aos consultores.
+-- Sai so a tabela analises, do fluxo antigo (o resultado agora fica em estatistica_lote).
 -- Banco novo, sem essas tabelas, nao precisa: o Spring cria tudo.
 --
 -- No DBeaver: SQL Editor > cole o arquivo inteiro > Alt+X (executar script).
@@ -10,6 +11,13 @@ DO $$
 DECLARE
 	r record;
 BEGIN
+	IF to_regclass('public.analises') IS NOT NULL THEN
+		IF to_regclass('public.insights') IS NOT NULL THEN
+			ALTER TABLE insights DROP COLUMN IF EXISTS analise_id;
+		END IF;
+		DROP TABLE analises;
+	END IF;
+
 	IF to_regclass('public.clientes') IS NULL THEN
 		RAISE NOTICE 'Nada a migrar: a tabela clientes nao existe.';
 		RETURN;

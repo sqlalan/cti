@@ -36,11 +36,6 @@ public abstract class Insight {
 	@JoinColumn(name = "contrato_id")
 	private Contrato contrato;
 
-	// Analise 1 -- N Insight: a planilha processada que gerou este insight
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "analise_id")
-	private Analise analise;
-
 	public Insight() {
 	}
 
@@ -120,14 +115,6 @@ public abstract class Insight {
 
 	public void setContrato(Contrato contrato) {
 		this.contrato = contrato;
-	}
-
-	public Analise getAnalise() {
-		return analise;
-	}
-
-	public void setAnalise(Analise analise) {
-		this.analise = analise;
 	}
 
 }

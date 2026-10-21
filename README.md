@@ -43,7 +43,7 @@ O código do back-end fica em `BackEnd/src/main/java/br/com/cti/insights/` e seg
 | `controller` | Porta HTTP. Recebe o JSON ou o arquivo e devolve a resposta com o status certo. Aqui também fica o `ErroHandler`, que transforma cada erro numa resposta JSON clara. |
 | `service` | Regras de negócio: e-mail único, login, gravação do lote (`UploadService`), chamada ao Python (`PythonEtlService`) e leitura do dashboard. |
 | `repository` | Acesso ao banco com Spring Data JPA. |
-| `model` | Entidades: `Cliente`, `Consultor`, `Contrato`, `Servico`, `UploadLote`, `UploadLinha`, `EstatisticaLote`, `Insight` (com subclasses), `Telemetria`, `Analise` e `Usuario`. |
+| `model` | Entidades: `Cliente`, `Consultor`, `Contrato`, `Servico`, `UploadLote`, `UploadLinha`, `EstatisticaLote`, `Insight` (com subclasses), `Telemetria` e `Usuario`. |
 | `dto` | O que entra e sai da API, com as validações declarativas (`@NotBlank`, `@Positive`, `@Pattern`...). `ClienteDTO` é uma linha da planilha; os `...RespostaDTO` são o que a API devolve. A senha nunca sai. |
 | `exception` | Exceções próprias (`ClienteDuplicadoException`, `RecursoNaoEncontradoException`...) tratadas pelo `ErroHandler`. |
 | `config` | Segurança, CORS e `AppProperties` (endereço e chave da API do Python). |
