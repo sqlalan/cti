@@ -7,20 +7,22 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
-@Table(name = "clientes")
+@Table(name = "cliente")
 public class Cliente {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	/** Codigo CTI do cliente; e a chave de negocio usada na planilha. */
-	@Column(nullable = false, unique = true, length = 30)
+	/** Codigo CTI do cliente. Nao e unico: cada lote grava os seus clientes. */
+	@Column(name = "codigo_cti", nullable = false, length = 60)
 	private String codigo;
 
-	@Column(nullable = false, length = 160)
+	@Column(nullable = false, length = 255)
 	private String nome;
 
 	@Column(nullable = false, length = 60)
@@ -33,11 +35,18 @@ public class Cliente {
 	@Column(name = "faturamento_anual", nullable = false, precision = 15, scale = 2)
 	private BigDecimal faturamentoAnual;
 
-	@Column(nullable = false, length = 100)
+	// Cidade e UF sao opcionais na planilha.
+	@Column(length = 120)
 	private String cidade;
 
-	@Column(nullable = false, length = 2)
+	@Column(length = 2)
 	private String uf;
+
+	// Lote que gravou o cliente (banco.py); nulo no cadastro manual. Apagar o lote apaga o cliente.
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "lote_id")
+	@OnDelete(action = OnDeleteAction.CASCADE)
+	private UploadLote lote;
 
 	// Consultor 1 -- N Cliente
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -138,7 +147,7 @@ public class Cliente {
 	}
 
 	public void setCidade(String cidade) {
-		this.cidade = cidade.trim();
+		this.cidade = cidade == null ? null : cidade.trim();
 	}
 
 	public String getUf() {
@@ -146,7 +155,15 @@ public class Cliente {
 	}
 
 	public void setUf(String uf) {
-		this.uf = uf.trim().toUpperCase(Locale.ROOT);
+		this.uf = uf == null ? null : uf.trim().toUpperCase(Locale.ROOT);
+	}
+
+	public UploadLote getLote() {
+		return lote;
+	}
+
+	public void setLote(UploadLote lote) {
+		this.lote = lote;
 	}
 
 	public Consultor getConsultor() {

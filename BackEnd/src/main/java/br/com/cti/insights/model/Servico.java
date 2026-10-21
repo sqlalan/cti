@@ -13,7 +13,7 @@ import org.hibernate.annotations.ColumnDefault;
  * Servico do catalogo CTI (Internet Dedicada, MPLS, Firewall...).
  */
 @Entity
-@Table(name = "servicos")
+@Table(name = "servico")
 public class Servico {
 
 	// Chaves sem acento e em minuscula, como o Python padroniza os nomes.
@@ -25,7 +25,7 @@ public class Servico {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(nullable = false, unique = true, length = 80)
+	@Column(nullable = false, unique = true, length = 120)
 	private String nome;
 
 	@Column(nullable = false, length = 30)

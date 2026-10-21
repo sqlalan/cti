@@ -6,16 +6,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
-@Table(name = "contratos")
+@Table(name = "contrato")
 public class Contrato {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(name = "data_inicio", nullable = false)
+	@Column(name = "data_contratacao", nullable = false)
 	private LocalDate dataInicio;
 
 	// Cancelado vira false e continua no historico.
@@ -23,9 +25,10 @@ public class Contrato {
 	@ColumnDefault("true")
 	private Boolean ativo = true;
 
-	// N Contratos -- 1 Cliente
+	// N Contratos -- 1 Cliente. Apagar o cliente apaga os contratos (o banco.py conta com isso).
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "cliente_id", nullable = false)
+	@OnDelete(action = OnDeleteAction.CASCADE)
 	private Cliente cliente;
 
 	// N Contratos -- 1 Servico

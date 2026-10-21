@@ -27,9 +27,9 @@ não na raiz do repositório — rodar `npm run dev` na raiz falha com `ENOENT`.
 | `/` | Home | Página institucional |
 | `/login` | Login | Entra com e-mail e senha conferidos na API; guarda o token (JWT) |
 | `/cadastro` | Cadastro | O consultor cria a própria conta e já entra |
-| `/upload` | Upload | Prévia e validação no navegador; depois (1) as linhas aprovadas vão em JSON para `POST /api/clientes/validar` e (2) o arquivo vai para `POST /api/planilhas` (**exige login**) |
-| `/relatorio` | Relatórios | Análise da carteira carregada, com filtros e exportação CSV (**exige login**) |
-| `/dashboard` | Dashboard | Gráficos por segmento, nível A/B/C e evolução de contratações, insights e testes da última planilha, lidos de `/api/indicadores` (**exige login**) |
+| `/upload` | Upload | Prévia e validação no navegador; depois (1) as linhas aprovadas vão em JSON para `POST /api/clientes/validar` e (2) no envio, para `POST /api/uploads/validadas`, que grava o lote e chama o Python (**exige login**) |
+| `/relatorio` | Relatórios | Validação da planilha carregada e histórico dos lotes enviados, com comparação, evolução e exportação CSV, XLSX e PDF (**exige login**) |
+| `/dashboard` | Dashboard (`views/DashboardView.vue`) | Cartões e 5 gráficos (Chart.js, `components/BaseChart.vue`) com o JSON que o Python gravou, lido de `GET /api/dashboard`; atualiza sozinho a cada 5 s enquanto o Python processa (**exige login**) |
 
 O endereço da API vem de `VITE_API_URL` (padrão `http://localhost:8080`; o `/api` é acrescentado quando falta).
 
@@ -85,9 +85,9 @@ exportação e as tabelas percorrem essa lista.
 ## Integração com o back-end
 
 ```
-Planilha → Vue Upload (prévia no navegador) → Axios → Spring Boot → Python → PostgreSQL
-                                                          ↓
-                              Dashboard ← GET /api/indicadores e /api/analises/ultima
+Planilha → Vue Upload (Pinia valida) → Axios → Spring Boot (valida e grava o lote) → POST /etl → Python → PostgreSQL
+                                                                                                  ↓
+                                         Dashboard (Chart.js) ← GET /api/dashboard ← Spring Boot lê
 ```
 
 O Vue **não acessa o PostgreSQL diretamente**: quem grava no banco é o Spring Boot.
@@ -98,10 +98,10 @@ O Vue **não acessa o PostgreSQL diretamente**: quem grava no banco é o Spring 
 - **`validarNoServidor()` em `src/stores/uploadStore.js`**: etapa 1. Manda as linhas que o
   Pinia aprovou, em JSON (`ClienteDTO`), para `POST /api/clientes/validar`. O servidor valida de
   novo e padroniza; se recusar, a tela diz a linha da planilha e o motivo.
-- **`enviar()` em `src/stores/uploadStore.js`**: etapa 2, liberada só depois da 1. Manda o **arquivo original** para
-  `POST /api/planilhas`. O servidor trata tudo de novo no Python, porque dado que vem
-  do navegador pode ter sido adulterado. A prévia daqui serve para a pessoa corrigir a
-  planilha antes de enviar.
+- **`enviar()` em `src/stores/uploadStore.js`**: etapa 2, liberada só depois da 1. Manda as linhas
+  aprovadas para `POST /api/uploads/validadas` (`uploadService` em `api.js`). O servidor valida de novo,
+  grava o lote e o Python processa em segundo plano; o lote devolvido fica em `lote` na store, e o
+  Dashboard acompanha por ele.
 - **`src/stores/authStore.js`**: login, cadastro e o token (JWT) no `localStorage`.
   A senha nunca é guardada.
 - **`src/router/index.js`**: Upload, Dashboard e Relatório exigem login.

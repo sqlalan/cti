@@ -3,7 +3,7 @@ import AppLayout from '../layouts/AppLayout.vue'
 import Home from '../pages/Home.vue'
 import Login from '../pages/Login.vue'
 import Cadastro from '../pages/Cadastro.vue'
-import Dashboard from '../pages/Dashboard.vue'
+import DashboardView from '../views/DashboardView.vue'
 import Upload from '../pages/Upload.vue'
 import Relatorio from '../pages/Relatorio.vue'
 import NaoEncontrada from '../pages/NaoEncontrada.vue'
@@ -28,7 +28,7 @@ const routes = [
     // Tudo dentro do layout exige login; os filhos herdam pelo `to.matched`.
     meta: { requerLogin: true },
     children: [
-      { path: 'dashboard', name: 'dashboard', component: Dashboard },
+      { path: 'dashboard', name: 'dashboard', component: DashboardView },
       { path: 'upload', name: 'upload', component: Upload },
       { path: 'relatorio', name: 'relatorio', component: Relatorio },
     ],

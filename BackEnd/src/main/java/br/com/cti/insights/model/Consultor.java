@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Locale;
 
 @Entity
-@Table(name = "consultores")
+@Table(name = "consultor")
 public class Consultor {
 
 	@Id

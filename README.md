@@ -14,17 +14,18 @@ O CTI Insights recebe a planilha, padroniza e valida os dados, grava tudo num ba
 ## Como as partes se conectam
 
 ```
-Planilha Excel ──▶ Vue 3 (Front-end) ──▶ Spring Boot (API REST) ──▶ Python (Pandas + SciPy)
-                        ▲                        │
-                        │                        ▼
-                   Dashboards ◀──── JSON ──── PostgreSQL
+Planilha ─▶ Pinia valida ─▶ Spring valida e grava o lote ─▶ POST /etl ─▶ Python (FastAPI + pandas)
+                                                                              │ limpa, calcula, grava
+   Dashboard (Chart.js) ◀── GET /api/dashboard ◀── Spring lê ◀── PostgreSQL ◀─┘
 ```
 
-1. O consultor faz login no front e envia a planilha. A API devolve um token (JWT), e o front o manda em todos os pedidos.
-2. O Spring Boot valida o arquivo e chama o script Python pelo `ProcessBuilder`.
-3. O Python limpa, padroniza e valida cada linha, calcula as estatísticas e os testes, e escreve os insights em texto.
-4. O Spring Boot grava os clientes (atualizando pelo código CTI), os contratos, os indicadores e os insights.
-5. O dashboard lê os resultados pela API.
+É um ETL (aula 11): **E**xtrair, o Spring entrega ao Python só as linhas válidas, em JSON; **T**ransformar, o Python limpa, padroniza, calcula e escreve as frases; **C**arregar, o Python grava no banco.
+
+1. O consultor faz login no front e carrega a planilha. O Pinia valida no navegador e o Spring valida de novo (`ClienteDTO` + `ClienteValidacaoService`, aula 10).
+2. No envio, o Spring grava o lote (`upload_lote`, status `AGUARDANDO_ETL`) e as linhas válidas (`upload_linha`).
+3. Depois do commit, o `PythonEtlService` faz `POST /etl` na API do Python com `{loteId, recebidas, linhas}`.
+4. O Python (`analytics-python/`) limpa (`limpeza.py`), calcula média, mediana, desvio e agrupamentos (`analise.py`), escreve os insights (`insights.py`) e grava clientes, contratos e o JSON do dashboard em `estatistica_lote` (`banco.py`). O lote vira `PROCESSADO`, ou `ERRO` com a mensagem.
+5. O dashboard lê esse JSON por `GET /api/dashboard` e desenha os gráficos com Chart.js.
 
 ## Estrutura do repositório
 
@@ -32,37 +33,46 @@ Planilha Excel ──▶ Vue 3 (Front-end) ──▶ Spring Boot (API REST) ─�
 | --- | --- | --- |
 | [`FrontEnd/`](FrontEnd/) | Vue 3, Vite, Tailwind, Pinia, Vue Router e Axios | Frameworks Front-end |
 | [`BackEnd/`](BackEnd/) | Java 21 e Spring Boot 4 (Web MVC, Data JPA, Security com JWT, Validation) | Desenvolvimento Back-end |
-| [`CienciaD/`](CienciaD/) | Python com Pandas, SciPy e Matplotlib: limpeza, estatística, gráficos e insights | Ciência de Dados |
-| [`database/`](database/) | `schema.sql`: a estrutura do banco no PostgreSQL | Back-end / Nuvem |
+| [`analytics-python/`](analytics-python/) | Python com FastAPI, pandas, SciPy e SQLAlchemy: o ETL que limpa, calcula, gera os insights e grava no banco | Ciência de Dados |
+| [`database/`](database/) | `schema.sql`: a estrutura do banco no PostgreSQL. `migracao-aula11.sql`: renomeia as tabelas antigas para as da aula 11 | Back-end / Nuvem |
 
 O código do back-end fica em `BackEnd/src/main/java/br/com/cti/insights/` e segue as camadas vistas em aula:
 
 | Pacote | Papel |
 | --- | --- |
 | `controller` | Porta HTTP. Recebe o JSON ou o arquivo e devolve a resposta com o status certo. Aqui também fica o `ErroHandler`, que transforma cada erro numa resposta JSON clara. |
-| `service` | Regras de negócio: e-mail único, login, importação da planilha. |
+| `service` | Regras de negócio: e-mail único, login, gravação do lote (`UploadService`), chamada ao Python (`PythonEtlService`) e leitura do dashboard. |
 | `repository` | Acesso ao banco com Spring Data JPA. |
-| `model` | Entidades: `Cliente`, `Consultor`, `Contrato`, `Servico`, `Insight` (com subclasses), `Telemetria`, `Analise` e `Usuario`. |
+| `model` | Entidades: `Cliente`, `Consultor`, `Contrato`, `Servico`, `UploadLote`, `UploadLinha`, `EstatisticaLote`, `Insight` (com subclasses), `Telemetria`, `Analise` e `Usuario`. |
 | `dto` | O que entra e sai da API, com as validações declarativas (`@NotBlank`, `@Positive`, `@Pattern`...). `ClienteDTO` é uma linha da planilha; os `...RespostaDTO` são o que a API devolve. A senha nunca sai. |
-| `exception` | Exceções próprias (`ExcelInvalidoException`, `ColunaObrigatoriaException`, `ClienteDuplicadoException`...) tratadas pelo `ErroHandler`. |
-| `analise` | A chamada ao script Python. |
+| `exception` | Exceções próprias (`ClienteDuplicadoException`, `RecursoNaoEncontradoException`...) tratadas pelo `ErroHandler`. |
+| `config` | Segurança, CORS e `AppProperties` (endereço e chave da API do Python). |
 
 ## Como rodar na sua máquina
 
 **Pré-requisitos:**
 - JDK 21 ou mais novo (o 25 também serve);
 - Node.js 22 ou mais novo;
-- Python 3.10 ou mais novo;
+- Python 3.11 ou mais novo;
 - um PostgreSQL.
 
 O banco pode ser local (instalado ou pelo Docker) ou na nuvem.
 
-**1. Dependências do Python** (uma vez):
+**1. API do Python** (`http://localhost:8000`), ligada **antes** de enviar a planilha:
 
 ```bash
-cd CienciaD
-py -m pip install -r requirements.txt      # Linux/Mac: python3 -m pip ...
+cd analytics-python
+python -m venv .venv
+.venv\Scripts\Activate.ps1                 # Linux/Mac: source .venv/bin/activate
+pip install -r requirements.txt
+copy .env.example .env                     # Linux/Mac: cp; preencha com os dados do banco
+python testar_conexao.py                   # deve mostrar "Conectou!"
+uvicorn api:app --port 8000                # confira http://localhost:8000/saude
 ```
+
+Sem o Python no ar, o lote fica com status `ERRO` e a mensagem "Não foi possível falar com o serviço Python". Para testar só o Python, sem banco: `http://localhost:8000/docs` > `POST /testar` com o conteúdo de `amostras/clientes.json`.
+
+**Banco que já existia antes da aula 11:** rode [`database/migracao-aula11.sql`](database/migracao-aula11.sql) uma vez (no DBeaver) **antes** de subir o back-end novo. Ele renomeia `clientes`, `contratos`, `consultores` e `servicos` para os nomes que o `banco.py` usa, sem perder dados.
 
 **2. Back-end** (`http://localhost:8080`):
 
@@ -103,8 +113,10 @@ Abra `/cadastro`, crie a conta de consultor e envie a planilha de exemplo [`Fron
 | `JWT_SECRET` | Back-end | Chave que assina o token de login. **Obrigatória em produção**, com 32 caracteres ou mais. (`JWT_SEGREDO` também é aceito.) | Aleatória a cada inicialização |
 | `JWT_VALIDADE` | Back-end | Por quanto tempo o login vale | `8h` |
 | `CORS_ORIGIN` | Back-end | Endereços do front que podem chamar a API, separados por vírgula. (`CORS_ORIGENS` também é aceito.) | `http://localhost:5173` |
-| `PYTHON_CMD` | Back-end | Executável do Python | `py` no Windows, `python3` nos outros |
-| `PYTHON_SCRIPT` | Back-end | Caminho do `main.py` | `../CienciaD/main.py` |
+| `ETL_URL` | Back-end | Endereço da API do Python | `http://localhost:8000/etl` |
+| `ETL_KEY` | Back-end | Chave enviada no cabeçalho `X-ETL-Key`; igual ao `ETL_API_KEY` do Python | vazia (sem chave) |
+| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_SSLMODE` | Python (`analytics-python/.env`) | O mesmo banco do back-end | `localhost`, `5432`, `ctiinsights`, `cti`, `cti123`, `prefer` |
+| `ETL_API_KEY` | Python (`.env`) | Chave exigida no `POST /etl` (errada = 401) | vazia (sem chave) |
 | `VITE_API_URL` | Front-end | Endereço da API. Com ou sem `/api` no final: o front acrescenta quando falta. | `http://localhost:8080` |
 
 ## API
@@ -126,10 +138,9 @@ Por enquanto nenhuma rota é exclusiva de `ADMIN`. O perfil já chega ao Spring 
 | GET | `/api/usuarios/me` | Quem está logado, lido do próprio token |
 | GET, PUT, DELETE | `/api/usuarios`, `/api/usuarios/{id}` | Consultar, alterar e remover usuários |
 | POST | `/api/clientes/validar` | Recebe em JSON as linhas que o Pinia aprovou, valida de novo (DTO + `ClienteValidacaoService`: código repetido e padronização) e devolve a lista padronizada. Não grava e não chama Python. |
-| POST | `/api/planilhas` | Upload da planilha (multipart, campo `arquivo`). Trata, analisa e grava. |
-| GET | `/api/indicadores` | Estatísticas da última planilha (frequências, medidas, testes, contratações por mês) |
-| GET | `/api/insights` | Insights da última planilha |
-| GET | `/api/analises`, `/api/analises/ultima`, `/api/analises/{id}`, `/api/analises/{id}/problemas` | Histórico de planilhas processadas e as linhas recusadas de cada uma |
+| POST | `/api/uploads/validadas?arquivo=&recebidas=` | Recebe as linhas que o Pinia aprovou (lista de `ClienteDTO`), valida de novo, grava o lote em `AGUARDANDO_ETL` e chama o Python. Responde 201 com o lote. |
+| GET | `/api/uploads` | Lotes enviados, do mais recente para o mais antigo, com status e mensagem |
+| GET | `/api/dashboard?loteId=` | `{ lote, geradoEm, estatisticas }`: o JSON que o Python gravou em `estatistica_lote`. Sem `loteId`, o último lote processado. `estatisticas` vem nulo enquanto o Python não terminou. |
 | GET, POST, PUT, DELETE | `/api/clientes`, `/api/clientes/{id}` | CRUD de clientes |
 | PATCH | `/api/clientes/{id}/nivel` | Altera só o nível A/B/C |
 | GET, POST | `/api/clientes/{id}/contratos` | Contratos do cliente |
@@ -140,21 +151,20 @@ Os erros vêm no formato `{ "mensagem": "..." }`. Na validação vêm também `c
 
 | Status | Quando acontece |
 | --- | --- |
-| 400 | Dados inválidos ou arquivo ilegível |
+| 400 | Dados inválidos |
 | 401 | Sem login ou token vencido (esta resposta vem sem corpo) |
 | 404 | O registro não existe |
 | 409 | E-mail, código CTI ou matrícula repetidos |
-| 413 | Arquivo acima de 25 MB |
-| 422 | Falta uma coluna obrigatória na planilha |
 
 ## Testes
 
 ```bash
-cd BackEnd && ./mvnw test                                  # API, regras, upload com Python e schema.sql
-cd CienciaD && py -m unittest discover -s tests -t .       # limpeza, estatística e linha de comando
+cd BackEnd && ./mvnw test                                  # API, regras, envio do lote ao Python e schema.sql
 ```
 
-Os testes do back-end usam o H2 em memória, então não precisam de PostgreSQL. O teste de upload roda o Python de verdade; sem Python com pandas, ele é pulado.
+Os testes do back-end usam o H2 em memória, então não precisam de PostgreSQL nem do Python: o teste do `PythonEtlService` sobe um servidor HTTP falso no lugar da API do Python e confere o JSON e a chave enviados.
+
+O Python se testa como na aula: `POST /testar` com `amostras/clientes.json` deve dar 2 clientes e média 1.135.000. Com a planilha de exemplo, o lote deve terminar `PROCESSADO` com 32 clientes, 61 contratos e média 2.261.250 (consultas no DBeaver no PASSO 12 do guia da aula).
 
 Mudou uma entidade? Regere o [`database/schema.sql`](database/schema.sql) com:
 
@@ -173,5 +183,4 @@ No sistema:
 
 ## Mais detalhes
 
-- [`CienciaD/README.md`](CienciaD/README.md): tratamento dos dados, métodos estatísticos, interpretação dos testes e o contrato com o back-end.
 - [`FrontEnd/README.md`](FrontEnd/README.md): telas, regras de padronização da planilha e onde mexer.

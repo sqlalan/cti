@@ -44,7 +44,7 @@ public class ClienteService {
 	@Transactional
 	public ClienteRespostaDTO criar(ClienteRequest request) {
 		String codigo = request.codigo().trim().toUpperCase(Locale.ROOT);
-		if (clienteRepository.existsByCodigo(codigo)) {
+		if (clienteRepository.existsByCodigoAndLoteIsNull(codigo)) {
 			throw new ClienteDuplicadoException(codigo);
 		}
 		Cliente cliente = new Cliente(codigo, request.nome(), catalogo.consultorPorNome(request.consultor()));
@@ -59,7 +59,7 @@ public class ClienteService {
 	public ClienteRespostaDTO substituir(Long id, ClienteRequest request) {
 		Cliente cliente = buscarEntidade(id);
 		String codigo = request.codigo().trim().toUpperCase(Locale.ROOT);
-		clienteRepository.findByCodigo(codigo).filter(outro -> !outro.getId().equals(id)).ifPresent(outro -> {
+		clienteRepository.findByCodigoAndLoteIsNull(codigo).filter(outro -> !outro.getId().equals(id)).ifPresent(outro -> {
 			throw new ClienteDuplicadoException(codigo);
 		});
 		cliente.setCodigo(codigo);

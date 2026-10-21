@@ -6,8 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ClienteRepository extends JpaRepository<Cliente, Long> {
 
-	Optional<Cliente> findByCodigo(String codigo);
+	// So o cadastro manual tem codigo unico: o mesmo codigo volta a cada lote enviado.
+	Optional<Cliente> findByCodigoAndLoteIsNull(String codigo);
 
-	boolean existsByCodigo(String codigo);
+	boolean existsByCodigoAndLoteIsNull(String codigo);
 
 }

@@ -9,7 +9,7 @@ import {
   tratarLinhas,
 } from '../dados/esquemaPlanilha'
 import { useNotificacoesStore } from './notificacoes'
-import { api, mensagemDeErro } from '../services/api'
+import { api, mensagemDeErro, uploadService } from '../services/api'
 
 export const FORMATOS = ['.xlsx', '.xls', '.csv']
 export const TAMANHO_MAXIMO = 25 * 1024 * 1024
@@ -137,9 +137,9 @@ export const useUploadStore = defineStore('upload', () => {
   // de LINHA mora em dadosInvalidos.
   const falha = ref('')
 
-  // Resposta do servidor ao envio: contagens, clientes novos/atualizados e os
-  // insights gerados. A prévia acima é do navegador; isto é o que foi gravado.
-  const analise = ref(null)
+  // O lote que o servidor gravou (status AGUARDANDO_ETL). O Python processa
+  // depois, em segundo plano; o Dashboard acompanha pelo id do lote.
+  const lote = ref(null)
   // Quando o envio começou e quanto levou (ms), para a tela mostrar o tempo.
   const inicioEnvio = ref(null)
   const duracaoEnvio = ref(null)
@@ -304,7 +304,7 @@ export const useUploadStore = defineStore('upload', () => {
     abasIgnoradas.value = []
     estado.value = 'vazio'
     falha.value = ''
-    analise.value = null
+    lote.value = null
     inicioEnvio.value = null
     duracaoEnvio.value = null
     validacaoServidor.value = null
@@ -491,45 +491,42 @@ export const useUploadStore = defineStore('upload', () => {
   }
 
   // -------------------------------------------------------------------------
-  // Envio ao Spring Boot (POST /api/planilhas). Vai o arquivo original, não as
-  // linhas tratadas aqui: o servidor trata de novo no Python, porque dado que
-  // vem do navegador é dado que o usuário pode ter adulterado. A prévia serve
-  // para a pessoa corrigir a planilha antes; quem grava é o servidor.
+  // Envio ao Spring Boot (POST /api/uploads/validadas, aula 11): só as linhas
+  // que o Pinia aprovou, em JSON. O servidor valida de novo, grava o lote e
+  // chama o Python (POST /etl), que limpa, calcula e grava no banco.
   // -------------------------------------------------------------------------
   async function enviar() {
     if (!podeEnviar.value) return false
 
     estado.value = 'enviando'
     falha.value = ''
-    analise.value = null
+    lote.value = null
     inicioEnvio.value = Date.now()
     duracaoEnvio.value = null
 
     const notificacao = abrirOperacao(
-      'Enviando e analisando…',
-      `${nomeArquivo.value} · o servidor trata a planilha e calcula os indicadores`,
+      'Enviando ao servidor…',
+      `${nomeArquivo.value} · ${linhas(quantidadeValidas.value)} validadas`,
     )
 
-    const corpo = new FormData()
-    corpo.append('arquivo', arquivo.value, nomeArquivo.value)
-
     try {
-      const { data } = await api.post('/planilhas', corpo)
-      analise.value = data
+      const data = await uploadService.enviarValidadas(dadosValidos.value.map(paraClienteDTO), {
+        arquivo: nomeArquivo.value,
+        recebidas: quantidadeLinhas.value,
+      })
+      lote.value = data
       duracaoEnvio.value = Date.now() - inicioEnvio.value
       estado.value = 'enviado'
 
       notificacoes.atualizar(notificacao, {
         tipo: 'sucesso',
-        titulo: 'Planilha processada',
-        texto:
-          `${linhas(data.linhasValidas)} gravadas: ${data.clientesCriados} cliente(s) novo(s) e ` +
-          `${data.clientesAtualizados} atualizado(s). Os insights já estão no Dashboard.`,
+        titulo: `Lote ${data.id} enviado`,
+        texto: `${linhas(data.linhasValidas)} gravadas. O Python está calculando; acompanhe no Dashboard.`,
       })
 
       return true
     } catch (erro) {
-      const mensagem = mensagemDeErro(erro)
+      const mensagem = explicarRecusa(erro)
       estado.value = 'falha'
       falha.value = `Falha ao enviar: ${mensagem}`
 
@@ -558,7 +555,7 @@ export const useUploadStore = defineStore('upload', () => {
     abasIgnoradas,
     estado,
     falha,
-    analise,
+    lote,
     inicioEnvio,
     duracaoEnvio,
     validacaoServidor,

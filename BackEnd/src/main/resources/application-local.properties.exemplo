@@ -23,3 +23,7 @@ DB_SSLMODE=require
 JWT_SECRET=COLE_AQUI_A_CHAVE_GERADA
 
 CORS_ORIGIN=http://localhost:5173
+
+# API do Python (analytics-python). ETL_KEY = o mesmo valor do ETL_API_KEY do analytics-python/.env.
+ETL_URL=http://localhost:8000/etl
+ETL_KEY=

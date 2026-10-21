@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { FORMATOS, TAMANHO_MAXIMO, formatarTamanho, useUploadStore } from '../stores/uploadStore'
 import { ESQUEMA, NIVEIS } from '../dados/esquemaPlanilha'
 import EtapasEnvio from '../components/EtapasEnvio.vue'
+import StatusBadge from '../components/StatusBadge.vue'
 
 const planilha = useUploadStore()
 
@@ -124,8 +125,8 @@ const grupos = computed(() => {
   ]
 })
 
-// O processamento é uma chamada só (servidor + Python), sem porcentagem real.
-// O relógio mostra que ele segue andando.
+// O envio é uma chamada só, sem porcentagem real. O relógio mostra que ele
+// segue andando.
 const agora = ref(Date.now())
 let relogio = null
 watch(
@@ -164,25 +165,26 @@ const etapas = computed(() => {
   else if (servidor?.status === 'aprovado') validacao = { situacao: 'feito', detalhe: plural(servidor.clientes.length, 'linha aprovada', 'linhas aprovadas') }
   else if (servidor?.status === 'recusado') validacao = { situacao: 'erro', detalhe: 'Recusada — motivo abaixo' }
 
-  let processamento = { situacao: 'pendente', detalhe: servidor?.status === 'aprovado' ? 'Aguardando o seu comando' : '' }
+  let envio = { situacao: 'pendente', detalhe: servidor?.status === 'aprovado' ? 'Aguardando o seu comando' : '' }
   if (estado === 'enviando') {
-    processamento = { situacao: 'andamento', detalhe: `Gravando e gerando insights… ${tempo(agora.value - planilha.inicioEnvio)}` }
+    envio = { situacao: 'andamento', detalhe: `Gravando o lote… ${tempo(agora.value - planilha.inicioEnvio)}` }
   } else if (estado === 'enviado') {
-    processamento = { situacao: 'feito', detalhe: plural(planilha.analise?.linhasValidas ?? 0, 'linha gravada', 'linhas gravadas') }
+    envio = { situacao: 'feito', detalhe: `Lote ${planilha.lote?.id} · ${plural(planilha.lote?.linhasValidas ?? 0, 'linha gravada', 'linhas gravadas')}` }
   } else if (falhouEnvio.value) {
-    processamento = { situacao: 'erro', detalhe: 'Não concluído — motivo abaixo' }
+    envio = { situacao: 'erro', detalhe: 'Não concluído — motivo abaixo' }
   }
 
-  const concluido =
+  // O Python roda depois da resposta; quem acompanha o fim é o Dashboard.
+  const python =
     estado === 'enviado'
-      ? { situacao: 'feito', detalhe: `Em ${tempo(planilha.duracaoEnvio ?? 0)} · insights no Dashboard` }
+      ? { situacao: 'andamento', detalhe: 'Limpando e calculando · resultado no Dashboard' }
       : { situacao: 'pendente', detalhe: '' }
 
   return [
     { titulo: 'Leitura', ...leitura },
     { titulo: 'Validação no servidor', ...validacao },
-    { titulo: 'Processamento', ...processamento },
-    { titulo: 'Concluído', ...concluido },
+    { titulo: 'Envio do lote', ...envio },
+    { titulo: 'Python (ETL)', ...python },
   ]
 })
 
@@ -527,9 +529,9 @@ async function processar() {
       </p>
     </section>
 
-    <!-- Duas validações, como na aula: o Pinia valida na tela e, logo depois da
-         leitura, o servidor valida de novo (JSON → DTO → Service). O botão só
-         libera quando o servidor aprovou. A barra mostra em que ponto está. -->
+    <!-- Pinia valida na tela, o servidor valida de novo (aula 10) e, no envio,
+         grava o lote e chama o Python (aula 11). O botão só libera quando o
+         servidor aprovou. A barra mostra em que ponto está. -->
     <EtapasEnvio class="mt-6" :etapas="etapas" />
 
     <div class="mt-4 flex flex-wrap items-center gap-3">
@@ -554,9 +556,9 @@ async function processar() {
           <path d="M21 12a9 9 0 0 0-9-9" stroke-linecap="round" />
         </svg>
         <template v-if="planilha.validacaoServidor?.status === 'validando'">Validando no servidor…</template>
-        <template v-else-if="planilha.estado === 'enviando'">Processando…</template>
-        <template v-else-if="planilha.estado === 'enviado'">Processada ✓</template>
-        <template v-else>Processar e gerar insights</template>
+        <template v-else-if="planilha.estado === 'enviando'">Enviando…</template>
+        <template v-else-if="planilha.estado === 'enviado'">Enviada ✓</template>
+        <template v-else>Enviar para análise</template>
       </button>
     </div>
 
@@ -565,7 +567,7 @@ async function processar() {
       v-if="falhouEnvio"
       role="alert"
     >
-      {{ planilha.falha.replace(/\.?$/, '.') }} A planilha continua carregada — é só clicar em processar de novo.
+      {{ planilha.falha.replace(/\.?$/, '.') }} A planilha continua carregada — é só clicar em enviar de novo.
     </p>
     <p
       class="mt-3 rounded border border-warn-500 bg-warn-500/10 px-4 py-3 text-sm text-ink-900 dark:bg-warn-500/15 dark:text-mist-100"
@@ -583,11 +585,11 @@ async function processar() {
       </button>
     </p>
 
-    <!-- O que o SERVIDOR gravou. Pode diferir da prévia acima se a planilha
-         trouxer algo que só o tratamento em Python recusa. -->
+    <!-- O lote que o servidor gravou. Os números e as frases saem do Python,
+         que roda em seguida; o Dashboard mostra quando ele terminar. -->
     <section
       class="mt-4 rounded border border-ok-600/40 bg-ok-600/5 p-5 focus:outline-none dark:border-ok-400/40 dark:bg-ok-400/10"
-      v-if="planilha.estado === 'enviado' && planilha.analise"
+      v-if="planilha.estado === 'enviado' && planilha.lote"
       ref="resultado"
       tabindex="-1"
       role="status"
@@ -607,35 +609,35 @@ async function processar() {
           <path d="m8.5 12 2.5 2.5 4.5-5" />
         </svg>
         <div>
-          <h2 class="text-base font-semibold text-ink-900 dark:text-mist-100">Planilha processada com sucesso</h2>
+          <h2 class="text-base font-semibold text-ink-900 dark:text-mist-100">Lote {{ planilha.lote.id }} enviado</h2>
           <p class="text-sm text-ink-600 dark:text-mist-300">
-            {{ planilha.nomeArquivo }} · gravada no banco em {{ tempo(planilha.duracaoEnvio ?? 0) }}
+            {{ planilha.nomeArquivo }} · gravado em {{ tempo(planilha.duracaoEnvio ?? 0) }} · o Python está calculando
           </p>
         </div>
       </div>
       <dl class="mt-3 grid gap-3 text-sm sm:grid-cols-4">
         <div>
-          <dt class="text-ink-600 dark:text-mist-300">Linhas gravadas</dt>
+          <dt class="text-ink-600 dark:text-mist-300">Linhas recebidas</dt>
           <dd class="text-lg font-semibold tabular-nums text-ink-900 dark:text-mist-100">
-            {{ inteiro(planilha.analise.linhasValidas) }}
+            {{ inteiro(planilha.lote.totalLinhas) }}
           </dd>
         </div>
         <div>
-          <dt class="text-ink-600 dark:text-mist-300">Recusadas</dt>
+          <dt class="text-ink-600 dark:text-mist-300">Válidas (enviadas ao Python)</dt>
           <dd class="text-lg font-semibold tabular-nums text-ink-900 dark:text-mist-100">
-            {{ inteiro(planilha.analise.linhasRejeitadas) }}
+            {{ inteiro(planilha.lote.linhasValidas) }}
           </dd>
         </div>
         <div>
-          <dt class="text-ink-600 dark:text-mist-300">Clientes novos</dt>
+          <dt class="text-ink-600 dark:text-mist-300">Inválidas</dt>
           <dd class="text-lg font-semibold tabular-nums text-ink-900 dark:text-mist-100">
-            {{ inteiro(planilha.analise.clientesCriados) }}
+            {{ inteiro(planilha.lote.linhasInvalidas) }}
           </dd>
         </div>
         <div>
-          <dt class="text-ink-600 dark:text-mist-300">Clientes atualizados</dt>
-          <dd class="text-lg font-semibold tabular-nums text-ink-900 dark:text-mist-100">
-            {{ inteiro(planilha.analise.clientesAtualizados) }}
+          <dt class="text-ink-600 dark:text-mist-300">Status</dt>
+          <dd class="text-lg font-semibold text-ink-900 dark:text-mist-100">
+            <StatusBadge :status="planilha.lote.status" />
           </dd>
         </div>
       </dl>

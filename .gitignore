@@ -25,6 +25,8 @@ Thumbs.db
 __pycache__/
 *.pyc
 .venv/
+# Senha do banco do Python (analytics-python/.env); o .env.example vai para o Git
+.env
 
 # Credenciais locais do back-end (GUIA 1): nunca no Git
 application-local.properties

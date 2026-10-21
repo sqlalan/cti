@@ -1,13 +1,10 @@
 package br.com.cti.insights.controller;
 
 import br.com.cti.insights.exception.ClienteDuplicadoException;
-import br.com.cti.insights.exception.ColunaObrigatoriaException;
 import br.com.cti.insights.exception.ConsultorJaVinculadoException;
 import br.com.cti.insights.exception.CredenciaisInvalidasException;
 import br.com.cti.insights.exception.EmailDuplicadoException;
-import br.com.cti.insights.exception.ExcelInvalidoException;
 import br.com.cti.insights.exception.MatriculaDuplicadaException;
-import br.com.cti.insights.exception.ProcessamentoPlanilhaException;
 import br.com.cti.insights.exception.RecursoNaoEncontradoException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -26,9 +23,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
-import org.springframework.web.multipart.MaxUploadSizeExceededException;
-import org.springframework.web.multipart.MultipartException;
-import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 /**
  * Transforma os erros da API em JSON que a tela consegue mostrar, sem detalhe tecnico.
@@ -82,16 +76,6 @@ public class ErroHandler {
 		return ResponseEntity.badRequest().body(corpo);
 	}
 
-	@ExceptionHandler(ExcelInvalidoException.class)
-	public ResponseEntity<Map<String, Object>> excelInvalido(ExcelInvalidoException ex) {
-		return resposta(HttpStatus.BAD_REQUEST, ex.getMessage());
-	}
-
-	@ExceptionHandler(ColunaObrigatoriaException.class)
-	public ResponseEntity<Map<String, Object>> colunaObrigatoria(ColunaObrigatoriaException ex) {
-		return resposta(HttpStatus.UNPROCESSABLE_CONTENT, ex.getMessage(), "coluna", ex.getColuna());
-	}
-
 	@ExceptionHandler(ClienteDuplicadoException.class)
 	public ResponseEntity<Map<String, Object>> clienteDuplicado(ClienteDuplicadoException ex) {
 		return resposta(HttpStatus.CONFLICT, ex.getMessage(), "codigo", ex.getCodigo());
@@ -118,21 +102,6 @@ public class ErroHandler {
 	@ExceptionHandler(RecursoNaoEncontradoException.class)
 	public ResponseEntity<Map<String, Object>> naoEncontrado(RecursoNaoEncontradoException ex) {
 		return resposta(HttpStatus.NOT_FOUND, ex.getMessage());
-	}
-
-	@ExceptionHandler(ProcessamentoPlanilhaException.class)
-	public ResponseEntity<Map<String, Object>> processamento(ProcessamentoPlanilhaException ex) {
-		return resposta(HttpStatus.INTERNAL_SERVER_ERROR, "Falha ao processar a planilha: " + ex.getMessage());
-	}
-
-	@ExceptionHandler(MaxUploadSizeExceededException.class)
-	public ResponseEntity<Map<String, Object>> arquivoGrande(MaxUploadSizeExceededException ex) {
-		return resposta(HttpStatus.CONTENT_TOO_LARGE, "A planilha passa do limite de 25 MB aceito pelo servidor");
-	}
-
-	@ExceptionHandler({ MissingServletRequestPartException.class, MultipartException.class })
-	public ResponseEntity<Map<String, Object>> semArquivo(Exception ex) {
-		return resposta(HttpStatus.BAD_REQUEST, "Envie a planilha como multipart/form-data no campo 'arquivo'");
 	}
 
 	/**

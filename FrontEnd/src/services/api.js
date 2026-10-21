@@ -59,3 +59,16 @@ export function mensagemDeErro(erro) {
   }
   return dados?.mensagem || 'Algo deu errado. Tente de novo.'
 }
+
+const corpo = (resposta) => resposta.data // o axios coloca a resposta em .data; esta função pega só ela
+
+export const uploadService = { // ---- envio da planilha ----
+  // POST só com as linhas aprovadas pelo Pinia; arquivo e recebidas vão na URL
+  enviarValidadas: (linhas, { arquivo, recebidas }) =>
+    api.post('/uploads/validadas', linhas, { params: { arquivo, recebidas } }).then(corpo),
+  listar: () => api.get('/uploads').then(corpo), // GET lista de lotes enviados
+}
+
+export const dashboardService = { // ---- dados dos gráficos ----
+  obter: (loteId) => api.get('/dashboard', { params: { loteId } }).then(corpo), // GET -> { lote, geradoEm, estatisticas }
+}
