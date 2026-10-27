@@ -2,12 +2,15 @@ import { createRouter, createWebHistory } from 'vue-router'
 import AppLayout from '../layouts/AppLayout.vue'
 import Home from '../pages/Home.vue'
 import Login from '../pages/Login.vue'
-import Cadastro from '../pages/Cadastro.vue'
-import DashboardView from '../views/DashboardView.vue'
-import Upload from '../pages/Upload.vue'
-import Relatorio from '../pages/Relatorio.vue'
-import NaoEncontrada from '../pages/NaoEncontrada.vue'
 import { useAuthStore } from '../stores/authStore'
+
+// As telas internas carregam só quando são abertas (import dinâmico): quem
+// entra pela home ou pelo login não baixa gráficos nem a leitura de planilha.
+const Cadastro = () => import('../pages/Cadastro.vue')
+const DashboardView = () => import('../views/DashboardView.vue')
+const Upload = () => import('../pages/Upload.vue')
+const Relatorio = () => import('../pages/Relatorio.vue')
+const NaoEncontrada = () => import('../pages/NaoEncontrada.vue')
 
 // Os caminhos só existem aqui. O resto do app navega pelo NOME da rota
 // ({ name: 'upload' }), então trocar uma URL é mudar uma linha deste arquivo —

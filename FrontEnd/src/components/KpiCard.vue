@@ -13,7 +13,8 @@ defineProps({
     :class="destaque ? 'border-brand-500' : 'border-ink-200 dark:border-night-700'"
   >
     <p class="text-xs text-ink-600 dark:text-mist-300">{{ titulo }}</p>
-    <p class="mt-1 truncate text-lg font-semibold tabular-nums text-ink-900 dark:text-mist-100" :title="valor">
+    <!-- Quebra em vez de cortar: no celular "R$ 70.510.000,00" não cabe numa linha. -->
+    <p class="mt-1 text-base font-semibold tabular-nums break-words text-ink-900 sm:text-lg dark:text-mist-100">
       {{ valor }}
     </p>
   </div>

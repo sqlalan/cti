@@ -1,6 +1,7 @@
 <template>
   <footer class="scroll-mt-24 bg-brand-900 px-6 py-12 dark:bg-night-950 text-center text-sm text-ink-200" id="contato">
-    <ul class="flex justify-center gap-3">
+    <!-- flex-wrap: no celular pequeno o e-mail desce para a linha de baixo em vez de vazar da tela. -->
+    <ul class="flex flex-wrap justify-center gap-x-3 gap-y-1">
       <li>
         <a
           class="flex h-11 w-11 items-center justify-center rounded text-ink-200 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"

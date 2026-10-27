@@ -397,149 +397,10 @@ async function processar() {
       </p>
     </section>
 
-    <!-- Avisos não bloqueiam a linha: são coisas que passaram, mas que alguém
-         precisa olhar — segmento novo, serviço fora do catálogo. -->
-    <section
-      class="mt-4 min-w-0 rounded border border-warn-500 bg-warn-500/10 p-5 dark:bg-warn-500/15"
-      v-if="planilha.resumo.avisos.length"
-    >
-      <h2 class="text-sm font-semibold text-ink-900 dark:text-mist-100">
-        Avisos ({{ inteiro(planilha.resumo.avisos.length) }})
-      </h2>
-      <p class="mt-1 text-xs text-ink-600 dark:text-mist-300">
-        Estas linhas seguem no envio: ou o valor foi ajustado pelo tratamento, ou falta
-        cadastrá-lo no dicionário em <code class="text-xs">esquemaPlanilha.js</code>. A contagem
-        por tipo está no <RouterLink class="underline" :to="{ name: 'relatorio' }">Relatório</RouterLink>.
-      </p>
-      <!-- A lista cresceu quando a padronização passou a ser reportada: numa
-           planilha bagunçada são dezenas de linhas. Rolar dentro da própria
-           seção evita que ela empurre a prévia e a tabela de erros para fora
-           da tela. -->
-      <ul class="mt-3 flex max-h-64 flex-col gap-1.5 overflow-auto">
-        <li
-          class="text-sm text-ink-900 dark:text-mist-100"
-          v-for="(aviso, i) in planilha.resumo.avisos"
-          :key="`${aviso.linha}-${i}`"
-        >
-          <span class="tabular-nums text-ink-600 dark:text-mist-300">Linha {{ aviso.linha }}</span>
-          — {{ aviso.motivo }}
-        </li>
-      </ul>
-    </section>
-
-    <section
-      class="mt-4 min-w-0 rounded border border-ink-200 bg-white p-5 dark:border-night-700 dark:bg-night-900"
-      v-if="planilha.quantidadeInvalidas"
-    >
-      <h2 class="text-sm font-semibold text-ink-900 dark:text-mist-100">
-        Linhas com erro ({{ inteiro(planilha.quantidadeInvalidas) }})
-      </h2>
-      <p class="mt-1 text-xs text-ink-600 dark:text-mist-300">
-        Estas linhas ficam de fora do envio. O número é o da linha na planilha.
-      </p>
-
-      <div class="mt-4 max-h-72 overflow-auto">
-        <table class="w-full min-w-lg text-left text-sm">
-          <thead class="sticky top-0 bg-white dark:bg-night-900">
-            <tr class="border-b border-ink-200 dark:border-night-700">
-              <th class="py-2 pr-4 font-medium text-ink-600 dark:text-mist-300" scope="col">Linha</th>
-              <th class="py-2 pr-4 font-medium text-ink-600 dark:text-mist-300" scope="col">Código</th>
-              <th class="py-2 pr-4 font-medium text-ink-600 dark:text-mist-300" scope="col">Cliente</th>
-              <th class="py-2 font-medium text-ink-600 dark:text-mist-300" scope="col">Motivo</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              class="border-b border-ink-200 last:border-0 dark:border-night-700"
-              v-for="erro in planilha.dadosInvalidos"
-              :key="`${erro.linha}-${erro.motivo}`"
-            >
-              <td class="py-2 pr-4 tabular-nums text-ink-600 dark:text-mist-300">{{ erro.linha }}</td>
-              <td class="py-2 pr-4 tabular-nums text-ink-900 dark:text-mist-100">{{ erro.codigo }}</td>
-              <td class="py-2 pr-4 text-ink-900 dark:text-mist-100">{{ erro.nome }}</td>
-              <td class="py-2 text-erro-600 dark:text-erro-400">{{ erro.motivo }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <section
-      class="mt-4 min-w-0 rounded border border-ink-200 bg-white p-5 dark:border-night-700 dark:bg-night-900"
-      v-if="planilha.temDados"
-    >
-      <h2 class="text-sm font-semibold text-ink-900 dark:text-mist-100">Prévia dos dados tratados</h2>
-      <p class="mt-1 text-xs text-ink-600 dark:text-mist-300">
-        Espaços removidos, segmento e consultor padronizados, nível validado, valor e data convertidos.
-      </p>
-
-      <div class="mt-4 overflow-x-auto">
-        <table class="w-full min-w-4xl text-left text-sm">
-          <thead>
-            <tr class="border-b border-ink-200 dark:border-night-700">
-              <th class="py-2 pr-4 font-medium text-ink-600 dark:text-mist-300" scope="col">Linha</th>
-              <th
-                class="py-2 pr-4 font-medium text-ink-600 dark:text-mist-300"
-                :class="alinhaDireita(coluna) ? 'text-right' : ''"
-                v-for="coluna in ESQUEMA"
-                :key="coluna.chave"
-                scope="col"
-              >
-                {{ coluna.rotulo }}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              class="border-b border-ink-200 last:border-0 dark:border-night-700"
-              v-for="registro in previa"
-              :key="registro.linha"
-            >
-              <td class="py-2 pr-4 tabular-nums text-ink-400 dark:text-mist-500">{{ registro.linha }}</td>
-              <td
-                class="py-2 pr-4 whitespace-nowrap text-ink-900 dark:text-mist-100"
-                :class="alinhaDireita(coluna) ? 'text-right tabular-nums' : ''"
-                v-for="coluna in ESQUEMA"
-                :key="coluna.chave"
-              >
-                <span class="flex items-center gap-2" v-if="coluna.chave === 'nivel'">
-                  <span
-                    class="h-2.5 w-2.5 shrink-0 rounded-sm"
-                    :class="NIVEL_PONTO[registro.nivel]"
-                    aria-hidden="true"
-                  ></span>
-                  <span class="font-semibold">{{ registro.nivel }}</span>
-                </span>
-                <template v-else>{{ celula(coluna, registro) }}</template>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <p class="mt-3 text-xs text-ink-400 dark:text-mist-500" v-if="ocultas">
-        Mostrando as primeiras {{ LIMITE_PREVIA }} linhas — outras {{ inteiro(ocultas) }} seguem no envio.
-      </p>
-    </section>
-
-    <!-- Sem nenhuma linha válida a prévia acima não renderiza, e uma seção que
-         simplesmente some não diz à pessoa que ela sumiu — parece tela quebrada.
-         Este bloco ocupa o lugar dela e aponta para a tabela de erros. -->
-    <section
-      class="mt-4 min-w-0 rounded border border-ink-200 bg-white p-5 dark:border-night-700 dark:bg-night-900"
-      v-else
-    >
-      <h2 class="text-sm font-semibold text-ink-900 dark:text-mist-100">Prévia dos dados tratados</h2>
-      <p class="mt-1 text-sm text-ink-600 dark:text-mist-300">
-        Nenhuma linha passou no tratamento, então não há o que pré-visualizar. Os
-        {{ inteiro(planilha.quantidadeInvalidas) }} motivos estão na tabela acima — corrija a planilha e
-        carregue de novo.
-      </p>
-    </section>
-
     <!-- Pinia valida na tela, o servidor valida de novo (aula 10) e, no envio,
          grava o lote e chama o Python (aula 11). O botão só libera quando o
-         servidor aprovou. A barra mostra em que ponto está. -->
+         servidor aprovou. Fica logo abaixo do resumo: com os avisos, os erros e
+         a prévia antes dele, era preciso rolar a página inteira para enviar. -->
     <EtapasEnvio class="mt-6" :etapas="etapas" />
 
     <div class="mt-4 flex flex-wrap items-center gap-3">
@@ -741,5 +602,146 @@ async function processar() {
         Ver gráficos e insights
       </RouterLink>
     </section>
+
+    <!-- Avisos não bloqueiam a linha: são coisas que passaram, mas que alguém
+         precisa olhar — segmento novo, serviço fora do catálogo. -->
+    <section
+      class="mt-4 min-w-0 rounded border border-warn-500 bg-warn-500/10 p-5 dark:bg-warn-500/15"
+      v-if="planilha.resumo.avisos.length"
+    >
+      <h2 class="text-sm font-semibold text-ink-900 dark:text-mist-100">
+        Avisos ({{ inteiro(planilha.resumo.avisos.length) }})
+      </h2>
+      <p class="mt-1 text-xs text-ink-600 dark:text-mist-300">
+        Estas linhas seguem no envio: ou o valor foi ajustado pelo tratamento, ou falta
+        cadastrá-lo no dicionário em <code class="text-xs">esquemaPlanilha.js</code>. A contagem
+        por tipo está no <RouterLink class="underline" :to="{ name: 'relatorio' }">Relatório</RouterLink>.
+      </p>
+      <!-- A lista cresceu quando a padronização passou a ser reportada: numa
+           planilha bagunçada são dezenas de linhas. Rolar dentro da própria
+           seção evita que ela empurre a prévia e a tabela de erros para fora
+           da tela. -->
+      <ul class="mt-3 flex max-h-64 flex-col gap-1.5 overflow-auto">
+        <li
+          class="text-sm text-ink-900 dark:text-mist-100"
+          v-for="(aviso, i) in planilha.resumo.avisos"
+          :key="`${aviso.linha}-${i}`"
+        >
+          <span class="tabular-nums text-ink-600 dark:text-mist-300">Linha {{ aviso.linha }}</span>
+          — {{ aviso.motivo }}
+        </li>
+      </ul>
+    </section>
+
+    <section
+      class="mt-4 min-w-0 rounded border border-ink-200 bg-white p-5 dark:border-night-700 dark:bg-night-900"
+      v-if="planilha.quantidadeInvalidas"
+    >
+      <h2 class="text-sm font-semibold text-ink-900 dark:text-mist-100">
+        Linhas com erro ({{ inteiro(planilha.quantidadeInvalidas) }})
+      </h2>
+      <p class="mt-1 text-xs text-ink-600 dark:text-mist-300">
+        Estas linhas ficam de fora do envio. O número é o da linha na planilha.
+      </p>
+
+      <div class="mt-4 max-h-72 overflow-auto">
+        <table class="w-full min-w-lg text-left text-sm">
+          <thead class="sticky top-0 bg-white dark:bg-night-900">
+            <tr class="border-b border-ink-200 dark:border-night-700">
+              <th class="py-2 pr-4 font-medium text-ink-600 dark:text-mist-300" scope="col">Linha</th>
+              <th class="py-2 pr-4 font-medium text-ink-600 dark:text-mist-300" scope="col">Código</th>
+              <th class="py-2 pr-4 font-medium text-ink-600 dark:text-mist-300" scope="col">Cliente</th>
+              <th class="py-2 font-medium text-ink-600 dark:text-mist-300" scope="col">Motivo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              class="border-b border-ink-200 last:border-0 dark:border-night-700"
+              v-for="erro in planilha.dadosInvalidos"
+              :key="`${erro.linha}-${erro.motivo}`"
+            >
+              <td class="py-2 pr-4 tabular-nums text-ink-600 dark:text-mist-300">{{ erro.linha }}</td>
+              <td class="py-2 pr-4 tabular-nums text-ink-900 dark:text-mist-100">{{ erro.codigo }}</td>
+              <td class="py-2 pr-4 text-ink-900 dark:text-mist-100">{{ erro.nome }}</td>
+              <td class="py-2 text-erro-600 dark:text-erro-400">{{ erro.motivo }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section
+      class="mt-4 min-w-0 rounded border border-ink-200 bg-white p-5 dark:border-night-700 dark:bg-night-900"
+      v-if="planilha.temDados"
+    >
+      <h2 class="text-sm font-semibold text-ink-900 dark:text-mist-100">Prévia dos dados tratados</h2>
+      <p class="mt-1 text-xs text-ink-600 dark:text-mist-300">
+        Espaços removidos, segmento e consultor padronizados, nível validado, valor e data convertidos.
+      </p>
+
+      <div class="mt-4 overflow-x-auto">
+        <table class="w-full min-w-4xl text-left text-sm">
+          <thead>
+            <tr class="border-b border-ink-200 dark:border-night-700">
+              <th class="py-2 pr-4 font-medium text-ink-600 dark:text-mist-300" scope="col">Linha</th>
+              <th
+                class="py-2 pr-4 font-medium text-ink-600 dark:text-mist-300"
+                :class="alinhaDireita(coluna) ? 'text-right' : ''"
+                v-for="coluna in ESQUEMA"
+                :key="coluna.chave"
+                scope="col"
+              >
+                {{ coluna.rotulo }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              class="border-b border-ink-200 last:border-0 dark:border-night-700"
+              v-for="registro in previa"
+              :key="registro.linha"
+            >
+              <td class="py-2 pr-4 tabular-nums text-ink-400 dark:text-mist-500">{{ registro.linha }}</td>
+              <td
+                class="py-2 pr-4 whitespace-nowrap text-ink-900 dark:text-mist-100"
+                :class="alinhaDireita(coluna) ? 'text-right tabular-nums' : ''"
+                v-for="coluna in ESQUEMA"
+                :key="coluna.chave"
+              >
+                <span class="flex items-center gap-2" v-if="coluna.chave === 'nivel'">
+                  <span
+                    class="h-2.5 w-2.5 shrink-0 rounded-sm"
+                    :class="NIVEL_PONTO[registro.nivel]"
+                    aria-hidden="true"
+                  ></span>
+                  <span class="font-semibold">{{ registro.nivel }}</span>
+                </span>
+                <template v-else>{{ celula(coluna, registro) }}</template>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="mt-3 text-xs text-ink-400 dark:text-mist-500" v-if="ocultas">
+        Mostrando as primeiras {{ LIMITE_PREVIA }} linhas — outras {{ inteiro(ocultas) }} seguem no envio.
+      </p>
+    </section>
+
+    <!-- Sem nenhuma linha válida a prévia acima não renderiza, e uma seção que
+         simplesmente some não diz à pessoa que ela sumiu — parece tela quebrada.
+         Este bloco ocupa o lugar dela e aponta para a tabela de erros. -->
+    <section
+      class="mt-4 min-w-0 rounded border border-ink-200 bg-white p-5 dark:border-night-700 dark:bg-night-900"
+      v-else
+    >
+      <h2 class="text-sm font-semibold text-ink-900 dark:text-mist-100">Prévia dos dados tratados</h2>
+      <p class="mt-1 text-sm text-ink-600 dark:text-mist-300">
+        Nenhuma linha passou no tratamento, então não há o que pré-visualizar. Os
+        {{ inteiro(planilha.quantidadeInvalidas) }} motivos estão na tabela acima — corrija a planilha e
+        carregue de novo.
+      </p>
+    </section>
+
   </template>
 </template>

@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useLargura } from '../../composables/useLargura'
 import { formatarData } from '../../dados/painel'
-import { formatarNumero, ticksBonitos } from './escala'
+import { compactar, formatarNumero, ticksBonitos } from './escala'
 
 const props = defineProps({
   pontos: { type: Array, required: true },
@@ -26,7 +26,7 @@ const rotularValor = (valor) =>
 // A margem inferior reserva a faixa dos rótulos de data dentro da própria
 // altura do desenho. Se o eixo ficasse fora dela, o cartão ganharia uma barra
 // de rolagem interna de poucos pixels.
-const MARGEM = { topo: 18, direita: 16, baixo: 26, esquerda: 48 }
+const MARGEM = { topo: 18, direita: 16, baixo: 26, esquerda: 62 }
 
 const raiz = ref(null)
 const largura = useLargura(raiz)
@@ -164,7 +164,7 @@ const posicaoDica = computed(() => {
         :y="posY(corte) + 4"
         text-anchor="end"
       >
-        {{ formatarNumero(corte) }}
+        {{ compactar(corte, { moeda: formato === 'moeda' }) }}
       </text>
 
       <path class="fill-serie-600/10 dark:fill-serie-400/10" :d="caminhoArea" />

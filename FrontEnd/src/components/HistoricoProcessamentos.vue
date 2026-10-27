@@ -133,6 +133,8 @@ const padronizacoes = computed(() => {
   ]
 })
 
+const houvePadronizacao = computed(() => padronizacoes.value.some((p) => p.quantidade > 0))
+
 // Só as formas que de fato mudaram ("IND." → "Indústria").
 const segmentosCorrigidos = computed(() =>
   (detalhe.value.est.qualidade.segmentosOriginais ?? []).filter((s) => s.original !== s.padronizado),
@@ -552,7 +554,12 @@ const classeBotao =
 
             <div :class="classeCartao">
               <h3 class="text-sm font-semibold text-ink-900 dark:text-mist-100">Padronizações feitas pelo Python</h3>
-              <table class="mt-3 w-full text-left text-sm">
+              <!-- Zero é o normal: o Pinia e o Spring já entregam as linhas padronizadas. -->
+              <p class="mt-3 text-sm text-ink-600 dark:text-mist-300" v-if="!houvePadronizacao">
+                Nenhuma correção foi necessária: as linhas chegaram ao Python já padronizadas pela validação no
+                navegador (Pinia) e no servidor (Spring). O Python confere de novo e só corrige o que escapar.
+              </p>
+              <table class="mt-3 w-full text-left text-sm" v-else>
                 <thead>
                   <tr class="border-b border-ink-200 dark:border-night-700">
                     <th :class="classeTh" scope="col">Padronização</th>

@@ -1,4 +1,3 @@
-import * as XLSX from 'xlsx'
 
 // Exportação de tabelas para arquivo, usada na Carteira (Dashboard) e no
 // Relatório. Cada tabela é { colunas: [[título, (linha) => valor], ...], linhas }.
@@ -45,7 +44,8 @@ export function baixarCsv(nome, { colunas, linhas }) {
  * Número sai como número (o Excel soma e ordena); texto sai como texto, nunca
  * como fórmula, então aqui não há injeção a neutralizar.
  */
-export function baixarXlsx(nome, abas) {
+export async function baixarXlsx(nome, abas) {
+  const XLSX = await import('xlsx') // só carrega quando alguém exporta
   const pasta = XLSX.utils.book_new()
   for (const aba of abas) {
     const matriz = [aba.colunas.map(([titulo]) => titulo), ...aba.linhas.map((linha) => aba.colunas.map(([, obter]) => obter(linha) ?? ''))]

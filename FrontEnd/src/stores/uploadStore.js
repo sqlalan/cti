@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
-import * as XLSX from 'xlsx'
 import {
   TIPOS_AVISO,
   TIPOS_ERRO,
@@ -65,6 +64,9 @@ function paraClienteDTO(registro) {
  * poluição de protótipo.
  */
 async function lerMatriz(arquivo) {
+  // Carregada só aqui: a biblioteca de planilhas é a parte mais pesada do site e
+  // só serve para quem abre um arquivo.
+  const XLSX = await import('xlsx')
   const buffer = await arquivo.arrayBuffer()
   let pasta
 

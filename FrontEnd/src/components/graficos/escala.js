@@ -27,3 +27,14 @@ export function ticksBonitos(maximo, quantidade = 4, { inteiro = false } = {}) {
 export function formatarNumero(valor, casas = 0) {
   return valor.toLocaleString('pt-BR', { maximumFractionDigits: casas })
 }
+
+// Rótulo curto para eixo: 70.510.000 vira "70,5 mi" e 12.500 vira "12,5 mil".
+// O valor exato fica na tabela e no tooltip; o eixo só precisa da ordem de grandeza.
+export function compactar(valor, { moeda = false } = {}) {
+  const abs = Math.abs(valor)
+  let texto
+  if (abs >= 1e6) texto = `${formatarNumero(valor / 1e6, 1)} mi`
+  else if (abs >= 1e4) texto = `${formatarNumero(valor / 1e3, 1)} mil`
+  else texto = formatarNumero(valor)
+  return moeda ? `R$ ${texto}` : texto
+}

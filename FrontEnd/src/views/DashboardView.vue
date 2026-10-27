@@ -38,6 +38,9 @@ const con = computed(() => d.value?.porConsultor ?? []) // faturamento por consu
 const ser = computed(() => d.value?.porServico ?? []) // serviços mais contratados
 const mes = computed(() => d.value?.porMes ?? []) // contratações por mês
 
+// Nível é ordinal: A é o tom mais forte e C o mais fraco (as mesmas cores do tema em style.css).
+const CORES_NIVEL = { claro: ['#194675', '#3f77c4', '#7fb0e8'], escuro: ['#8fbdf0', '#4f8bd6', '#2a5c94'] }
+
 async function buscar() { // pede os dados ao Spring
   await dash.carregar(upload.lote?.id) // se acabou de enviar, usa esse lote; senão o último processado
   const esperando = ['AGUARDANDO_ETL', 'PROCESSANDO'].includes(dash.lote?.status) // o Python ainda não terminou (ERRO não espera)
@@ -62,7 +65,7 @@ onBeforeUnmount(() => relogio && clearInterval(relogio)) // limpa o timer ao sai
     <p v-else-if="dash.lote && !d" class="rounded border border-brand-500/40 bg-brand-500/10 p-3 text-sm text-ink-900 dark:text-mist-100" role="status">O Python está processando a planilha. Esta tela atualiza sozinha.</p>
 
     <template v-if="d">
-      <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6"> <!-- cartões de resumo -->
+      <div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5"> <!-- cartões de resumo: 5 lado a lado só com espaço para os valores em R$ -->
         <KpiCard titulo="Clientes" :valor="String(d.resumo.totalClientes)" />
         <KpiCard titulo="Faturamento total" :valor="moeda(d.resumo.faturamentoTotal)" />
         <KpiCard titulo="Média" :valor="moeda(d.resumo.media)" destaque /> <!-- média calculada pelo Python -->
@@ -77,11 +80,11 @@ onBeforeUnmount(() => relogio && clearInterval(relogio)) // limpa o timer ao sai
         </div>
         <div class="min-w-0 rounded border border-ink-200 bg-white p-4 shadow-cartao dark:border-night-700 dark:bg-night-900">
           <h2 class="mb-2 font-semibold text-ink-900 dark:text-mist-100">Clientes por nível</h2>
-          <BaseChart tipo="doughnut" :rotulos="niv.map((x) => 'Nível ' + x.nivel)" :valores="niv.map((x) => x.clientes)" />
+          <BaseChart tipo="doughnut" :cores="CORES_NIVEL" :rotulos="niv.map((x) => 'Nível ' + x.nivel)" :valores="niv.map((x) => x.clientes)" />
         </div>
         <div class="min-w-0 rounded border border-ink-200 bg-white p-4 shadow-cartao dark:border-night-700 dark:bg-night-900">
           <h2 class="mb-2 font-semibold text-ink-900 dark:text-mist-100">Faturamento por consultor</h2>
-          <BaseChart tipo="bar" horizontal titulo="Faturamento" :rotulos="con.map((x) => x.consultor)" :valores="con.map((x) => x.faturamentoTotal)" />
+          <BaseChart tipo="bar" horizontal formato="moeda" titulo="Faturamento" :rotulos="con.map((x) => x.consultor)" :valores="con.map((x) => x.faturamentoTotal)" />
         </div>
         <div class="min-w-0 rounded border border-ink-200 bg-white p-4 shadow-cartao dark:border-night-700 dark:bg-night-900">
           <h2 class="mb-2 font-semibold text-ink-900 dark:text-mist-100">Serviços mais contratados</h2>
