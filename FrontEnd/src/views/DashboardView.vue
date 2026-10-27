@@ -3,6 +3,7 @@
 import { computed, onBeforeUnmount, onMounted, reactive } from 'vue' // reactive: objeto reativo só desta tela
 import { dashboardService, mensagemDeErro } from '../services/api' // chamada ao backend (sem store: só esta tela usa)
 import { useUploadStore } from '../stores/uploadStore' // para abrir o lote recém-enviado
+import { explicarLote } from '../dados/lote' // situação do lote sem termos técnicos
 import BaseChart from '../components/BaseChart.vue' // desenha gráficos
 import KpiCard from '../components/KpiCard.vue' // cartão de número
 import StatusBadge from '../components/StatusBadge.vue' // etiqueta de status
@@ -61,8 +62,8 @@ onBeforeUnmount(() => relogio && clearInterval(relogio)) // limpa o timer ao sai
 
     <p v-if="dash.erro" class="rounded border border-warn-500 bg-warn-500/10 p-3 text-sm text-ink-900 dark:bg-warn-500/15 dark:text-mist-100">{{ dash.erro }} <RouterLink :to="{ name: 'upload' }" class="font-semibold text-brand-800 underline dark:text-brand-300">Enviar planilha</RouterLink></p>
     <p v-else-if="dash.carregando && !d" class="text-sm text-ink-600 dark:text-mist-300">Carregando...</p>
-    <p v-else-if="dash.lote?.status === 'ERRO'" class="rounded border border-erro-600 bg-erro-600/5 p-3 text-sm text-ink-900 dark:border-erro-400 dark:bg-erro-400/10 dark:text-mist-100" role="alert">O processamento deste lote falhou: {{ dash.lote.mensagem }} <RouterLink :to="{ name: 'upload' }" class="font-semibold text-brand-800 underline dark:text-brand-300">Enviar de novo</RouterLink></p>
-    <p v-else-if="dash.lote && !d" class="rounded border border-brand-500/40 bg-brand-500/10 p-3 text-sm text-ink-900 dark:text-mist-100" role="status">O Python está processando a planilha. Esta tela atualiza sozinha.</p>
+    <p v-else-if="dash.lote?.status === 'ERRO'" class="rounded border border-erro-600 bg-erro-600/5 p-3 text-sm text-ink-900 dark:border-erro-400 dark:bg-erro-400/10 dark:text-mist-100" role="alert">{{ explicarLote(dash.lote) }} <RouterLink :to="{ name: 'upload' }" class="font-semibold text-brand-800 underline dark:text-brand-300">Enviar de novo</RouterLink></p>
+    <p v-else-if="dash.lote && !d" class="rounded border border-brand-500/40 bg-brand-500/10 p-3 text-sm text-ink-900 dark:text-mist-100" role="status">A planilha está sendo processada. Esta tela atualiza sozinha.</p>
 
     <template v-if="d">
       <div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5"> <!-- cartões de resumo: 5 lado a lado só com espaço para os valores em R$ -->

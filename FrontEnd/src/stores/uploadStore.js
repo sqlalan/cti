@@ -8,6 +8,7 @@ import {
   tratarLinhas,
 } from '../dados/esquemaPlanilha'
 import { useNotificacoesStore } from './notificacoes'
+import { explicarLote } from '../dados/lote'
 import { api, dashboardService, mensagemDeErro, uploadService } from '../services/api'
 
 export const FORMATOS = ['.xlsx', '.xls', '.csv']
@@ -488,7 +489,7 @@ export const useUploadStore = defineStore('upload', () => {
         tipo: deFora ? 'aviso' : 'sucesso',
         titulo: 'Servidor aprovou a planilha',
         texto:
-          `${linhas(data.length)} validadas e padronizadas pelo Spring Boot.` +
+          `${linhas(data.length)} conferidas e padronizadas pelo servidor.` +
           (deFora ? ` ${linhas(deFora)} de fora — confira "Linhas com erro" na página.` : ''),
       })
       return true
@@ -546,7 +547,7 @@ export const useUploadStore = defineStore('upload', () => {
       notificacoes.atualizar(notificacao, {
         tipo: 'progresso',
         titulo: `Lote ${data.id} enviado · processando…`,
-        texto: `${linhas(data.linhasValidas)} gravadas. O Python está limpando e calculando.`,
+        texto: `${linhas(data.linhasValidas)} gravadas. Os indicadores estão sendo calculados.`,
       })
       acompanharLote(notificacao)
 
@@ -602,7 +603,7 @@ export const useUploadStore = defineStore('upload', () => {
           notificacoes.atualizar(notificacao, {
             tipo: 'erro',
             titulo: 'O processamento falhou',
-            texto: resposta.lote.mensagem || `O lote ${id} não foi processado.`,
+            texto: explicarLote(resposta.lote),
           })
           return
         }

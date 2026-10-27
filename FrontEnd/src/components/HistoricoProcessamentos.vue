@@ -6,6 +6,7 @@ import StatusBadge from './StatusBadge.vue'
 import { formatarNumero } from './graficos/escala'
 import { baixarCsv, baixarXlsx } from '../dados/exportar'
 import { dashboardService, mensagemDeErro, uploadService } from '../services/api'
+import { explicarLote } from '../dados/lote'
 import { useUploadStore } from '../stores/uploadStore'
 
 // Todos os lotes enviados (upload_lote) e, para os PROCESSADOS, o JSON que o
@@ -119,7 +120,7 @@ const quadroQualidade = computed(() => {
   const q = detalhe.value.est.qualidade
   return [
     { tipo: 'recebidas', rotulo: 'Linhas recebidas', quantidade: q.linhasRecebidas },
-    { tipo: 'invalidas', rotulo: 'Linhas inválidas (recusadas antes do Python)', quantidade: q.linhasInvalidas },
+    { tipo: 'invalidas', rotulo: 'Linhas inválidas (recusadas na validação)', quantidade: q.linhasInvalidas },
     { tipo: 'validos', rotulo: 'Clientes gravados', quantidade: q.linhasValidas },
   ]
 })
@@ -391,7 +392,7 @@ const classeBotao =
     <section class="mt-10 min-w-0">
       <h2 class="text-lg font-semibold text-ink-900 dark:text-mist-100">Lotes enviados</h2>
       <p class="mt-1 text-sm text-ink-600 dark:text-mist-300">
-        Cada envio vira um lote no banco. Clique em um lote para ver o que o Python calculou e a comparação com o
+        Cada envio vira um lote. Clique em um lote para ver os indicadores calculados e a comparação com o
         lote processado anterior.
       </p>
 
@@ -456,7 +457,7 @@ const classeBotao =
               {{ posicaoSelecionada === 0 ? 'Último lote enviado' : 'Lote selecionado' }} · {{ detalhe.lote.id }}
             </h2>
             <p class="mt-1 max-w-2xl text-sm text-ink-600 dark:text-mist-300">
-              O Spring envia só as linhas válidas; o Python limpa, calcula e grava o resultado que aparece abaixo.
+              Só as linhas válidas são processadas; os indicadores abaixo foram calculados a partir delas.
             </p>
           </div>
 
@@ -529,7 +530,7 @@ const classeBotao =
           v-if="!detalhe.est"
           role="status"
         >
-          {{ detalhe.lote.mensagem || 'O Python ainda não processou este lote.' }}
+          {{ explicarLote(detalhe.lote) }}
         </p>
 
         <template v-else>
@@ -553,11 +554,11 @@ const classeBotao =
             </div>
 
             <div :class="classeCartao">
-              <h3 class="text-sm font-semibold text-ink-900 dark:text-mist-100">Padronizações feitas pelo Python</h3>
+              <h3 class="text-sm font-semibold text-ink-900 dark:text-mist-100">Padronizações no processamento</h3>
               <!-- Zero é o normal: o Pinia e o Spring já entregam as linhas padronizadas. -->
               <p class="mt-3 text-sm text-ink-600 dark:text-mist-300" v-if="!houvePadronizacao">
-                Nenhuma correção foi necessária: as linhas chegaram ao Python já padronizadas pela validação no
-                navegador (Pinia) e no servidor (Spring). O Python confere de novo e só corrige o que escapar.
+                Nenhuma correção foi necessária: as linhas já chegaram padronizadas pela validação da planilha.
+                O processamento confere de novo e só corrige o que escapar.
               </p>
               <table class="mt-3 w-full text-left text-sm" v-else>
                 <thead>
@@ -684,7 +685,7 @@ const classeBotao =
           </template>
         </CartaoGrafico>
 
-        <CartaoGrafico titulo="Clientes gravados por lote" descricao="Clientes que o Python gravou em cada lote.">
+        <CartaoGrafico titulo="Clientes gravados por lote" descricao="Clientes gravados em cada lote.">
           <GraficoArea :pontos="evolucao" campo="clientes" unidade="clientes" descricao="Clientes gravados por lote." />
           <template #tabela>
             <table class="w-full text-left text-sm">

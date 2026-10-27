@@ -4,6 +4,7 @@ import { FORMATOS, TAMANHO_MAXIMO, formatarTamanho, useUploadStore } from '../st
 import { ESQUEMA, NIVEIS } from '../dados/esquemaPlanilha'
 import EtapasEnvio from '../components/EtapasEnvio.vue'
 import StatusBadge from '../components/StatusBadge.vue'
+import { explicarLote } from '../dados/lote'
 
 const planilha = useUploadStore()
 
@@ -162,7 +163,7 @@ const etapas = computed(() => {
     : { situacao: 'erro', detalhe: 'Nenhuma linha aproveitada' }
 
   let validacao = { situacao: 'pendente', detalhe: '' }
-  if (servidor?.status === 'validando') validacao = { situacao: 'andamento', detalhe: 'Conferindo no Spring Boot…' }
+  if (servidor?.status === 'validando') validacao = { situacao: 'andamento', detalhe: 'Conferindo os dados…' }
   else if (servidor?.status === 'aprovado') validacao = { situacao: 'feito', detalhe: plural(servidor.clientes.length, 'linha aprovada', 'linhas aprovadas') }
   else if (servidor?.status === 'recusado') validacao = { situacao: 'erro', detalhe: 'Recusada — motivo abaixo' }
 
@@ -175,10 +176,10 @@ const etapas = computed(() => {
     envio = { situacao: 'erro', detalhe: 'Não concluído — motivo abaixo' }
   }
 
-  // O Python roda depois da resposta do envio; a store pergunta o status do lote.
+  // O processamento roda depois da resposta do envio; a store pergunta o status do lote.
   let python = { situacao: 'pendente', detalhe: '' }
   if (planilha.etapaEtl === 'processando') {
-    python = { situacao: 'andamento', detalhe: `Limpando e calculando… ${tempo(agora.value - planilha.inicioEnvio)}` }
+    python = { situacao: 'andamento', detalhe: `Calculando os indicadores… ${tempo(agora.value - planilha.inicioEnvio)}` }
   } else if (planilha.etapaEtl === 'concluido') {
     python = { situacao: 'feito', detalhe: 'Indicadores prontos no Dashboard' }
   } else if (planilha.etapaEtl === 'erro') {
@@ -189,7 +190,7 @@ const etapas = computed(() => {
     { titulo: 'Leitura', ...leitura },
     { titulo: 'Validação no servidor', ...validacao },
     { titulo: 'Envio do lote', ...envio },
-    { titulo: 'Python (ETL)', ...python },
+    { titulo: 'Processamento', ...python },
   ]
 })
 
@@ -539,18 +540,18 @@ async function processar() {
           <div class="h-full w-2/5 rounded-full bg-brand-500 animate-progresso motion-reduce:w-full motion-reduce:animate-none" />
         </div>
         <p class="mt-3 text-sm text-ink-600 dark:text-mist-300">
-          O Python está limpando os dados, calculando os indicadores e gravando no banco. Esta tela
-          atualiza sozinha; você pode sair dela, o resultado também aparece no Dashboard.
+          O sistema está organizando os dados, calculando os indicadores e salvando o resultado. Esta
+          tela atualiza sozinha; você pode sair dela, o resultado também aparece no Dashboard.
         </p>
         <p class="mt-2 text-sm text-alerta-600 dark:text-alerta-400" v-if="planilha.semRespostaEtl">
-          Está demorando mais que o normal. Confira se a API do Python está ligada
-          (<code>uvicorn api:app --port 8000</code>) e acompanhe pelo Dashboard.
+          Está demorando mais que o normal. Acompanhe pelo Dashboard; se não terminar, tente enviar de
+          novo mais tarde ou avise o suporte.
         </p>
       </template>
 
       <p class="mt-3 text-sm text-ink-900 dark:text-mist-100" v-else-if="planilha.etapaEtl === 'erro'">
-        {{ planilha.lote.mensagem || 'O serviço Python não processou este lote.' }}
-        A planilha continua carregada: use <span class="font-semibold">Enviar de novo</span> depois de corrigir.
+        {{ explicarLote(planilha.lote) }}
+        A planilha continua carregada: é só usar <span class="font-semibold">Enviar de novo</span>.
       </p>
 
       <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-4">
@@ -561,7 +562,7 @@ async function processar() {
           </dd>
         </div>
         <div>
-          <dt class="text-ink-600 dark:text-mist-300">Válidas (enviadas ao Python)</dt>
+          <dt class="text-ink-600 dark:text-mist-300">Válidas (enviadas para análise)</dt>
           <dd class="text-lg font-semibold tabular-nums text-ink-900 dark:text-mist-100">
             {{ inteiro(planilha.lote.linhasValidas) }}
           </dd>
@@ -613,8 +614,8 @@ async function processar() {
         Avisos ({{ inteiro(planilha.resumo.avisos.length) }})
       </h2>
       <p class="mt-1 text-xs text-ink-600 dark:text-mist-300">
-        Estas linhas seguem no envio: ou o valor foi ajustado pelo tratamento, ou falta
-        cadastrá-lo no dicionário em <code class="text-xs">esquemaPlanilha.js</code>. A contagem
+        Estas linhas seguem no envio: ou o valor foi ajustado pelo tratamento, ou ele não está na
+        lista de valores conhecidos do sistema (avise o suporte se for um valor novo). A contagem
         por tipo está no <RouterLink class="underline" :to="{ name: 'relatorio' }">Relatório</RouterLink>.
       </p>
       <!-- A lista cresceu quando a padronização passou a ser reportada: numa
