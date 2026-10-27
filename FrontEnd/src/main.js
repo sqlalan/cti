@@ -12,9 +12,10 @@ const app = createApp(App).use(createPinia()).use(router)
 const auth = useAuthStore()
 configurarSessao({
   token: () => auth.token,
-  expirou: () => {
+  // Conta bloqueada pelo admin também chega aqui (401): a mensagem diz qual dos dois foi.
+  expirou: (mensagem) => {
     auth.logout()
-    router.push({ name: 'login', query: { sessao: 'expirada' } })
+    router.push({ name: 'login', query: { sessao: mensagem?.includes('liberada') ? 'suspensa' : 'expirada' } })
   },
 })
 

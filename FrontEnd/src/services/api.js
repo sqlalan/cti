@@ -37,7 +37,7 @@ api.interceptors.response.use(
     // 401 com token = token vencido ou inválido. Sem token (login errado) a
     // tela de login mostra a mensagem da API e não há sessão para encerrar.
     if (erro.response?.status === 401 && erro.config?.headers?.Authorization) {
-      aoExpirar()
+      aoExpirar(erro.response.data?.mensagem)
     }
     return Promise.reject(erro)
   },
@@ -67,6 +67,12 @@ export const uploadService = { // ---- envio da planilha ----
   enviarValidadas: (linhas, { arquivo, recebidas }) =>
     api.post('/uploads/validadas', linhas, { params: { arquivo, recebidas } }).then(corpo),
   listar: () => api.get('/uploads').then(corpo), // GET lista de lotes enviados
+}
+
+export const adminService = { // ---- liberação de acesso (só ADMIN) ----
+  listar: (status) => api.get('/admin/usuarios', { params: { status } }).then(corpo), // lista as contas (filtra por status)
+  alterarStatus: (id, status) => api.patch(`/admin/usuarios/${id}/status`, { status }).then(corpo), // APROVADO | BLOQUEADO | PENDENTE
+  alterarPerfil: (id, perfil) => api.patch(`/admin/usuarios/${id}/perfil`, { perfil }).then(corpo), // USER | ADMIN
 }
 
 export const dashboardService = { // ---- dados dos gráficos ----

@@ -35,6 +35,13 @@ public class Usuario {
 	@ColumnDefault("'USER'")
 	private Perfil perfil = Perfil.USER;
 
+	// Default APROVADO no banco: as contas que ja existiam continuam entrando. O cadastro publico
+	// grava PENDENTE (UsuarioService.criar).
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, length = 20)
+	@ColumnDefault("'APROVADO'")
+	private StatusUsuario status = StatusUsuario.APROVADO;
+
 	@Column(name = "criado_em", nullable = false, updatable = false)
 	private Instant criadoEm;
 
@@ -91,6 +98,21 @@ public class Usuario {
 
 	public void setPerfil(Perfil perfil) {
 		this.perfil = perfil;
+	}
+
+	/**
+	 * Pode entrar e usar o sistema: conta ativa e aprovada por um administrador.
+	 */
+	public boolean podeEntrar() {
+		return ativo && status == StatusUsuario.APROVADO;
+	}
+
+	public StatusUsuario getStatus() {
+		return status;
+	}
+
+	public void setStatus(StatusUsuario status) {
+		this.status = status;
 	}
 
 	public boolean isAtivo() {

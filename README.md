@@ -117,6 +117,7 @@ Abra `/cadastro`, crie a conta de consultor e envie a planilha de exemplo [`Fron
 | `CORS_ORIGIN` | Back-end | Endereços do front que podem chamar a API, separados por vírgula. (`CORS_ORIGENS` também é aceito.) | `http://localhost:5173` |
 | `ETL_URL` | Back-end | Endereço da API do Python | `http://localhost:8000/etl` |
 | `ETL_KEY` | Back-end | Chave enviada no cabeçalho `X-ETL-Key`; igual ao `ETL_API_KEY` do Python | vazia (sem chave) |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Back-end | Primeiro administrador, garantido ao subir (a senha só é usada se a conta não existir) | vazios (nenhum) |
 | `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_SSLMODE` | Python (`analytics-python/.env`) | O mesmo banco do back-end | `localhost`, `5432`, `ctiinsights`, `cti`, `cti123`, `prefer` |
 | `ETL_API_KEY` | Python (`.env`) | Chave exigida no `POST /etl` (errada = 401) | vazia (sem chave) |
 | `VITE_API_URL` | Front-end | Endereço da API. Com ou sem `/api` no final: o front acrescenta quando falta. | `http://localhost:8080` |
@@ -125,20 +126,22 @@ Abra `/cadastro`, crie a conta de consultor e envie a planilha de exemplo [`Fron
 
 Todas as rotas, menos o cadastro e o login, exigem o header `Authorization: Bearer <token>`.
 
-Todo usuário tem um **perfil**, `USER` ou `ADMIN`, que vai dentro do token. O cadastro sempre cria `USER`. Para promover alguém, use o banco (por exemplo, no DBeaver):
+**Aprovação de contas.** O cadastro é público, mas a conta nasce **pendente** e só entra depois que um administrador aprova na tela **Usuários** (menu visível só para `ADMIN`). Cada conta tem:
+- um **perfil**, `USER` ou `ADMIN`, que vai dentro do token;
+- um **status**, `PENDENTE`, `APROVADO` ou `BLOQUEADO`.
 
-```sql
-UPDATE usuarios SET perfil = 'ADMIN' WHERE email = 'pessoa@empresa.com';
-```
+Bloquear tira o acesso na hora: a cada pedido o servidor confere se a conta continua aprovada, mesmo com o token ainda válido.
 
-Por enquanto nenhuma rota é exclusiva de `ADMIN`. O perfil já chega ao Spring Security como `ROLE_USER` ou `ROLE_ADMIN`, então restringir uma rota é só acrescentar `.hasRole("ADMIN")` à regra no `SecurityConfig`. A pessoa precisa entrar de novo depois da promoção, para receber um token com o perfil novo.
+**Primeiro administrador:** defina `ADMIN_EMAIL` (e `ADMIN_PASSWORD`, se a conta ainda não existir) e suba o back-end. A conta vira `ADMIN` e aprovada. Depois disso, os próprios administradores promovem outras pessoas na tela Usuários; o perfil novo vale a partir do próximo login. As contas que já existiam antes da aprovação continuam entrando (status `APROVADO`).
 
 | Verbo | Rota | O que faz |
 | --- | --- | --- |
 | POST | `/api/usuarios` | Cadastro do consultor: nome (o mesmo da coluna consultor da planilha), e-mail, senha (8 a 72 caracteres, com letras e números) e matrícula opcional. `consultor` só é preciso se for diferente do nome. O e-mail é gravado em minúsculas. |
 | POST | `/api/usuarios/login` | Login. Devolve `{ token, expiraEm, usuario }` |
 | GET | `/api/usuarios/me` | Quem está logado, lido do próprio token |
-| GET, PUT, DELETE | `/api/usuarios`, `/api/usuarios/{id}` | Consultar, alterar e remover usuários |
+| GET, PUT, DELETE | `/api/usuarios`, `/api/usuarios/{id}` | Consultar, alterar e remover usuários (**só ADMIN**) |
+| GET | `/api/admin/usuarios?status=` | Contas para aprovação, filtradas por `PENDENTE`, `APROVADO` ou `BLOQUEADO` (**só ADMIN**) |
+| PATCH | `/api/admin/usuarios/{id}/status`, `/api/admin/usuarios/{id}/perfil` | Aprovar, bloquear ou reativar; tornar ou deixar de ser `ADMIN` (**só ADMIN**; ninguém altera a própria conta) |
 | POST | `/api/clientes/validar` | Recebe em JSON as linhas que o Pinia aprovou, valida de novo (DTO + `ClienteValidacaoService`: código repetido e padronização) e devolve a lista padronizada. Não grava e não chama Python. |
 | POST | `/api/uploads/validadas?arquivo=&recebidas=` | Recebe as linhas que o Pinia aprovou (lista de `ClienteDTO`), valida de novo, grava o lote em `AGUARDANDO_ETL` e chama o Python. Responde 201 com o lote. |
 | GET | `/api/uploads` | Lotes enviados, do mais recente para o mais antigo, com status e mensagem |
@@ -154,7 +157,8 @@ Os erros vêm no formato `{ "mensagem": "..." }`. Na validação vêm também `c
 | Status | Quando acontece |
 | --- | --- |
 | 400 | Dados inválidos ou formato de arquivo não aceito |
-| 401 | Sem login ou token vencido (esta resposta vem sem corpo) |
+| 401 | Sem login, token vencido ou conta bloqueada durante a sessão |
+| 403 | Conta pendente ou bloqueada no login, ou rota só de `ADMIN` |
 | 404 | O registro não existe |
 | 409 | E-mail, código CTI ou matrícula repetidos |
 | 422 | Falta uma coluna obrigatória na planilha |

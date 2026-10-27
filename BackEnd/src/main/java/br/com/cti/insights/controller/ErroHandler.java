@@ -3,6 +3,7 @@ package br.com.cti.insights.controller;
 import br.com.cti.insights.exception.ClienteDuplicadoException;
 import br.com.cti.insights.exception.ColunaObrigatoriaException;
 import br.com.cti.insights.exception.ConsultorJaVinculadoException;
+import br.com.cti.insights.exception.ContaNaoLiberadaException;
 import br.com.cti.insights.exception.CredenciaisInvalidasException;
 import br.com.cti.insights.exception.EmailDuplicadoException;
 import br.com.cti.insights.exception.ExcelInvalidoException;
@@ -111,6 +112,12 @@ public class ErroHandler {
 	@ExceptionHandler(DataIntegrityViolationException.class)
 	public ResponseEntity<Map<String, Object>> violacaoDeUnicidade(DataIntegrityViolationException ex) {
 		return resposta(HttpStatus.CONFLICT, "Já existe um cadastro com esses dados");
+	}
+
+	// Senha certa, conta pendente ou bloqueada: 403 com o motivo, para a tela explicar.
+	@ExceptionHandler(ContaNaoLiberadaException.class)
+	public ResponseEntity<Map<String, Object>> contaNaoLiberada(ContaNaoLiberadaException ex) {
+		return resposta(HttpStatus.FORBIDDEN, ex.getMessage());
 	}
 
 	@ExceptionHandler(CredenciaisInvalidasException.class)

@@ -16,7 +16,11 @@ const email = ref(contaCriada)
 const senha = ref('')
 const campoSenha = ref(null)
 const mensagem = ref(
-  route.query.sessao === 'expirada' ? 'Sua sessão expirou. Entre de novo para continuar.' : '',
+  route.query.sessao === 'expirada'
+    ? 'Sua sessão expirou. Entre de novo para continuar.'
+    : route.query.sessao === 'suspensa'
+      ? 'Seu acesso foi suspenso pelo administrador.'
+      : '',
 )
 
 onMounted(() => {
@@ -85,7 +89,8 @@ async function entrar() {
           role="status"
         >
           <svg class="mt-0.5 h-4 w-4 shrink-0 text-ok-600 dark:text-ok-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="m8.5 12 2.5 2.5 4.5-5" /></svg>
-          Conta criada com sucesso. Entre com seu e-mail e senha.
+          Conta criada. Antes do primeiro acesso, ela precisa ser aprovada pelo administrador; depois é só
+          entrar com seu e-mail e senha.
         </p>
 
         <!-- Sem `required` nos campos: a regra de campo vazio mora na store, e

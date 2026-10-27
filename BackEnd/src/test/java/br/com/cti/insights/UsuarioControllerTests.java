@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -13,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.jayway.jsonpath.JsonPath;
 import br.com.cti.insights.model.Consultor;
 import br.com.cti.insights.model.Perfil;
+import br.com.cti.insights.model.StatusUsuario;
 import br.com.cti.insights.model.Usuario;
 import br.com.cti.insights.repository.ConsultorRepository;
 import br.com.cti.insights.repository.UsuarioRepository;
@@ -125,6 +128,7 @@ class UsuarioControllerTests {
 			.andExpect(status().isConflict())
 			.andExpect(jsonPath("$.mensagem").value("E-mail já cadastrado"));
 
+		aprovar("joana@exemplo.com");
 		this.mockMvc
 			.perform(post("/api/usuarios/login").contentType(MediaType.APPLICATION_JSON).content("""
 					{"email":"JOANA@EXEMPLO.COM","senha":"segredo123"}
@@ -163,7 +167,8 @@ class UsuarioControllerTests {
 					{"nome":"Nina","email":"nina@exemplo.com","senha":"segredo123","consultor":"Nina Rocha"}
 					"""))
 			.andExpect(status().isCreated())
-			.andExpect(jsonPath("$.perfil").value("USER"));
+			.andExpect(jsonPath("$.perfil").value("USER"))
+			.andExpect(jsonPath("$.status").value("PENDENTE"));
 	}
 
 	@Test
@@ -172,6 +177,7 @@ class UsuarioControllerTests {
 		Usuario otto = usuarioRepository.findByEmailIgnoreCase("otto@exemplo.com").orElseThrow();
 		// O GUIA promove pelo DBeaver: UPDATE usuarios SET perfil = 'ADMIN' WHERE email = '...'
 		otto.setPerfil(Perfil.ADMIN);
+		otto.setStatus(StatusUsuario.APROVADO);
 		usuarioRepository.save(otto);
 
 		String token = JsonPath.read(this.mockMvc
@@ -201,7 +207,7 @@ class UsuarioControllerTests {
 
 	@Test
 	void meDevolveQuemEstaLogadoPeloToken() throws Exception {
-		cadastrar("mel@exemplo.com");
+		cadastrarAprovado("mel@exemplo.com");
 		String token = JsonPath.read(this.mockMvc
 			.perform(post("/api/usuarios/login").contentType(MediaType.APPLICATION_JSON).content("""
 					{"email":"mel@exemplo.com","senha":"segredo123"}
@@ -275,7 +281,7 @@ class UsuarioControllerTests {
 
 	@Test
 	void loginComSenhaCorretaDevolveTokenEUsuario() throws Exception {
-		cadastrar("bia@exemplo.com");
+		cadastrarAprovado("bia@exemplo.com");
 		this.mockMvc
 			.perform(post("/api/usuarios/login").contentType(MediaType.APPLICATION_JSON).content("""
 					{"email":"bia@exemplo.com","senha":"segredo123"}
@@ -290,7 +296,7 @@ class UsuarioControllerTests {
 
 	@Test
 	void tokenDoLoginLiberaAsRotasProtegidas() throws Exception {
-		cadastrar("fabio@exemplo.com");
+		cadastrarAprovado("fabio@exemplo.com");
 		String token = JsonPath.read(this.mockMvc
 			.perform(post("/api/usuarios/login").contentType(MediaType.APPLICATION_JSON).content("""
 					{"email":"fabio@exemplo.com","senha":"segredo123"}
@@ -299,7 +305,7 @@ class UsuarioControllerTests {
 			.getResponse()
 			.getContentAsString(), "$.token");
 
-		this.mockMvc.perform(get("/api/usuarios").header("Authorization", "Bearer " + token))
+		this.mockMvc.perform(get("/api/uploads").header("Authorization", "Bearer " + token))
 			.andExpect(status().isOk());
 	}
 
@@ -359,9 +365,132 @@ class UsuarioControllerTests {
 	}
 
 	@Test
-	@WithMockUser
+	@WithMockUser(roles = "ADMIN")
 	void retorna404ParaUsuarioInexistente() throws Exception {
 		this.mockMvc.perform(get("/api/usuarios/99999")).andExpect(status().isNotFound());
+	}
+
+	// ---------------------------------------------------------------- aprovacao de contas
+
+	@Test
+	void contaPendenteNaoEntraMasSenhaErradaContinuaGenerica() throws Exception {
+		cadastrar("pendente@exemplo.com");
+		this.mockMvc
+			.perform(post("/api/usuarios/login").contentType(MediaType.APPLICATION_JSON).content("""
+					{"email":"pendente@exemplo.com","senha":"segredo123"}
+					"""))
+			.andExpect(status().isForbidden())
+			.andExpect(jsonPath("$.mensagem").value("Sua conta aguarda a aprovação do administrador"));
+		// Senha errada nao revela que a conta existe.
+		this.mockMvc
+			.perform(post("/api/usuarios/login").contentType(MediaType.APPLICATION_JSON).content("""
+					{"email":"pendente@exemplo.com","senha":"errada123"}
+					"""))
+			.andExpect(status().isUnauthorized())
+			.andExpect(jsonPath("$.mensagem").value("E-mail ou senha inválidos"));
+	}
+
+	@Test
+	void contaBloqueadaNaoEntra() throws Exception {
+		cadastrar("bloqueada@exemplo.com");
+		Usuario usuario = usuarioRepository.findByEmailIgnoreCase("bloqueada@exemplo.com").orElseThrow();
+		usuario.setStatus(StatusUsuario.BLOQUEADO);
+		usuarioRepository.save(usuario);
+		this.mockMvc
+			.perform(post("/api/usuarios/login").contentType(MediaType.APPLICATION_JSON).content("""
+					{"email":"bloqueada@exemplo.com","senha":"segredo123"}
+					"""))
+			.andExpect(status().isForbidden())
+			.andExpect(jsonPath("$.mensagem").value("Sua conta está bloqueada. Fale com o administrador"));
+	}
+
+	@Test
+	@WithMockUser
+	void usuarioComumNaoAdministraContas() throws Exception {
+		this.mockMvc.perform(get("/api/usuarios")).andExpect(status().isForbidden());
+		this.mockMvc.perform(get("/api/usuarios/1")).andExpect(status().isForbidden());
+		this.mockMvc.perform(delete("/api/usuarios/1")).andExpect(status().isForbidden());
+		this.mockMvc.perform(get("/api/admin/usuarios")).andExpect(status().isForbidden());
+		this.mockMvc
+			.perform(patch("/api/admin/usuarios/1/status").contentType(MediaType.APPLICATION_JSON)
+				.content("{\"status\":\"APROVADO\"}"))
+			.andExpect(status().isForbidden());
+	}
+
+	@Test
+	@WithMockUser(username = "chefe@exemplo.com", roles = "ADMIN")
+	void adminAprovaContaPendenteEElaPassaAEntrar() throws Exception {
+		cadastrar("nova@exemplo.com");
+		long id = usuarioRepository.findByEmailIgnoreCase("nova@exemplo.com").orElseThrow().getId();
+
+		this.mockMvc.perform(get("/api/admin/usuarios").param("status", "PENDENTE"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$[?(@.email == 'nova@exemplo.com')]").exists());
+
+		this.mockMvc
+			.perform(patch("/api/admin/usuarios/" + id + "/status").contentType(MediaType.APPLICATION_JSON)
+				.content("{\"status\":\"APROVADO\"}"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value("APROVADO"));
+
+		this.mockMvc
+			.perform(post("/api/usuarios/login").contentType(MediaType.APPLICATION_JSON).content("""
+					{"email":"nova@exemplo.com","senha":"segredo123"}
+					"""))
+			.andExpect(status().isOk());
+	}
+
+	@Test
+	@WithMockUser(username = "chefe2@exemplo.com", roles = "ADMIN")
+	void tornarAdminTambemAprovaEAdminNaoMexeNaPropriaConta() throws Exception {
+		cadastrar("promovida@exemplo.com");
+		long id = usuarioRepository.findByEmailIgnoreCase("promovida@exemplo.com").orElseThrow().getId();
+		this.mockMvc
+			.perform(patch("/api/admin/usuarios/" + id + "/perfil").contentType(MediaType.APPLICATION_JSON)
+				.content("{\"perfil\":\"ADMIN\"}"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.perfil").value("ADMIN"))
+			.andExpect(jsonPath("$.status").value("APROVADO"));
+
+		cadastrar("chefe2@exemplo.com");
+		long proprio = usuarioRepository.findByEmailIgnoreCase("chefe2@exemplo.com").orElseThrow().getId();
+		this.mockMvc
+			.perform(patch("/api/admin/usuarios/" + proprio + "/status").contentType(MediaType.APPLICATION_JSON)
+				.content("{\"status\":\"BLOQUEADO\"}"))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.erro").value("Você não pode alterar o status ou o perfil da sua própria conta"));
+	}
+
+	@Test
+	void contaBloqueadaPerdeOAcessoNaHoraMesmoComTokenValido() throws Exception {
+		cadastrarAprovado("rui@exemplo.com");
+		String token = JsonPath.read(this.mockMvc
+			.perform(post("/api/usuarios/login").contentType(MediaType.APPLICATION_JSON).content("""
+					{"email":"rui@exemplo.com","senha":"segredo123"}
+					"""))
+			.andReturn()
+			.getResponse()
+			.getContentAsString(), "$.token");
+		this.mockMvc.perform(get("/api/uploads").header("Authorization", "Bearer " + token)).andExpect(status().isOk());
+
+		Usuario rui = usuarioRepository.findByEmailIgnoreCase("rui@exemplo.com").orElseThrow();
+		rui.setStatus(StatusUsuario.BLOQUEADO);
+		usuarioRepository.save(rui);
+
+		this.mockMvc.perform(get("/api/uploads").header("Authorization", "Bearer " + token))
+			.andExpect(status().isUnauthorized())
+			.andExpect(jsonPath("$.mensagem").value("Sua conta não está liberada para acessar o sistema"));
+	}
+
+	private void cadastrarAprovado(String email) throws Exception {
+		cadastrar(email);
+		aprovar(email);
+	}
+
+	private void aprovar(String email) {
+		Usuario usuario = usuarioRepository.findByEmailIgnoreCase(email).orElseThrow();
+		usuario.setStatus(StatusUsuario.APROVADO);
+		usuarioRepository.save(usuario);
 	}
 
 	private void cadastrar(String email) throws Exception {

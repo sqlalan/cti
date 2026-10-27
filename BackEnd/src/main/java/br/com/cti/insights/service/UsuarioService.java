@@ -5,10 +5,13 @@ import br.com.cti.insights.dto.LoginResponse;
 import br.com.cti.insights.dto.UsuarioDTO;
 import br.com.cti.insights.dto.UsuarioRequest;
 import br.com.cti.insights.exception.ConsultorJaVinculadoException;
+import br.com.cti.insights.exception.ContaNaoLiberadaException;
 import br.com.cti.insights.exception.CredenciaisInvalidasException;
 import br.com.cti.insights.exception.EmailDuplicadoException;
 import br.com.cti.insights.exception.RecursoNaoEncontradoException;
 import br.com.cti.insights.model.Consultor;
+import br.com.cti.insights.model.Perfil;
+import br.com.cti.insights.model.StatusUsuario;
 import br.com.cti.insights.model.Usuario;
 import br.com.cti.insights.repository.ConsultorRepository;
 import br.com.cti.insights.repository.UsuarioRepository;
@@ -46,14 +49,57 @@ public class UsuarioService {
 		return UsuarioDTO.de(buscarEntidade(id));
 	}
 
-	// Mesma mensagem para e-mail inexistente e senha errada: nao revela quais e-mails existem.
+	// Mesma mensagem para e-mail inexistente e senha errada: nao revela quais e-mails existem. So quem
+	// acertou a senha fica sabendo que a conta aguarda aprovacao ou foi bloqueada.
 	public LoginResponse login(LoginRequest request) {
-		return repository.findByEmailIgnoreCase(normalizar(request.email()))
+		Usuario usuario = repository.findByEmailIgnoreCase(normalizar(request.email()))
 			.filter(Usuario::isAtivo)
-			.filter(usuario -> passwordEncoder.matches(request.senha(), usuario.getSenha()))
-			.map(UsuarioDTO::de)
-			.map(tokenService::emitir)
+			.filter(u -> passwordEncoder.matches(request.senha(), u.getSenha()))
 			.orElseThrow(CredenciaisInvalidasException::new);
+		if (usuario.getStatus() == StatusUsuario.PENDENTE) {
+			throw new ContaNaoLiberadaException("Sua conta aguarda a aprovação do administrador");
+		}
+		if (usuario.getStatus() == StatusUsuario.BLOQUEADO) {
+			throw new ContaNaoLiberadaException("Sua conta está bloqueada. Fale com o administrador");
+		}
+		return tokenService.emitir(UsuarioDTO.de(usuario));
+	}
+
+	// Tela de administracao: filtra por status; sem status, todos. Mais recentes primeiro.
+	public List<UsuarioDTO> listarPorStatus(StatusUsuario status) {
+		List<Usuario> usuarios = status == null ? repository.findAllByOrderByCriadoEmDesc()
+				: repository.findByStatusOrderByCriadoEmDesc(status);
+		return usuarios.stream().map(UsuarioDTO::de).toList();
+	}
+
+	/**
+	 * Aprovar, bloquear ou devolver para pendente. O admin nao mexe na propria conta: bloquear a si
+	 * mesmo deixaria o sistema sem ninguem para liberar acessos.
+	 */
+	@Transactional
+	public UsuarioDTO alterarStatus(Long id, StatusUsuario status, String emailAdmin) {
+		Usuario usuario = buscarEntidade(id);
+		recusarPropriaConta(usuario, emailAdmin);
+		usuario.setStatus(status);
+		return UsuarioDTO.de(repository.save(usuario));
+	}
+
+	// Quem vira ADMIN ja fica aprovado. O perfil novo vale a partir do proximo login (vai no token).
+	@Transactional
+	public UsuarioDTO alterarPerfil(Long id, Perfil perfil, String emailAdmin) {
+		Usuario usuario = buscarEntidade(id);
+		recusarPropriaConta(usuario, emailAdmin);
+		usuario.setPerfil(perfil);
+		if (perfil == Perfil.ADMIN) {
+			usuario.setStatus(StatusUsuario.APROVADO);
+		}
+		return UsuarioDTO.de(repository.save(usuario));
+	}
+
+	private static void recusarPropriaConta(Usuario usuario, String emailAdmin) {
+		if (usuario.getEmail().equalsIgnoreCase(emailAdmin)) {
+			throw new IllegalArgumentException("Você não pode alterar o status ou o perfil da sua própria conta");
+		}
 	}
 
 	@Transactional
@@ -66,6 +112,8 @@ public class UsuarioService {
 		usuario.setNome(request.nome());
 		usuario.setEmail(email);
 		usuario.setSenha(passwordEncoder.encode(request.senha()));
+		// Cadastro publico: entra so depois da aprovacao de um administrador.
+		usuario.setStatus(StatusUsuario.PENDENTE);
 		usuario.setConsultor(consultorLivre(nomeDoConsultor(request), null));
 		catalogo.definirMatricula(usuario.getConsultor(), request.matricula());
 		return UsuarioDTO.de(repository.save(usuario));
@@ -102,7 +150,7 @@ public class UsuarioService {
 	 */
 	public UsuarioDTO logado(String email) {
 		return repository.findByEmailIgnoreCase(email)
-			.filter(Usuario::isAtivo)
+			.filter(Usuario::podeEntrar)
 			.map(UsuarioDTO::de)
 			.orElseThrow(CredenciaisInvalidasException::new);
 	}

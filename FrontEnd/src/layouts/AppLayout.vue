@@ -1,18 +1,26 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAdminStore } from '../stores/adminStore'
 import Notificacoes from '../components/Notificacoes.vue'
 import { useAuthStore } from '../stores/authStore'
 
 const router = useRouter()
 const auth = useAuthStore()
+const admin = useAdminStore()
 const menuAberto = ref(false)
 
-const itens = [
+// "Usuários" só aparece para ADMIN, com o número de contas aguardando aprovação.
+const itens = computed(() => [
   { nome: 'dashboard', rotulo: 'Dashboard' },
   { nome: 'upload', rotulo: 'Upload' },
   { nome: 'relatorio', rotulo: 'Relatórios' },
-]
+  ...(auth.ehAdmin ? [{ nome: 'usuarios', rotulo: 'Usuários', contador: admin.pendentes }] : []),
+])
+
+onMounted(() => {
+  if (auth.ehAdmin) admin.atualizarPendentes()
+})
 
 // A sessão é descartada ANTES de navegar: sair sem limpar deixaria o
 // localStorage marcado como logado, e a próxima pessoa no mesmo navegador
@@ -44,7 +52,16 @@ function sair() {
           :to="{ name: item.nome }"
           @click="menuAberto = false"
         >
-          {{ item.rotulo }}
+          <span class="flex items-center justify-between gap-2">
+            {{ item.rotulo }}
+            <span
+              class="min-w-5 rounded-full bg-alerta-600 px-1.5 text-center text-xs font-semibold leading-5 text-white dark:bg-alerta-400 dark:text-night-950"
+              v-if="item.contador"
+              :aria-label="`${item.contador} aguardando aprovação`"
+            >
+              {{ item.contador }}
+            </span>
+          </span>
         </RouterLink>
       </nav>
 

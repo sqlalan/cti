@@ -8,6 +8,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import br.com.cti.insights.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +29,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.util.StringUtils;
 import org.springframework.web.cors.CorsConfiguration;
@@ -43,18 +45,25 @@ public class SecurityConfig {
 	private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
 	@Bean
-	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+	SecurityFilterChain securityFilterChain(HttpSecurity http, UsuarioRepository usuarios) throws Exception {
 		return http
 			// API stateless com token no header: CSRF nao se aplica.
 			.csrf(AbstractHttpConfigurer::disable)
 			.cors(Customizer.withDefaults())
 			.sessionManagement(sessao -> sessao.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-			// Cadastro e login abertos: o proprio consultor cria a conta e recebe o token no login.
+			// Cadastro e login abertos (a conta nasce PENDENTE). Administrar contas e so para ADMIN;
+			// cada pessoa ve a propria conta em /me.
 			.authorizeHttpRequests(requests -> requests.requestMatchers(HttpMethod.POST, "/api/usuarios", "/api/usuarios/login")
 				.permitAll()
+				.requestMatchers("/api/usuarios/me")
+				.authenticated()
+				.requestMatchers("/api/admin/**", "/api/usuarios", "/api/usuarios/**")
+				.hasRole("ADMIN")
 				.anyRequest()
 				.authenticated())
 			.oauth2ResourceServer(servidor -> servidor.jwt(Customizer.withDefaults()))
+			// Conta bloqueada perde o acesso na hora, mesmo com o token ainda na validade.
+			.addFilterAfter(new ContaLiberadaFilter(usuarios), BearerTokenAuthenticationFilter.class)
 			.build();
 	}
 
@@ -94,7 +103,7 @@ public class SecurityConfig {
 
 	/**
 	 * O claim "perfil" do token vira ROLE_USER ou ROLE_ADMIN, como o getAuthorities() do guia.
-	 * Nenhuma rota exige perfil ainda; quando precisar, basta .hasRole("ADMIN") na regra.
+	 * As rotas de administracao de contas exigem ROLE_ADMIN (regra no securityFilterChain).
 	 */
 	@Bean
 	JwtAuthenticationConverter jwtAuthenticationConverter() {

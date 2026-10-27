@@ -11,6 +11,7 @@ const DashboardView = () => import('../views/DashboardView.vue')
 const Upload = () => import('../pages/Upload.vue')
 const Relatorio = () => import('../pages/Relatorio.vue')
 const NaoEncontrada = () => import('../pages/NaoEncontrada.vue')
+const Usuarios = () => import('../pages/Usuarios.vue')
 
 // Os caminhos só existem aqui. O resto do app navega pelo NOME da rota
 // ({ name: 'upload' }), então trocar uma URL é mudar uma linha deste arquivo —
@@ -34,6 +35,8 @@ const routes = [
       { path: 'dashboard', name: 'dashboard', component: DashboardView },
       { path: 'upload', name: 'upload', component: Upload },
       { path: 'relatorio', name: 'relatorio', component: Relatorio },
+      // Liberação de contas: só ADMIN. O servidor também recusa; aqui só evita a tela vazia.
+      { path: 'usuarios', name: 'usuarios', component: Usuarios, meta: { requerAdmin: true } },
     ],
   },
 
@@ -63,6 +66,9 @@ router.beforeEach((to) => {
   const auth = useAuthStore()
   if (to.matched.some((rota) => rota.meta.requerLogin) && !auth.logado) {
     return { name: 'login', query: { voltar: to.fullPath } }
+  }
+  if (to.matched.some((rota) => rota.meta.requerAdmin) && !auth.ehAdmin) {
+    return { name: 'dashboard' }
   }
   if ((to.name === 'login' || to.name === 'cadastro') && auth.logado) {
     return { name: 'upload' }
