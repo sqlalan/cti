@@ -1,9 +1,12 @@
 package br.com.cti.insights.controller;
 
 import br.com.cti.insights.exception.ClienteDuplicadoException;
+import br.com.cti.insights.exception.ColunaObrigatoriaException;
 import br.com.cti.insights.exception.ConsultorJaVinculadoException;
 import br.com.cti.insights.exception.CredenciaisInvalidasException;
 import br.com.cti.insights.exception.EmailDuplicadoException;
+import br.com.cti.insights.exception.ExcelInvalidoException;
+import br.com.cti.insights.exception.LinhaInvalidaException;
 import br.com.cti.insights.exception.MatriculaDuplicadaException;
 import br.com.cti.insights.exception.RecursoNaoEncontradoException;
 import java.lang.reflect.Field;
@@ -74,6 +77,22 @@ public class ErroHandler {
 		corpo.put("mensagem", "JSON inválido");
 		corpo.put("erro", "Confira o formato dos campos: datas em aaaa-mm-dd e números sem aspas");
 		return ResponseEntity.badRequest().body(corpo);
+	}
+
+	// Linha do lote recusada pelo UploadService: mesmo formato da validacao da lista, com a posicao.
+	@ExceptionHandler(LinhaInvalidaException.class)
+	public ResponseEntity<Map<String, Object>> linhaInvalida(LinhaInvalidaException ex) {
+		return dadosInvalidos(List.of(new ErroDeCampo(ex.getPosicao() - 1, ex.getCampo(), ex.getMessage())));
+	}
+
+	@ExceptionHandler(ExcelInvalidoException.class)
+	public ResponseEntity<Map<String, Object>> excelInvalido(ExcelInvalidoException ex) {
+		return resposta(HttpStatus.BAD_REQUEST, ex.getMessage());
+	}
+
+	@ExceptionHandler(ColunaObrigatoriaException.class)
+	public ResponseEntity<Map<String, Object>> colunaObrigatoria(ColunaObrigatoriaException ex) {
+		return resposta(HttpStatus.UNPROCESSABLE_CONTENT, ex.getMessage(), "coluna", ex.getColuna());
 	}
 
 	@ExceptionHandler(ClienteDuplicadoException.class)

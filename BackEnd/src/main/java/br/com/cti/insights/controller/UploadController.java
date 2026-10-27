@@ -3,7 +3,6 @@ package br.com.cti.insights.controller;
 import br.com.cti.insights.dto.ClienteDTO;
 import br.com.cti.insights.dto.UploadLoteDTO;
 import br.com.cti.insights.service.UploadService;
-import jakarta.validation.Valid;
 import java.net.URI;
 import java.security.Principal;
 import java.util.List;
@@ -27,9 +26,10 @@ public class UploadController {
 
 	// POST /api/uploads/validadas?arquivo=dados.xlsx&recebidas=38 com as linhas do Pinia no corpo,
 	// no formato do ClienteDTO (aula 10). Responde com o lote em AGUARDANDO_ETL.
+	// Sem @Valid aqui: o UploadService revalida na ordem da planilha (arquivo, colunas, linhas).
 	@PostMapping("/validadas")
 	public ResponseEntity<UploadLoteDTO> enviarValidadas(@RequestParam(required = false) String arquivo,
-			@RequestParam(required = false) Integer recebidas, @RequestBody List<@Valid ClienteDTO> linhas,
+			@RequestParam(required = false) Integer recebidas, @RequestBody List<ClienteDTO> linhas,
 			Principal usuario) {
 		UploadLoteDTO lote = service.registrar(arquivo, recebidas, linhas, usuario.getName());
 		return ResponseEntity.created(URI.create("/api/dashboard?loteId=" + lote.id())).body(lote);

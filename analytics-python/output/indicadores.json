@@ -1,0 +1,502 @@
+{
+  "geradoEm": "2026-10-27T00:23:47+00:00",
+  "resumo": {
+    "totalClientes": 31,
+    "faturamentoTotal": 70510000.0,
+    "media": 2274516.13,
+    "mediana": 1420000.0,
+    "desvioPadrao": 1939069.95,
+    "minimo": 390000.0,
+    "maximo": 7200000.0,
+    "q1": 835000.0,
+    "q3": 3250000.0,
+    "segmentoMaisFrequente": "Comércio",
+    "nivelMaisFrequente": "B",
+    "servicoMaisContratado": "Internet Dedicada",
+    "mediaServicosPorCliente": 1.9,
+    "coeficienteVariacao": 0.853,
+    "consultores": 4
+  },
+  "porSegmento": [
+    {
+      "segmento": "Comércio",
+      "clientes": 8,
+      "percentual": 25.8,
+      "percentualFaturamento": 11.6,
+      "faturamentoTotal": 8190000.0,
+      "total": 8190000.0,
+      "media": 1023750.0,
+      "mediana": 695000.0,
+      "desvioPadrao": 972918.11,
+      "minimo": 470000.0,
+      "maximo": 3400000.0
+    },
+    {
+      "segmento": "Serviços",
+      "clientes": 7,
+      "percentual": 22.6,
+      "percentualFaturamento": 15.3,
+      "faturamentoTotal": 10780000.0,
+      "total": 10780000.0,
+      "media": 1540000.0,
+      "mediana": 1250000.0,
+      "desvioPadrao": 1227463.51,
+      "minimo": 390000.0,
+      "maximo": 4200000.0
+    },
+    {
+      "segmento": "Indústria",
+      "clientes": 6,
+      "percentual": 19.4,
+      "percentualFaturamento": 37.0,
+      "faturamentoTotal": 26120000.0,
+      "total": 26120000.0,
+      "media": 4353333.33,
+      "mediana": 4475000.0,
+      "desvioPadrao": 2014563.64,
+      "minimo": 1420000.0,
+      "maximo": 7200000.0
+    },
+    {
+      "segmento": "Saúde",
+      "clientes": 4,
+      "percentual": 12.9,
+      "percentualFaturamento": 17.2,
+      "faturamentoTotal": 12150000.0,
+      "total": 12150000.0,
+      "media": 3037500.0,
+      "mediana": 2415000.0,
+      "desvioPadrao": 2764276.58,
+      "minimo": 420000.0,
+      "maximo": 6900000.0
+    },
+    {
+      "segmento": "Educação",
+      "clientes": 3,
+      "percentual": 9.7,
+      "percentualFaturamento": 6.1,
+      "faturamentoTotal": 4270000.0,
+      "total": 4270000.0,
+      "media": 1423333.33,
+      "mediana": 1080000.0,
+      "desvioPadrao": 765136.15,
+      "minimo": 890000.0,
+      "maximo": 2300000.0
+    },
+    {
+      "segmento": "Tecnologia",
+      "clientes": 3,
+      "percentual": 9.7,
+      "percentualFaturamento": 12.8,
+      "faturamentoTotal": 9000000.0,
+      "total": 9000000.0,
+      "media": 3000000.0,
+      "mediana": 2750000.0,
+      "desvioPadrao": 1490805.15,
+      "minimo": 1650000.0,
+      "maximo": 4600000.0
+    }
+  ],
+  "porNivel": [
+    {
+      "nivel": "A",
+      "clientes": 12,
+      "percentual": 38.7,
+      "percentualFaturamento": 73.3,
+      "faturamentoTotal": 51700000.0,
+      "total": 51700000.0,
+      "media": 4308333.33,
+      "mediana": 4025000.0,
+      "desvioPadrao": 1600828.38,
+      "minimo": 2300000.0,
+      "maximo": 7200000.0
+    },
+    {
+      "nivel": "B",
+      "clientes": 13,
+      "percentual": 41.9,
+      "percentualFaturamento": 22.3,
+      "faturamentoTotal": 15690000.0,
+      "total": 15690000.0,
+      "media": 1206923.08,
+      "mediana": 1170000.0,
+      "desvioPadrao": 367749.57,
+      "minimo": 710000.0,
+      "maximo": 1980000.0
+    },
+    {
+      "nivel": "C",
+      "clientes": 6,
+      "percentual": 19.4,
+      "percentualFaturamento": 4.4,
+      "faturamentoTotal": 3120000.0,
+      "total": 3120000.0,
+      "media": 520000.0,
+      "mediana": 510000.0,
+      "desvioPadrao": 113137.08,
+      "minimo": 390000.0,
+      "maximo": 680000.0
+    }
+  ],
+  "porConsultor": [
+    {
+      "consultor": "Ana Souza",
+      "clientes": 8,
+      "percentual": 25.8,
+      "percentualFaturamento": 23.2,
+      "faturamentoTotal": 16330000.0,
+      "total": 16330000.0,
+      "media": 2041250.0,
+      "mediana": 1335000.0,
+      "desvioPadrao": 1784220.02,
+      "minimo": 390000.0,
+      "maximo": 5450000.0
+    },
+    {
+      "consultor": "Carla Mendes",
+      "clientes": 8,
+      "percentual": 25.8,
+      "percentualFaturamento": 24.2,
+      "faturamentoTotal": 17030000.0,
+      "total": 17030000.0,
+      "media": 2128750.0,
+      "mediana": 1530000.0,
+      "desvioPadrao": 2111102.88,
+      "minimo": 420000.0,
+      "maximo": 6900000.0
+    },
+    {
+      "consultor": "Carlos Lima",
+      "clientes": 8,
+      "percentual": 25.8,
+      "percentualFaturamento": 12.6,
+      "faturamentoTotal": 8900000.0,
+      "total": 8900000.0,
+      "media": 1112500.0,
+      "mediana": 745000.0,
+      "desvioPadrao": 962107.06,
+      "minimo": 470000.0,
+      "maximo": 3400000.0
+    },
+    {
+      "consultor": "Marcos Reis",
+      "clientes": 7,
+      "percentual": 22.6,
+      "percentualFaturamento": 40.1,
+      "faturamentoTotal": 28250000.0,
+      "total": 28250000.0,
+      "media": 4035714.29,
+      "mediana": 3850000.0,
+      "desvioPadrao": 1812850.95,
+      "minimo": 1650000.0,
+      "maximo": 7200000.0
+    }
+  ],
+  "porServico": [
+    {
+      "servico": "Internet Dedicada",
+      "contratos": 15,
+      "percentual": 48.4,
+      "faturamentoMedio": 1938000.0
+    },
+    {
+      "servico": "Firewall",
+      "contratos": 11,
+      "percentual": 35.5,
+      "faturamentoMedio": 3989090.91
+    },
+    {
+      "servico": "Backup",
+      "contratos": 10,
+      "percentual": 32.3,
+      "faturamentoMedio": 3204000.0
+    },
+    {
+      "servico": "MPLS",
+      "contratos": 9,
+      "percentual": 29.0,
+      "faturamentoMedio": 4074444.44
+    },
+    {
+      "servico": "Cloud",
+      "contratos": 7,
+      "percentual": 22.6,
+      "faturamentoMedio": 3760000.0
+    },
+    {
+      "servico": "Link Empresarial",
+      "contratos": 7,
+      "percentual": 22.6,
+      "faturamentoMedio": 605714.29
+    }
+  ],
+  "porMes": [
+    {
+      "mes": "2025-02",
+      "clientes": 2,
+      "faturamento": 2030000.0,
+      "acumulado": 2
+    },
+    {
+      "mes": "2025-03",
+      "clientes": 2,
+      "faturamento": 3520000.0,
+      "acumulado": 4
+    },
+    {
+      "mes": "2025-04",
+      "clientes": 2,
+      "faturamento": 3300000.0,
+      "acumulado": 6
+    },
+    {
+      "mes": "2025-05",
+      "clientes": 2,
+      "faturamento": 5090000.0,
+      "acumulado": 8
+    },
+    {
+      "mes": "2025-06",
+      "clientes": 2,
+      "faturamento": 1600000.0,
+      "acumulado": 10
+    },
+    {
+      "mes": "2025-07",
+      "clientes": 2,
+      "faturamento": 5490000.0,
+      "acumulado": 12
+    },
+    {
+      "mes": "2025-08",
+      "clientes": 2,
+      "faturamento": 8220000.0,
+      "acumulado": 14
+    },
+    {
+      "mes": "2025-09",
+      "clientes": 2,
+      "faturamento": 4320000.0,
+      "acumulado": 16
+    },
+    {
+      "mes": "2025-10",
+      "clientes": 2,
+      "faturamento": 3470000.0,
+      "acumulado": 18
+    },
+    {
+      "mes": "2025-11",
+      "clientes": 1,
+      "faturamento": 1650000.0,
+      "acumulado": 19
+    },
+    {
+      "mes": "2025-12",
+      "clientes": 0,
+      "faturamento": 0.0,
+      "acumulado": 19
+    },
+    {
+      "mes": "2026-01",
+      "clientes": 2,
+      "faturamento": 4820000.0,
+      "acumulado": 21
+    },
+    {
+      "mes": "2026-02",
+      "clientes": 2,
+      "faturamento": 6580000.0,
+      "acumulado": 23
+    },
+    {
+      "mes": "2026-03",
+      "clientes": 1,
+      "faturamento": 1520000.0,
+      "acumulado": 24
+    },
+    {
+      "mes": "2026-04",
+      "clientes": 2,
+      "faturamento": 7880000.0,
+      "acumulado": 26
+    },
+    {
+      "mes": "2026-05",
+      "clientes": 2,
+      "faturamento": 2010000.0,
+      "acumulado": 28
+    },
+    {
+      "mes": "2026-06",
+      "clientes": 1,
+      "faturamento": 2850000.0,
+      "acumulado": 29
+    },
+    {
+      "mes": "2026-07",
+      "clientes": 0,
+      "faturamento": 0.0,
+      "acumulado": 29
+    },
+    {
+      "mes": "2026-08",
+      "clientes": 2,
+      "faturamento": 6160000.0,
+      "acumulado": 31
+    }
+  ],
+  "correlacao": {
+    "pearson": 0.787,
+    "p": 0.0,
+    "n": 31,
+    "spearman": 0.834,
+    "spearmanP": 0.0,
+    "interpretacao": "Correlação forte positiva entre a quantidade de serviços e o faturamento."
+  },
+  "topClientes": [
+    {
+      "codigo": "CTI027",
+      "nome": "Indústria Prime",
+      "segmento": "Indústria",
+      "nivel": "A",
+      "faturamento": 7200000.0
+    },
+    {
+      "codigo": "CTI015",
+      "nome": "Hospital Vida",
+      "segmento": "Saúde",
+      "nivel": "A",
+      "faturamento": 6900000.0
+    },
+    {
+      "codigo": "CTI035",
+      "nome": "Fábrica Nacional",
+      "segmento": "Indústria",
+      "nivel": "A",
+      "faturamento": 5450000.0
+    },
+    {
+      "codigo": "CTI012",
+      "nome": "Fábrica Delta",
+      "segmento": "Indústria",
+      "nivel": "A",
+      "faturamento": 5100000.0
+    },
+    {
+      "codigo": "CTI024",
+      "nome": "Software Nova Geração",
+      "segmento": "Tecnologia",
+      "nivel": "A",
+      "faturamento": 4600000.0
+    }
+  ],
+  "qualidade": {
+    "linhasRecebidas": 31,
+    "linhasValidas": 31,
+    "linhasInvalidas": 0,
+    "correcoesSegmento": 0,
+    "correcoesConsultor": 0,
+    "correcoesNivel": 0,
+    "segmentosOriginais": [
+      {
+        "original": "Comércio",
+        "padronizado": "Comércio",
+        "ocorrencias": 8
+      },
+      {
+        "original": "Educação",
+        "padronizado": "Educação",
+        "ocorrencias": 3
+      },
+      {
+        "original": "Indústria",
+        "padronizado": "Indústria",
+        "ocorrencias": 6
+      },
+      {
+        "original": "Saúde",
+        "padronizado": "Saúde",
+        "ocorrencias": 4
+      },
+      {
+        "original": "Serviços",
+        "padronizado": "Serviços",
+        "ocorrencias": 7
+      },
+      {
+        "original": "Tecnologia",
+        "padronizado": "Tecnologia",
+        "ocorrencias": 3
+      }
+    ],
+    "avisos": []
+  },
+  "insights": [
+    "O segmento Comércio concentra a maior carteira: 8 clientes (25,8%).",
+    "A média de faturamento (R$ 2.274.516,13) é maior que a mediana (R$ 1.420.000,00): poucos clientes muito grandes puxam a média para cima, então a mediana descreve melhor o cliente típico.",
+    "Os 12 clientes nível A representam 73,3% do faturamento total, com apenas 38,7% dos clientes.",
+    "Marcos Reis é o consultor com maior faturamento sob gestão (R$ 28.250.000,00, 7 clientes).",
+    "Internet Dedicada é o serviço mais contratado: presente em 15 clientes (48,4%).",
+    "As contratações ficaram distribuídas ao longo do tempo: no máximo 2 por mês, repetido em 14 meses.",
+    "Correlação forte positiva entre a quantidade de serviços e o faturamento (r de Pearson = 0,787)."
+  ],
+  "testes": {
+    "normalidade": {
+      "teste": "Shapiro-Wilk",
+      "aplicado": true,
+      "variavel": "faturamento_anual",
+      "n": 31,
+      "estatistica": 0.8439,
+      "p": 0.000376,
+      "normal": false,
+      "interpretacao": "O faturamento não segue uma distribuição normal (Shapiro-Wilk W = 0,844, p = 0,0004 < 0,05): a mediana descreve melhor o cliente típico do que a média."
+    },
+    "associacao": {
+      "teste": "Qui-quadrado",
+      "aplicado": true,
+      "variaveis": [
+        "segmento",
+        "nivel_cliente"
+      ],
+      "estatistica": 15.875,
+      "p": 0.103268,
+      "grausLiberdade": 10,
+      "associadas": false,
+      "poucasObservacoes": true,
+      "tabela": {
+        "Comércio": {
+          "A": 1,
+          "B": 3,
+          "C": 4
+        },
+        "Educação": {
+          "A": 1,
+          "B": 2,
+          "C": 0
+        },
+        "Indústria": {
+          "A": 5,
+          "B": 1,
+          "C": 0
+        },
+        "Saúde": {
+          "A": 2,
+          "B": 1,
+          "C": 1
+        },
+        "Serviços": {
+          "A": 1,
+          "B": 5,
+          "C": 1
+        },
+        "Tecnologia": {
+          "A": 2,
+          "B": 1,
+          "C": 0
+        }
+      },
+      "interpretacao": "Não há evidência de associação entre segmento e nível do cliente (qui-quadrado = 15,87, gl = 10, p = 0,1033): a proporção de clientes A, B e C é parecida entre os segmentos. Atenção: há poucas observações por combinação, então o resultado é só indicativo."
+    }
+  }
+}

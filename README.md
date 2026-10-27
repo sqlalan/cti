@@ -33,7 +33,7 @@ Planilha ─▶ Pinia valida ─▶ Spring valida e grava o lote ─▶ POST /et
 | --- | --- | --- |
 | [`FrontEnd/`](FrontEnd/) | Vue 3, Vite, Tailwind, Pinia, Vue Router e Axios | Frameworks Front-end |
 | [`BackEnd/`](BackEnd/) | Java 21 e Spring Boot 4 (Web MVC, Data JPA, Security com JWT, Validation) | Desenvolvimento Back-end |
-| [`analytics-python/`](analytics-python/) | Python com FastAPI, pandas, SciPy e SQLAlchemy: o ETL que limpa, calcula, gera os insights e grava no banco | Ciência de Dados |
+| [`analytics-python/`](analytics-python/) | Python com FastAPI, pandas, SciPy, SQLAlchemy e Matplotlib: o ETL que limpa, calcula, gera os insights e grava no banco, e o relatório com os testes estatísticos e os 4 gráficos (`output/`) | Ciência de Dados |
 | [`database/`](database/) | `schema.sql`: a estrutura do banco no PostgreSQL. `migracao-aula11.sql`: renomeia as tabelas antigas para as da aula 11 | Back-end / Nuvem |
 
 O código do back-end fica em `BackEnd/src/main/java/br/com/cti/insights/` e segue as camadas vistas em aula:
@@ -41,11 +41,11 @@ O código do back-end fica em `BackEnd/src/main/java/br/com/cti/insights/` e seg
 | Pacote | Papel |
 | --- | --- |
 | `controller` | Porta HTTP. Recebe o JSON ou o arquivo e devolve a resposta com o status certo. Aqui também fica o `ErroHandler`, que transforma cada erro numa resposta JSON clara. |
-| `service` | Regras de negócio: e-mail único, login, gravação do lote (`UploadService`), chamada ao Python (`PythonEtlService`) e leitura do dashboard. |
+| `service` | Regras de negócio: e-mail único, login, gravação do lote (`UploadService`), chamada ao Python (`PythonEtlService`), leitura do dashboard e a `Telemetria` de cada envio e de cada execução do Python (`TelemetriaService`). |
 | `repository` | Acesso ao banco com Spring Data JPA. |
 | `model` | Entidades: `Cliente`, `Consultor`, `Contrato`, `Servico`, `UploadLote`, `UploadLinha`, `EstatisticaLote`, `Insight` (com subclasses), `Telemetria` e `Usuario`. |
 | `dto` | O que entra e sai da API, com as validações declarativas (`@NotBlank`, `@Positive`, `@Pattern`...). `ClienteDTO` é uma linha da planilha; os `...RespostaDTO` são o que a API devolve. A senha nunca sai. |
-| `exception` | Exceções próprias (`ClienteDuplicadoException`, `RecursoNaoEncontradoException`...) tratadas pelo `ErroHandler`. |
+| `exception` | Exceções próprias tratadas pelo `ErroHandler`, entre elas as três do plano: `ExcelInvalidoException` (formato não aceito ou planilha sem linhas), `ColunaObrigatoriaException` (falta uma coluna, ex. "segmento") e `ClienteDuplicadoException` (código CTI repetido). |
 | `config` | Segurança, CORS e `AppProperties` (endereço e chave da API do Python). |
 
 ## Como rodar na sua máquina
@@ -69,6 +69,8 @@ copy .env.example .env                     # Linux/Mac: cp; preencha com os dado
 python testar_conexao.py                   # deve mostrar "Conectou!"
 uvicorn api:app --port 8000                # confira http://localhost:8000/saude
 ```
+
+Relatório em arquivos, sem banco: `python relatorio.py` lê `amostras/lote_exemplo.json` e gera em `output/` o `indicadores.json` (com os testes de Shapiro-Wilk e qui-quadrado), o `insights.json` e os 4 gráficos (linha, dispersão, histograma e boxplot).
 
 Sem o Python no ar, o lote fica com status `ERRO` e a mensagem "Não foi possível falar com o serviço Python". Para testar só o Python, sem banco: `http://localhost:8000/docs` > `POST /testar` com o conteúdo de `amostras/clientes.json`.
 
@@ -151,10 +153,11 @@ Os erros vêm no formato `{ "mensagem": "..." }`. Na validação vêm também `c
 
 | Status | Quando acontece |
 | --- | --- |
-| 400 | Dados inválidos |
+| 400 | Dados inválidos ou formato de arquivo não aceito |
 | 401 | Sem login ou token vencido (esta resposta vem sem corpo) |
 | 404 | O registro não existe |
 | 409 | E-mail, código CTI ou matrícula repetidos |
+| 422 | Falta uma coluna obrigatória na planilha |
 
 ## Testes
 

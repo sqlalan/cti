@@ -1,0 +1,11 @@
+[
+  "O segmento Comércio concentra a maior carteira: 8 clientes (25,8%).",
+  "A média de faturamento (R$ 2.274.516,13) é maior que a mediana (R$ 1.420.000,00): poucos clientes muito grandes puxam a média para cima, então a mediana descreve melhor o cliente típico.",
+  "Os 12 clientes nível A representam 73,3% do faturamento total, com apenas 38,7% dos clientes.",
+  "Marcos Reis é o consultor com maior faturamento sob gestão (R$ 28.250.000,00, 7 clientes).",
+  "Internet Dedicada é o serviço mais contratado: presente em 15 clientes (48,4%).",
+  "As contratações ficaram distribuídas ao longo do tempo: no máximo 2 por mês, repetido em 14 meses.",
+  "Correlação forte positiva entre a quantidade de serviços e o faturamento (r de Pearson = 0,787).",
+  "O faturamento não segue uma distribuição normal (Shapiro-Wilk W = 0,844, p = 0,0004 < 0,05): a mediana descreve melhor o cliente típico do que a média.",
+  "Não há evidência de associação entre segmento e nível do cliente (qui-quadrado = 15,87, gl = 10, p = 0,1033): a proporção de clientes A, B e C é parecida entre os segmentos. Atenção: há poucas observações por combinação, então o resultado é só indicativo."
+]

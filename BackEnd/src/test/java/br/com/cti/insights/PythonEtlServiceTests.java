@@ -5,7 +5,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import br.com.cti.insights.model.StatusLote;
+import br.com.cti.insights.model.Telemetria;
 import br.com.cti.insights.model.UploadLote;
+import br.com.cti.insights.repository.TelemetriaRepository;
 import br.com.cti.insights.repository.UploadLoteRepository;
 import com.jayway.jsonpath.JsonPath;
 import com.sun.net.httpserver.HttpServer;
@@ -46,6 +48,9 @@ class PythonEtlServiceTests {
 
 	@Autowired
 	private UploadLoteRepository lotes;
+
+	@Autowired
+	private TelemetriaRepository telemetria;
 
 	record Pedido(String chave, String corpo) {
 	}
@@ -120,6 +125,9 @@ class PythonEtlServiceTests {
 
 		// Quem muda o status para PROCESSADO e o Python; com 200 o Spring nao mexe no lote.
 		assertThat(lotes.findById(id).orElseThrow().getStatus()).isEqualTo(StatusLote.AGUARDANDO_ETL);
+
+		// Plano PI: a Telemetria registra a execucao do Python.
+		esperarTelemetria("Lote " + id + " processado pelo Python", true);
 	}
 
 	@Test
@@ -130,6 +138,22 @@ class PythonEtlServiceTests {
 
 		UploadLote lote = esperarStatus(lotes, id, StatusLote.ERRO);
 		assertThat(lote.getMensagem()).startsWith("O serviço Python respondeu 500:");
+		esperarTelemetria("Lote " + id + ": O serviço Python respondeu 500", false);
+	}
+
+	private void esperarTelemetria(String inicioMensagem, boolean sucesso) throws InterruptedException {
+		long limite = System.currentTimeMillis() + 10_000;
+		while (System.currentTimeMillis() < limite) {
+			boolean achou = telemetria.findAll()
+				.stream()
+				.anyMatch(t -> t.getEvento().equals(Telemetria.EXECUCAO_SCRIPT) && t.isSucesso() == sucesso
+						&& t.getMensagem().startsWith(inicioMensagem));
+			if (achou) {
+				return;
+			}
+			Thread.sleep(100);
+		}
+		throw new AssertionError("Telemetria de EXECUCAO_SCRIPT nao registrada: " + inicioMensagem);
 	}
 
 	static UploadLote esperarStatus(UploadLoteRepository lotes, long id, StatusLote esperado)

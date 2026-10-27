@@ -6,3 +6,4 @@ psycopg[binary]>=3.2
 python-dotenv>=1.0
 fastapi>=0.115     # cria a API (api.py)
 uvicorn>=0.30      # servidor que mantém a API ligada
+matplotlib>=3.9  # gráficos do relatório (graficos.py)

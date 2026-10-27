@@ -8,9 +8,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import br.com.cti.insights.model.EstatisticaLote;
+import br.com.cti.insights.model.Telemetria;
 import br.com.cti.insights.model.StatusLote;
 import br.com.cti.insights.model.UploadLote;
 import br.com.cti.insights.repository.EstatisticaLoteRepository;
+import br.com.cti.insights.repository.TelemetriaRepository;
 import br.com.cti.insights.repository.UploadLinhaRepository;
 import br.com.cti.insights.repository.UploadLoteRepository;
 import com.jayway.jsonpath.JsonPath;
@@ -51,8 +53,12 @@ class UploadControllerTests {
 	@Autowired
 	private EstatisticaLoteRepository estatisticas;
 
+	@Autowired
+	private TelemetriaRepository telemetria;
+
 	@BeforeEach
 	void limpar() {
+		telemetria.deleteAll();
 		estatisticas.deleteAll();
 		linhas.deleteAll();
 		lotes.deleteAll();
@@ -92,6 +98,13 @@ class UploadControllerTests {
 		assertThat(gravadas).extracting("codigoCliente").containsExactlyInAnyOrder("CTI001", "CTI002");
 		assertThat(gravadas).extracting("consultor").containsExactlyInAnyOrder("Ana Souza", "Carlos Lima");
 		assertThat(gravadas).extracting("segmento").containsExactlyInAnyOrder("Indústria", "Comércio");
+
+		// Plano PI: a Telemetria registra cada envio de planilha.
+		assertThat(telemetria.findAll()).anySatisfy(t -> {
+			assertThat(t.getEvento()).isEqualTo(Telemetria.UPLOAD_PLANILHA);
+			assertThat(t.isSucesso()).isTrue();
+			assertThat(t.getRegistrosProcessados()).isEqualTo(2);
+		});
 	}
 
 	// Teste de falha do PASSO 12: sem o Python no ar o lote fica com ERRO e a mensagem explica.
@@ -111,6 +124,36 @@ class UploadControllerTests {
 			.andExpect(status().isBadRequest())
 			.andExpect(jsonPath("$.erro").value("Código repetido na planilha: CTI001"));
 		assertThat(lotes.count()).isZero();
+
+		// A falha tambem fica registrada, mesmo com o envio desfeito.
+		assertThat(telemetria.findAll()).anySatisfy(t -> {
+			assertThat(t.getEvento()).isEqualTo(Telemetria.UPLOAD_PLANILHA);
+			assertThat(t.isSucesso()).isFalse();
+			assertThat(t.getMensagem()).contains("Código repetido");
+		});
+	}
+
+	@Test
+	void formatoDeArquivoNaoAceitoDevolve400() throws Exception {
+		mockMvc
+			.perform(post("/api/uploads/validadas").param("arquivo", "dados.pdf")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(DUAS_LINHAS))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.mensagem").value("Formato .pdf não aceito; envie .xlsx, .xls ou .csv"));
+		assertThat(lotes.count()).isZero();
+	}
+
+	// Campo vazio em todas as linhas = a planilha nao tem a coluna.
+	@Test
+	void colunaObrigatoriaAusenteDevolve422() throws Exception {
+		mockMvc
+			.perform(post("/api/uploads/validadas").contentType(MediaType.APPLICATION_JSON)
+				.content(DUAS_LINHAS.replace("\"segmento\":\"IND.\",", "").replace("\"segmento\":\"Comercio\",", "")))
+			.andExpect(status().is(422))
+			.andExpect(jsonPath("$.coluna").value("segmento"))
+			.andExpect(jsonPath("$.mensagem").value("Coluna obrigatória ausente na planilha: segmento"));
+		assertThat(lotes.count()).isZero();
 	}
 
 	@Test
@@ -128,7 +171,7 @@ class UploadControllerTests {
 	void listaVaziaDevolve400() throws Exception {
 		mockMvc.perform(post("/api/uploads/validadas").contentType(MediaType.APPLICATION_JSON).content("[]"))
 			.andExpect(status().isBadRequest())
-			.andExpect(jsonPath("$.erro").value("Nenhuma linha válida foi enviada"));
+			.andExpect(jsonPath("$.mensagem").value("A planilha não tem linhas válidas para enviar"));
 	}
 
 	@Test

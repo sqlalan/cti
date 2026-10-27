@@ -3,6 +3,7 @@ package br.com.cti.insights.service;                        // pacote desta clas
 import br.com.cti.insights.model.LoteValidadoEvent;
 import br.com.cti.insights.model.StatusLinha;
 import br.com.cti.insights.model.StatusLote;
+import br.com.cti.insights.model.Telemetria;
 import br.com.cti.insights.model.UploadLinha;
 import br.com.cti.insights.model.UploadLote;
 import br.com.cti.insights.repository.UploadLinhaRepository;
@@ -42,19 +43,21 @@ public class PythonEtlService {                                                 
     private final UploadLoteRepository lotes;                                       // repositório de lotes (para marcar erro)
     private final UploadLinhaRepository linhas;                                     // repositório das linhas (para buscar as válidas)
     private final ObjectMapper json;                                                // transforma o pedido em JSON
+    private final TelemetriaService telemetria;                                     // registra cada chamada ao Python (Plano PI: Telemetria)
     private final ExecutorService fila = Executors.newSingleThreadExecutor(r -> {   // fila de uma thread só: um lote por vez
         Thread t = new Thread(r, "etl-trigger");                                    // cria a thread
         t.setDaemon(true);                                                          // thread de fundo: não impede o servidor de desligar
         return t;                                                                   // devolve a thread
     });                                                                             // fim da definição da fila
 
-    public PythonEtlService(AppProperties props, UploadLoteRepository lotes, UploadLinhaRepository linhas, ObjectMapper json) {  // construtor: o Spring entrega as peças
+    public PythonEtlService(AppProperties props, UploadLoteRepository lotes, UploadLinhaRepository linhas, ObjectMapper json, TelemetriaService telemetria) {  // construtor: o Spring entrega as peças
         this.url = props.etl() == null || props.etl().url() == null || props.etl().url().isBlank()  // endereço não configurado?
                 ? "http://localhost:8000/etl" : props.etl().url().trim();           // usa o padrão; senão o configurado
         this.chave = props.etl() == null || props.etl().key() == null ? "" : props.etl().key().trim();  // lê a chave (pode ser vazia)
         this.lotes = lotes;                                                         // guarda o repositório de lotes
         this.linhas = linhas;                                                       // guarda o repositório de linhas
         this.json = json;                                                           // guarda o conversor de JSON
+        this.telemetria = telemetria;                                               // guarda o registro de telemetria
     }                                                                               // fecha o bloco
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)              // roda só DEPOIS do commit (o lote já está no banco)
@@ -63,6 +66,7 @@ public class PythonEtlService {                                                 
     }                                                                               // fecha o bloco
 
     private void executar(Long loteId) {                                            // executar: manda um lote para o Python
+        long inicio = System.nanoTime();                                            // início, para a duração na telemetria
         try {                                                                       // tenta executar
             UploadLote lote = lotes.findById(loteId).orElseThrow();                 // busca o lote no banco
             List<Map<String, Object>> validas = new ArrayList<>();                  // lista das linhas válidas
@@ -95,19 +99,22 @@ public class PythonEtlService {                                                 
             if (!chave.isEmpty()) req.header("X-ETL-Key", chave);                   // se há chave, envia no cabeçalho
             HttpResponse<String> resp = http.send(req.build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));  // ENVIA e espera o Python terminar
             if (resp.statusCode() != 200) {                                         // o Python respondeu erro?
-                marcarErro(loteId, "O serviço Python respondeu " + resp.statusCode() + ": " + resp.body());  // marca o lote com ERRO e mostra o motivo
+                marcarErro(loteId, "O serviço Python respondeu " + resp.statusCode() + ": " + resp.body(), inicio);  // marca o lote com ERRO e mostra o motivo
+            } else {                                                                // o Python respondeu 200: gravou no banco
+                telemetria.registrar(Telemetria.EXECUCAO_SCRIPT, true, validas.size(), inicio, "Lote " + loteId + " processado pelo Python");  // registra a execução que deu certo
             }                                                                       // fecha o bloco
         } catch (IOException e) {                                                   // não conseguiu falar com o Python (serviço desligado?)
-            marcarErro(loteId, "Não foi possível falar com o serviço Python em " + url + " (ele está ligado? uvicorn api:app --port 8000).");  // marca o lote com ERRO e explica o motivo
+            marcarErro(loteId, "Não foi possível falar com o serviço Python em " + url + " (ele está ligado? uvicorn api:app --port 8000).", inicio);  // marca o lote com ERRO e explica o motivo
         } catch (InterruptedException e) {                                          // thread interrompida
             Thread.currentThread().interrupt();                                     // restaura o sinal de interrupção
         } catch (RuntimeException e) {                                              // qualquer outro erro inesperado
-            marcarErro(loteId, "Erro ao enviar o lote ao Python: " + e.getMessage());  // marca o lote com ERRO
+            marcarErro(loteId, "Erro ao enviar o lote ao Python: " + e.getMessage(), inicio);  // marca o lote com ERRO
         }                                                                           // fecha o bloco
     }                                                                               // fecha o bloco
 
-    private void marcarErro(Long loteId, String mensagem) {                         // marcarErro: grava ERRO no lote para a tela mostrar
+    private void marcarErro(Long loteId, String mensagem, long inicio) {            // marcarErro: grava ERRO no lote para a tela mostrar
         log.error("ETL do lote {}: {}", loteId, mensagem);                          // registra no terminal
+        telemetria.registrar(Telemetria.EXECUCAO_SCRIPT, false, null, inicio, "Lote " + loteId + ": " + mensagem);  // registra a execução que falhou
         lotes.findById(loteId).ifPresent(l -> {                                     // busca o lote no banco
             if (l.getStatus() == StatusLote.PROCESSADO) return;                     // já terminou bem: não sobrescreve
             l.setStatus(StatusLote.ERRO);                                           // status ERRO
