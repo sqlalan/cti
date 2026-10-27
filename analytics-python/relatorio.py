@@ -20,7 +20,6 @@ from pathlib import Path
 import pandas as pd
 
 import graficos
-import testes_estatisticos
 from analise import calcular
 from limpeza import tratar
 
@@ -31,17 +30,14 @@ PADRAO = PASTA / "amostras" / "lote_exemplo.json"
 def gerar(arquivo: Path, saida: Path) -> dict:
     linhas = json.loads(arquivo.read_text(encoding="utf-8"))
     res = tratar(pd.DataFrame(linhas).astype(object))
-    payload = calcular(res, len(linhas))
-    testes = testes_estatisticos.calcular(res.tratado)
-
-    indicadores = {**payload, "testes": {"normalidade": testes["normalidade"], "associacao": testes["associacao"]}}
-    insights = payload["insights"] + testes["frases"]
+    payload = calcular(res, len(linhas))  # já traz os testes estatísticos e as frases deles
     arquivos = graficos.gerar(res.tratado, payload, saida / "graficos")
 
     saida.mkdir(parents=True, exist_ok=True)
-    (saida / "indicadores.json").write_text(json.dumps(indicadores, ensure_ascii=False, indent=2), encoding="utf-8")
-    (saida / "insights.json").write_text(json.dumps(insights, ensure_ascii=False, indent=2), encoding="utf-8")
-    return {"clientes": len(res.tratado), "recusadas": len(res.rejeitadas), "insights": len(insights), "graficos": arquivos}
+    (saida / "indicadores.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    (saida / "insights.json").write_text(json.dumps(payload["insights"], ensure_ascii=False, indent=2), encoding="utf-8")
+    return {"clientes": len(res.tratado), "recusadas": len(res.rejeitadas), "insights": len(payload["insights"]),
+            "graficos": arquivos}
 
 
 if __name__ == "__main__":

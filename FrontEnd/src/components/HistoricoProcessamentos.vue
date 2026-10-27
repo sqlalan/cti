@@ -302,6 +302,18 @@ function exportarXlsx() {
     },
     { nome: 'Insights', colunas: [['Frase', (f) => f]], linhas: insights.value },
   ]
+  if (est.testes) {
+    abas.push({
+      nome: 'Testes estatísticos',
+      colunas: [
+        ['Teste', (x) => x.teste],
+        ['Estatística', (x) => x.estatistica ?? ''],
+        ['p', (x) => x.p ?? ''],
+        ['Interpretação', (x) => x.interpretacao],
+      ],
+      linhas: Object.values(est.testes),
+    })
+  }
   if (anterior) {
     abas.push(
       { nome: 'Comparação', colunas: COLUNAS_COMPARACAO('Indicador'), linhas: comparacao.value },

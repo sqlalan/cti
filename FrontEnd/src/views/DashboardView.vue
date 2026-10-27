@@ -7,6 +7,7 @@ import { explicarLote } from '../dados/lote' // situação do lote sem termos t�
 import BaseChart from '../components/BaseChart.vue' // desenha gráficos
 import KpiCard from '../components/KpiCard.vue' // cartão de número
 import StatusBadge from '../components/StatusBadge.vue' // etiqueta de status
+import TestesEstatisticos from '../components/TestesEstatisticos.vue' // Shapiro-Wilk e qui-quadrado (Plano PI)
 
 const moeda = (n) => (n == null ? '—' : Number(n).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })) // 1500 -> R$ 1.500,00
 const numero = (n) => (n == null ? '—' : Number(n).toLocaleString('pt-BR', { maximumFractionDigits: 2 })) // 1234.5 -> 1.234,5
@@ -38,6 +39,10 @@ const niv = computed(() => d.value?.porNivel ?? []) // clientes por nível
 const con = computed(() => d.value?.porConsultor ?? []) // faturamento por consultor
 const ser = computed(() => d.value?.porServico ?? []) // serviços mais contratados
 const mes = computed(() => d.value?.porMes ?? []) // contratações por mês
+
+// A interpretação dos testes já aparece no quadro deles; aqui fica só o resto, para não repetir a frase.
+const frasesTestes = computed(() => Object.values(d.value?.testes ?? {}).map((t) => t.interpretacao))
+const insights = computed(() => (d.value?.insights ?? []).filter((f) => !frasesTestes.value.includes(f)))
 
 // Nível é ordinal: A é o tom mais forte e C o mais fraco (as mesmas cores do tema em style.css).
 const CORES_NIVEL = { claro: ['#194675', '#3f77c4', '#7fb0e8'], escuro: ['#8fbdf0', '#4f8bd6', '#2a5c94'] }
@@ -97,9 +102,11 @@ onBeforeUnmount(() => relogio && clearInterval(relogio)) // limpa o timer ao sai
         </div>
       </div>
 
-      <div v-if="d.insights?.length" class="mt-6 rounded border border-brand-500/40 bg-brand-500/10 p-4"> <!-- frases geradas pelo Python -->
+      <TestesEstatisticos v-if="d.testes" :testes="d.testes" /> <!-- lotes antigos não têm: o quadro só aparece quando há -->
+
+      <div v-if="insights.length" class="mt-6 rounded border border-brand-500/40 bg-brand-500/10 p-4"> <!-- frases geradas pelo Python -->
         <h2 class="mb-2 font-semibold text-ink-900 dark:text-mist-100">O que os dados mostram</h2>
-        <ul class="list-disc space-y-1 pl-5 text-sm text-ink-900 dark:text-mist-100"><li v-for="i in d.insights" :key="i">{{ i }}</li></ul>
+        <ul class="list-disc space-y-1 pl-5 text-sm text-ink-900 dark:text-mist-100"><li v-for="i in insights" :key="i">{{ i }}</li></ul>
       </div>
       <p class="mt-4 text-xs text-ink-600 dark:text-mist-300">Linhas recebidas: {{ numero(d.qualidade?.linhasRecebidas) }} · válidas: {{ numero(d.qualidade?.linhasValidas) }}</p>
     </template>
