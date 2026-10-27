@@ -125,15 +125,16 @@ const grupos = computed(() => {
   ]
 })
 
-// O envio é uma chamada só, sem porcentagem real. O relógio mostra que ele
-// segue andando.
+// Nem o envio nem o Python informam quanto falta. O relógio mostra que o
+// trabalho segue andando.
 const agora = ref(Date.now())
 let relogio = null
+const trabalhando = computed(() => planilha.estado === 'enviando' || planilha.etapaEtl === 'processando')
 watch(
-  () => planilha.estado,
-  (estado) => {
+  trabalhando,
+  (ativo) => {
     clearInterval(relogio)
-    if (estado === 'enviando') {
+    if (ativo) {
       agora.value = Date.now()
       relogio = setInterval(() => (agora.value = Date.now()), 1000)
     }
@@ -174,11 +175,15 @@ const etapas = computed(() => {
     envio = { situacao: 'erro', detalhe: 'Não concluído — motivo abaixo' }
   }
 
-  // O Python roda depois da resposta; quem acompanha o fim é o Dashboard.
-  const python =
-    estado === 'enviado'
-      ? { situacao: 'andamento', detalhe: 'Limpando e calculando · resultado no Dashboard' }
-      : { situacao: 'pendente', detalhe: '' }
+  // O Python roda depois da resposta do envio; a store pergunta o status do lote.
+  let python = { situacao: 'pendente', detalhe: '' }
+  if (planilha.etapaEtl === 'processando') {
+    python = { situacao: 'andamento', detalhe: `Limpando e calculando… ${tempo(agora.value - planilha.inicioEnvio)}` }
+  } else if (planilha.etapaEtl === 'concluido') {
+    python = { situacao: 'feito', detalhe: 'Indicadores prontos no Dashboard' }
+  } else if (planilha.etapaEtl === 'erro') {
+    python = { situacao: 'erro', detalhe: 'Falhou — motivo abaixo' }
+  }
 
   return [
     { titulo: 'Leitura', ...leitura },
@@ -189,7 +194,10 @@ const etapas = computed(() => {
 })
 
 const ocupado = computed(
-  () => planilha.validacaoServidor?.status === 'validando' || planilha.estado === 'enviando',
+  () =>
+    planilha.validacaoServidor?.status === 'validando' ||
+    planilha.estado === 'enviando' ||
+    planilha.etapaEtl === 'processando',
 )
 
 // Com planilha grande o resultado nasce fora da tela; sem rolar até ele, a
@@ -557,7 +565,9 @@ async function processar() {
         </svg>
         <template v-if="planilha.validacaoServidor?.status === 'validando'">Validando no servidor…</template>
         <template v-else-if="planilha.estado === 'enviando'">Enviando…</template>
-        <template v-else-if="planilha.estado === 'enviado'">Enviada ✓</template>
+        <template v-else-if="planilha.etapaEtl === 'processando'">Processando…</template>
+        <template v-else-if="planilha.etapaEtl === 'erro'">Enviar de novo</template>
+        <template v-else-if="planilha.estado === 'enviado'">Processada ✓</template>
         <template v-else>Enviar para análise</template>
       </button>
     </div>
@@ -585,18 +595,41 @@ async function processar() {
       </button>
     </p>
 
-    <!-- O lote que o servidor gravou. Os números e as frases saem do Python,
-         que roda em seguida; o Dashboard mostra quando ele terminar. -->
+    <!-- Depois do envio: o lote foi gravado e o Python processa em seguida. O
+         cartão muda sozinho de "processando" para "concluído" ou "falhou",
+         porque a store pergunta o status do lote a cada 2 segundos. -->
     <section
-      class="mt-4 rounded border border-ok-600/40 bg-ok-600/5 p-5 focus:outline-none dark:border-ok-400/40 dark:bg-ok-400/10"
+      class="mt-4 rounded border p-5 focus:outline-none"
+      :class="{
+        'border-brand-500/50 bg-brand-500/5 dark:bg-brand-500/10': planilha.etapaEtl === 'processando',
+        'border-ok-600/40 bg-ok-600/5 dark:border-ok-400/40 dark:bg-ok-400/10': planilha.etapaEtl === 'concluido',
+        'border-erro-600/50 bg-erro-600/5 dark:border-erro-400/50 dark:bg-erro-400/10': planilha.etapaEtl === 'erro',
+      }"
       v-if="planilha.estado === 'enviado' && planilha.lote"
       ref="resultado"
       tabindex="-1"
       role="status"
+      aria-live="polite"
+      :aria-busy="planilha.etapaEtl === 'processando'"
     >
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-4">
+        <!-- Processando: círculo girando -->
         <svg
-          class="h-8 w-8 shrink-0 text-ok-600 dark:text-ok-400"
+          class="h-10 w-10 shrink-0 animate-spin text-brand-800 motion-reduce:animate-none dark:text-brand-300"
+          v-if="planilha.etapaEtl === 'processando'"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          aria-hidden="true"
+        >
+          <circle class="opacity-20" cx="12" cy="12" r="9" />
+          <path d="M21 12a9 9 0 0 0-9-9" stroke-linecap="round" />
+        </svg>
+        <!-- Concluído: check verde -->
+        <svg
+          class="h-10 w-10 shrink-0 text-ok-600 dark:text-ok-400"
+          v-else-if="planilha.etapaEtl === 'concluido'"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -608,14 +641,58 @@ async function processar() {
           <circle cx="12" cy="12" r="9" />
           <path d="m8.5 12 2.5 2.5 4.5-5" />
         </svg>
-        <div>
-          <h2 class="text-base font-semibold text-ink-900 dark:text-mist-100">Lote {{ planilha.lote.id }} enviado</h2>
+        <!-- Falhou: X vermelho -->
+        <svg
+          class="h-10 w-10 shrink-0 text-erro-600 dark:text-erro-400"
+          v-else
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="9" />
+          <path d="m9 9 6 6M15 9l-6 6" />
+        </svg>
+
+        <div class="min-w-0">
+          <h2 class="text-base font-semibold text-ink-900 dark:text-mist-100">
+            <template v-if="planilha.etapaEtl === 'processando'">Processando a planilha…</template>
+            <template v-else-if="planilha.etapaEtl === 'concluido'">Planilha processada com sucesso</template>
+            <template v-else>O processamento falhou</template>
+          </h2>
           <p class="text-sm text-ink-600 dark:text-mist-300">
-            {{ planilha.nomeArquivo }} · gravado em {{ tempo(planilha.duracaoEnvio ?? 0) }} · o Python está calculando
+            Lote {{ planilha.lote.id }} · {{ planilha.nomeArquivo }}
+            <template v-if="planilha.etapaEtl === 'processando'">
+              · {{ tempo(agora - planilha.inicioEnvio) }}
+            </template>
           </p>
         </div>
       </div>
-      <dl class="mt-3 grid gap-3 text-sm sm:grid-cols-4">
+
+      <!-- Barra sem porcentagem: o Python não informa quanto falta. -->
+      <template v-if="planilha.etapaEtl === 'processando'">
+        <div class="mt-4 h-1.5 overflow-hidden rounded-full bg-brand-500/15" aria-hidden="true">
+          <div class="h-full w-2/5 rounded-full bg-brand-500 animate-progresso motion-reduce:w-full motion-reduce:animate-none" />
+        </div>
+        <p class="mt-3 text-sm text-ink-600 dark:text-mist-300">
+          O Python está limpando os dados, calculando os indicadores e gravando no banco. Esta tela
+          atualiza sozinha; você pode sair dela, o resultado também aparece no Dashboard.
+        </p>
+        <p class="mt-2 text-sm text-alerta-600 dark:text-alerta-400" v-if="planilha.semRespostaEtl">
+          Está demorando mais que o normal. Confira se a API do Python está ligada
+          (<code>uvicorn api:app --port 8000</code>) e acompanhe pelo Dashboard.
+        </p>
+      </template>
+
+      <p class="mt-3 text-sm text-ink-900 dark:text-mist-100" v-else-if="planilha.etapaEtl === 'erro'">
+        {{ planilha.lote.mensagem || 'O serviço Python não processou este lote.' }}
+        A planilha continua carregada: use <span class="font-semibold">Enviar de novo</span> depois de corrigir.
+      </p>
+
+      <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-4">
         <div>
           <dt class="text-ink-600 dark:text-mist-300">Linhas recebidas</dt>
           <dd class="text-lg font-semibold tabular-nums text-ink-900 dark:text-mist-100">
@@ -628,22 +705,38 @@ async function processar() {
             {{ inteiro(planilha.lote.linhasValidas) }}
           </dd>
         </div>
-        <div>
-          <dt class="text-ink-600 dark:text-mist-300">Inválidas</dt>
-          <dd class="text-lg font-semibold tabular-nums text-ink-900 dark:text-mist-100">
-            {{ inteiro(planilha.lote.linhasInvalidas) }}
-          </dd>
-        </div>
-        <div>
-          <dt class="text-ink-600 dark:text-mist-300">Status</dt>
-          <dd class="text-lg font-semibold text-ink-900 dark:text-mist-100">
-            <StatusBadge :status="planilha.lote.status" />
-          </dd>
-        </div>
+        <template v-if="planilha.etapaEtl === 'concluido' && planilha.resumoEtl">
+          <div>
+            <dt class="text-ink-600 dark:text-mist-300">Clientes gravados</dt>
+            <dd class="text-lg font-semibold tabular-nums text-ok-600 dark:text-ok-400">
+              {{ inteiro(planilha.resumoEtl.totalClientes) }}
+            </dd>
+          </div>
+          <div>
+            <dt class="text-ink-600 dark:text-mist-300">Média de faturamento</dt>
+            <dd class="text-lg font-semibold tabular-nums text-ink-900 dark:text-mist-100">
+              {{ dinheiro(planilha.resumoEtl.media) }}
+            </dd>
+          </div>
+        </template>
+        <template v-else>
+          <div>
+            <dt class="text-ink-600 dark:text-mist-300">Inválidas</dt>
+            <dd class="text-lg font-semibold tabular-nums text-ink-900 dark:text-mist-100">
+              {{ inteiro(planilha.lote.linhasInvalidas) }}
+            </dd>
+          </div>
+          <div>
+            <dt class="text-ink-600 dark:text-mist-300">Status</dt>
+            <dd class="mt-1"><StatusBadge :status="planilha.lote.status" /></dd>
+          </div>
+        </template>
       </dl>
+
       <RouterLink
         class="mt-4 inline-flex rounded bg-brand-800 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
         :to="{ name: 'dashboard' }"
+        v-if="planilha.etapaEtl === 'concluido'"
       >
         Ver gráficos e insights
       </RouterLink>

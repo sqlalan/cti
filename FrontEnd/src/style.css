@@ -78,6 +78,7 @@
   --animate-flutuar: flutuar 7s ease-in-out infinite;
   --animate-flutuar-card: flutuar-card 9s ease-in-out infinite;
   --animate-flutuar-lento: flutuar-lento 11s ease-in-out infinite;
+  --animate-progresso: progresso 1.4s ease-in-out infinite;
 }
 
 /* Vinheta que escurece as bordas do matrix para o texto do hero respirar. */
@@ -116,6 +117,16 @@
   }
   50% {
     translate: 0 18px;
+  }
+}
+
+/* Barra de progresso sem porcentagem (o Python não informa quanto falta). */
+@keyframes progresso {
+  from {
+    translate: -100% 0;
+  }
+  to {
+    translate: 250% 0;
   }
 }
 

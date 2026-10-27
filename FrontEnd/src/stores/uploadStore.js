@@ -9,7 +9,7 @@ import {
   tratarLinhas,
 } from '../dados/esquemaPlanilha'
 import { useNotificacoesStore } from './notificacoes'
-import { api, mensagemDeErro, uploadService } from '../services/api'
+import { api, dashboardService, mensagemDeErro, uploadService } from '../services/api'
 
 export const FORMATOS = ['.xlsx', '.xls', '.csv']
 export const TAMANHO_MAXIMO = 25 * 1024 * 1024
@@ -140,6 +140,10 @@ export const useUploadStore = defineStore('upload', () => {
   // O lote que o servidor gravou (status AGUARDANDO_ETL). O Python processa
   // depois, em segundo plano; o Dashboard acompanha pelo id do lote.
   const lote = ref(null)
+  // Resumo que o Python calculou (média, clientes...), quando o lote termina.
+  const resumoEtl = ref(null)
+  // O acompanhamento do lote parou de perguntar (demorou demais ou o servidor sumiu).
+  const semRespostaEtl = ref(false)
   // Quando o envio começou e quanto levou (ms), para a tela mostrar o tempo.
   const inicioEnvio = ref(null)
   const duracaoEnvio = ref(null)
@@ -281,9 +285,22 @@ export const useUploadStore = defineStore('upload', () => {
       validacaoServidor.value?.status !== 'validando',
   )
 
+  // Situação do Python depois do envio: null (nada enviado) | 'processando' |
+  // 'concluido' | 'erro'. Sai do status do lote, que o Python atualiza no banco.
+  const etapaEtl = computed(() => {
+    const status = lote.value?.status
+    if (!status) return null
+    if (status === 'PROCESSADO') return 'concluido'
+    if (status === 'ERRO' || status === 'REJEITADO') return 'erro'
+    return 'processando'
+  })
+
   // O arquivo só segue para análise depois que o servidor aprovou as linhas.
+  // Lote que falhou no Python pode ser enviado de novo sem carregar a planilha.
   const podeEnviar = computed(
-    () => podeValidar.value && validacaoServidor.value?.status === 'aprovado',
+    () =>
+      validacaoServidor.value?.status === 'aprovado' &&
+      (podeValidar.value || (estado.value === 'enviado' && etapaEtl.value === 'erro')),
   )
 
   // ---------------------------------------------------------------------------
@@ -304,7 +321,10 @@ export const useUploadStore = defineStore('upload', () => {
     abasIgnoradas.value = []
     estado.value = 'vazio'
     falha.value = ''
+    pararAcompanhamento()
     lote.value = null
+    resumoEtl.value = null
+    semRespostaEtl.value = false
     inicioEnvio.value = null
     duracaoEnvio.value = null
     validacaoServidor.value = null
@@ -498,9 +518,12 @@ export const useUploadStore = defineStore('upload', () => {
   async function enviar() {
     if (!podeEnviar.value) return false
 
+    pararAcompanhamento()
     estado.value = 'enviando'
     falha.value = ''
     lote.value = null
+    resumoEtl.value = null
+    semRespostaEtl.value = false
     inicioEnvio.value = Date.now()
     duracaoEnvio.value = null
 
@@ -519,10 +542,11 @@ export const useUploadStore = defineStore('upload', () => {
       estado.value = 'enviado'
 
       notificacoes.atualizar(notificacao, {
-        tipo: 'sucesso',
-        titulo: `Lote ${data.id} enviado`,
-        texto: `${linhas(data.linhasValidas)} gravadas. O Python está calculando; acompanhe no Dashboard.`,
+        tipo: 'progresso',
+        titulo: `Lote ${data.id} enviado · processando…`,
+        texto: `${linhas(data.linhasValidas)} gravadas. O Python está limpando e calculando.`,
       })
+      acompanharLote(notificacao)
 
       return true
     } catch (erro) {
@@ -538,6 +562,59 @@ export const useUploadStore = defineStore('upload', () => {
 
       return false
     }
+  }
+
+  // -------------------------------------------------------------------------
+  // Acompanhamento do lote: o Python roda depois da resposta do envio, então a
+  // tela pergunta o status (GET /api/dashboard?loteId=) até ele terminar.
+  // -------------------------------------------------------------------------
+  const INTERVALO_ETL = 2000
+  const LIMITE_ETL = 5 * 60 * 1000
+  let timerEtl = null
+
+  function pararAcompanhamento() {
+    clearTimeout(timerEtl)
+    timerEtl = null
+  }
+
+  function acompanharLote(notificacao) {
+    pararAcompanhamento()
+    const id = lote.value.id
+    const inicio = Date.now()
+
+    async function perguntar() {
+      try {
+        const resposta = await dashboardService.obter(id)
+        if (lote.value?.id !== id) return // outra planilha entrou no meio
+        lote.value = resposta.lote
+        if (etapaEtl.value === 'concluido') {
+          resumoEtl.value = resposta.estatisticas?.resumo ?? null
+          notificacoes.atualizar(notificacao, {
+            tipo: 'sucesso',
+            titulo: 'Planilha processada',
+            texto: `Lote ${id}: ${linhas(resposta.lote.linhasValidas)} gravadas e indicadores prontos no Dashboard.`,
+          })
+          return
+        }
+        if (etapaEtl.value === 'erro') {
+          notificacoes.atualizar(notificacao, {
+            tipo: 'erro',
+            titulo: 'O processamento falhou',
+            texto: resposta.lote.mensagem || `O lote ${id} não foi processado.`,
+          })
+          return
+        }
+      } catch {
+        // Falha passageira de rede: tenta de novo na próxima volta.
+      }
+      if (Date.now() - inicio > LIMITE_ETL) {
+        semRespostaEtl.value = true
+        return
+      }
+      timerEtl = setTimeout(perguntar, INTERVALO_ETL)
+    }
+
+    timerEtl = setTimeout(perguntar, INTERVALO_ETL)
   }
 
   return {
@@ -556,6 +633,8 @@ export const useUploadStore = defineStore('upload', () => {
     estado,
     falha,
     lote,
+    resumoEtl,
+    semRespostaEtl,
     inicioEnvio,
     duracaoEnvio,
     validacaoServidor,
@@ -579,6 +658,7 @@ export const useUploadStore = defineStore('upload', () => {
     resumo,
     podeValidar,
     podeEnviar,
+    etapaEtl,
     // actions
     limpar,
     validarDados,
