@@ -1,6 +1,6 @@
 -- CTI Insights: estrutura do banco (PostgreSQL).
 -- Gerado a partir das entidades JPA por SchemaSqlTests; nao edite a mao.
--- Para regerar: cd BackEnd && ./mvnw test -Dtest=SchemaSqlTests -DatualizarSchema=true
+-- Para regerar: cd backend && ./mvnw test -Dtest=SchemaSqlTests -DatualizarSchema=true
 
 create table cliente (
     faturamento_anual numeric(15,2) not null,

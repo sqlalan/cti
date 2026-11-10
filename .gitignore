@@ -12,7 +12,7 @@ logs/
 npm-debug.log*
 
 # Editor / IDE
-# .vscode da raiz contém caminhos locais do JDK; o de FrontEnd tem regra própria
+# .vscode da raiz contém caminhos locais do JDK; o de frontend tem regra própria
 /.vscode/
 .idea/
 *.iml

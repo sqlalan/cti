@@ -31,12 +31,13 @@ Planilha ─▶ Pinia valida ─▶ Spring valida e grava o lote ─▶ POST /et
 
 | Pasta | Conteúdo | Disciplina |
 | --- | --- | --- |
-| [`FrontEnd/`](FrontEnd/) | Vue 3, Vite, Tailwind, Pinia, Vue Router e Axios | Frameworks Front-end |
-| [`BackEnd/`](BackEnd/) | Java 21 e Spring Boot 4 (Web MVC, Data JPA, Security com JWT, Validation) | Desenvolvimento Back-end |
+| [`frontend/`](frontend/) | Vue 3, Vite, Tailwind, Pinia, Vue Router e Axios | Frameworks Front-end |
+| [`backend/`](backend/) | Java 21 e Spring Boot 4 (Web MVC, Data JPA, Security com JWT, Validation) | Desenvolvimento Back-end |
 | [`analytics-python/`](analytics-python/) | Python com FastAPI, pandas, SciPy, SQLAlchemy e Matplotlib: o ETL que limpa, calcula, gera os insights e grava no banco, e o relatório com os testes estatísticos e os 4 gráficos (`output/`) | Ciência de Dados |
 | [`database/`](database/) | `schema.sql`: a estrutura do banco no PostgreSQL. `migracao-aula11.sql`: renomeia as tabelas antigas para as da aula 11 | Back-end / Nuvem |
+| [`sample-data/`](sample-data/) | `dados.xlsx`: a planilha modelo da aula, para testar o upload depois do deploy | Todas |
 
-O código do back-end fica em `BackEnd/src/main/java/br/com/cti/insights/` e segue as camadas vistas em aula:
+O código do back-end fica em `backend/src/main/java/br/com/cti/insights/` e segue as camadas vistas em aula:
 
 | Pacote | Papel |
 | --- | --- |
@@ -79,11 +80,11 @@ Sem o Python no ar, o lote fica com status `ERRO` e a mensagem "Não foi possív
 **2. Back-end** (`http://localhost:8080`):
 
 ```bash
-cd BackEnd
+cd backend
 ./mvnw spring-boot:run
 ```
 
-Para usar o banco da Azure, copie `BackEnd/src/main/resources/application-local.properties.exemplo` para `application-local.properties` (o arquivo fica fora do Git), preencha com os dados do servidor e rode com o perfil `local`:
+Para usar o banco da Azure, copie `backend/src/main/resources/application-local.properties.exemplo` para `application-local.properties` (o arquivo fica fora do Git), preencha com os dados do servidor e rode com o perfil `local`:
 
 ```bash
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=local                 # Linux/macOS/Git Bash
@@ -99,22 +100,24 @@ docker run -d --name cti-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=c
 **3. Front-end** (`http://localhost:5173`):
 
 ```bash
-cd FrontEnd
+cd frontend
 npm install
 npm run dev
 ```
 
-Abra `/cadastro`, crie a conta de consultor e envie a planilha de exemplo [`FrontEnd/planilhas-exemplo/dados.xlsx`](FrontEnd/planilhas-exemplo/).
+Abra `/cadastro`, crie a conta de consultor e envie a planilha de exemplo [`frontend/planilhas-exemplo/dados.xlsx`](frontend/planilhas-exemplo/).
 
 ### Variáveis de ambiente
 
 | Variável | Onde | Para quê | Padrão |
 | --- | --- | --- | --- |
-| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Back-end | Conexão com o PostgreSQL | `localhost`, `5432`, `cti`, `postgres`, `postgres` |
+| `DB_URL` | Back-end | Endereço JDBC completo, como no deploy da aula: `jdbc:postgresql://SERVIDOR.postgres.database.azure.com:5432/ctiinsights?sslmode=require`. Quando definido, vale no lugar de `DB_HOST`/`DB_PORT`/`DB_NAME`/`DB_SSLMODE` | vazio |
+| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Back-end | Conexão com o PostgreSQL (`DB_USER` e `DB_PASSWORD` valem também com `DB_URL`) | `localhost`, `5432`, `cti`, `postgres`, `postgres` |
 | `DB_SSLMODE` | Back-end | Use `require` no Azure e em qualquer banco na nuvem | `prefer` |
 | `JWT_SECRET` | Back-end | Chave que assina o token de login. **Obrigatória em produção**, com 32 caracteres ou mais. (`JWT_SEGREDO` também é aceito.) | Aleatória a cada inicialização |
-| `JWT_VALIDADE` | Back-end | Por quanto tempo o login vale | `8h` |
-| `CORS_ORIGIN` | Back-end | Endereços do front que podem chamar a API, separados por vírgula. (`CORS_ORIGENS` também é aceito.) | `http://localhost:5173` |
+| `JWT_VALIDADE` | Back-end | Por quanto tempo o login vale | `2h` |
+| `LOGIN_TENTATIVAS`, `LOGIN_BLOQUEIO` | Back-end | Senhas erradas seguidas para o mesmo e-mail antes de bloquear o login, e por quanto tempo | `5`, `15m` |
+| `CORS_ORIGINS` | Back-end | Endereços do front que podem chamar a API, separados por vírgula (no deploy, o endereço da Vercel). (`CORS_ORIGIN` e `CORS_ORIGENS` também são aceitos.) | `http://localhost:5173` |
 | `ETL_URL` | Back-end | Endereço da API do Python | `http://localhost:8000/etl` |
 | `ETL_KEY` | Back-end | Chave enviada no cabeçalho `X-ETL-Key`; igual ao `ETL_API_KEY` do Python | vazia (sem chave) |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Back-end | Primeiro administrador, garantido ao subir (a senha só é usada se a conta não existir) | vazios (nenhum) |
@@ -124,7 +127,9 @@ Abra `/cadastro`, crie a conta de consultor e envie a planilha de exemplo [`Fron
 
 ## API
 
-Todas as rotas, menos o cadastro e o login, exigem o header `Authorization: Bearer <token>`.
+Todas as rotas, menos `/api/health`, o cadastro e o login, exigem o header `Authorization: Bearer <token>`.
+
+**Tentativas de login.** Depois de 5 senhas erradas seguidas para o mesmo e-mail, o login desse e-mail fica bloqueado por 15 minutos (resposta 429), mesmo com a senha certa. Acertar a senha antes disso zera a contagem.
 
 **Aprovação de contas.** O cadastro é público, mas a conta nasce **pendente** e só entra depois que um administrador aprova na tela **Usuários** (menu visível só para `ADMIN`). Cada conta tem:
 - um **perfil**, `USER` ou `ADMIN`, que vai dentro do token;
@@ -136,10 +141,11 @@ Bloquear tira o acesso na hora: a cada pedido o servidor confere se a conta cont
 
 | Verbo | Rota | O que faz |
 | --- | --- | --- |
-| POST | `/api/usuarios` | Cadastro do consultor: nome (o mesmo da coluna consultor da planilha), e-mail, senha (8 a 72 caracteres, com letras e números) e matrícula opcional. `consultor` só é preciso se for diferente do nome. O e-mail é gravado em minúsculas. |
-| POST | `/api/usuarios/login` | Login. Devolve `{ token, expiraEm, usuario }` |
-| GET | `/api/usuarios/me` | Quem está logado, lido do próprio token |
-| GET, PUT, DELETE | `/api/usuarios`, `/api/usuarios/{id}` | Consultar, alterar e remover usuários (**só ADMIN**) |
+| GET | `/api/health` | Confere se a API está no ar (teste do deploy). Devolve `{ "status": "ok" }`, sem token |
+| POST | `/api/auth/register` | Cadastro do consultor: nome (o mesmo da coluna consultor da planilha), e-mail, senha (8 a 72 caracteres, com letras e números) e matrícula opcional. `consultor` só é preciso se for diferente do nome. O e-mail é gravado em minúsculas. |
+| POST | `/api/auth/login` | Login. Devolve `{ token, expiraEm, usuario }` |
+| GET | `/api/auth/me` | Quem está logado, lido do próprio token |
+| GET, POST, PUT, DELETE | `/api/usuarios`, `/api/usuarios/{id}` | Consultar, cadastrar, alterar e remover usuários (**só ADMIN**) |
 | GET | `/api/admin/usuarios?status=` | Contas para aprovação, filtradas por `PENDENTE`, `APROVADO` ou `BLOQUEADO` (**só ADMIN**) |
 | PATCH | `/api/admin/usuarios/{id}/status`, `/api/admin/usuarios/{id}/perfil` | Aprovar, bloquear ou reativar; tornar ou deixar de ser `ADMIN` (**só ADMIN**; ninguém altera a própria conta) |
 | POST | `/api/clientes/validar` | Recebe em JSON as linhas que o Pinia aprovou, valida de novo (DTO + `ClienteValidacaoService`: código repetido e padronização) e devolve a lista padronizada. Não grava e não chama Python. |
@@ -162,11 +168,22 @@ Os erros vêm no formato `{ "mensagem": "..." }`. Na validação vêm também `c
 | 404 | O registro não existe |
 | 409 | E-mail, código CTI ou matrícula repetidos |
 | 422 | Falta uma coluna obrigatória na planilha |
+| 429 | Senhas erradas demais seguidas no login: espere o bloqueio vencer |
+
+## Deploy
+
+Como na aula de deploy: back-end no **Azure App Service** (Java 21), banco no **Azure Database for PostgreSQL** e front-end na **Vercel**.
+
+1. **Back-end (Azure):** publique a pasta `backend/` e configure no App Service `DB_URL` (com `sslmode=require`), `DB_USER`, `DB_PASSWORD`, `JWT_SECRET` e `CORS_ORIGINS` com o endereço da Vercel. Se usar o Python, defina também `ETL_URL` e `ETL_KEY`.
+2. **Teste:** abra `https://SEU-BACKEND.azurewebsites.net/api/health`; a resposta precisa ser `{"status":"ok"}`.
+3. **Front-end (Vercel):** importe o repositório com **Root Directory** `frontend` e defina `VITE_API_URL` com o endereço do back-end. O `frontend/vercel.json` já manda todas as rotas para o `index.html`, então recarregar `/dashboard` não dá 404.
+
+Senhas e chaves ficam só nas configurações do Azure e da Vercel, nunca no Git.
 
 ## Testes
 
 ```bash
-cd BackEnd && ./mvnw test                                  # API, regras, envio do lote ao Python e schema.sql
+cd backend && ./mvnw test                                  # API, regras, envio do lote ao Python e schema.sql
 ```
 
 Os testes do back-end usam o H2 em memória, então não precisam de PostgreSQL nem do Python: o teste do `PythonEtlService` sobe um servidor HTTP falso no lugar da API do Python e confere o JSON e a chave enviados.
@@ -176,7 +193,7 @@ O Python se testa como na aula: `POST /testar` com `amostras/clientes.json` deve
 Mudou uma entidade? Regere o [`database/schema.sql`](database/schema.sql) com:
 
 ```bash
-cd BackEnd && ./mvnw test -Dtest=SchemaSqlTests -DatualizarSchema=true
+cd backend && ./mvnw test -Dtest=SchemaSqlTests -DatualizarSchema=true
 ```
 
 ## Dados e privacidade
@@ -190,4 +207,4 @@ No sistema:
 
 ## Mais detalhes
 
-- [`FrontEnd/README.md`](FrontEnd/README.md): telas, regras de padronização da planilha e onde mexer.
+- [`frontend/README.md`](frontend/README.md): telas, regras de padronização da planilha e onde mexer.
