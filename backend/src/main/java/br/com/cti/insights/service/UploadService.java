@@ -24,8 +24,8 @@ import org.springframework.util.StringUtils;
 
 /**
  * Recebe as linhas que o Pinia aprovou e revalida como uma planilha: o arquivo, as colunas
- * obrigatorias, cada linha (regras do ClienteDTO) e os codigos repetidos (aula 10). Depois manda as
- * linhas ao Python (PythonEtlService), que cria o lote e grava tudo no banco (aula 12): o Java nao
+ * obrigatorias, cada linha (regras do ClienteDTO) e os codigos repetidos. Depois manda as
+ * linhas ao Python (PythonEtlService), que cria o lote e grava tudo no banco: o Java nao
  * grava a planilha.
  */
 @Service

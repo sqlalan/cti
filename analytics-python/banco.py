@@ -39,7 +39,7 @@ def criar_lote(engine: Engine, arquivo_nome: str, recebidas: int, validas: int, 
         }).scalar_one()                                                             # devolve o id do lote criado
 
 
-def registrar_telemetria(engine: Engine, evento: str, sucesso: bool, registros: int | None,  # registrar_telemetria: grava um evento (Plano PI: Telemetria)
+def registrar_telemetria(engine: Engine, evento: str, sucesso: bool, registros: int | None,  # registrar_telemetria: grava um evento de processamento
                          duracao_ms: int, mensagem: str) -> None:
     """Uma linha na tabela telemetria. Falhar aqui não pode derrubar o processamento."""
     try:                                                                            # tenta gravar

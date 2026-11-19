@@ -33,8 +33,8 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 /**
  * Transforma os erros da API em JSON que a tela consegue mostrar, sem detalhe tecnico.
  *
- * Validacao (@Valid): {"mensagem":"Dados inválidos","campo":...,"erro":...} com o primeiro erro, como na
- * aula, mais "campos" com todos. Regra do Service: {"mensagem":"Regra de validação não atendida","erro":...}.
+ * Validacao (@Valid): {"mensagem":"Dados inválidos","campo":...,"erro":...} com o primeiro erro,
+ * mais "campos" com todos. Regra do Service: {"mensagem":"Regra de validação não atendida","erro":...}.
  * Os demais: {"mensagem":...}.
  */
 @RestControllerAdvice

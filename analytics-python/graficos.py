@@ -1,4 +1,4 @@
-"""Os 4 gráficos da ementa de Ciência de Dados (Plano PI, tópico 2.5), salvos em PNG.
+"""Os 4 gráficos do relatório (linha, dispersão, histograma e boxplot), salvos em PNG.
 
 - linha: contratações por mês
 - dispersão: faturamento x quantidade de serviços

@@ -94,7 +94,7 @@ async function entrar() {
         </p>
 
         <!-- Sem `required` nos campos: a regra de campo vazio mora na store, e
-             o navegador barrando antes dela esconderia a mensagem da aula e
+             o navegador barrando antes dela esconderia a mensagem da API e
              deixaria duas validações dizendo coisas diferentes. -->
         <form class="mt-8" @submit.prevent="entrar">
           <label class="block text-sm font-medium text-ink-900 dark:text-mist-100" for="email">E-mail</label>

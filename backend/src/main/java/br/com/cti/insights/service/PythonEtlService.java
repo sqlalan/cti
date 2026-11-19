@@ -24,7 +24,7 @@ import org.springframework.http.HttpStatus;                                     
 import org.springframework.stereotype.Service;                                      // import: marca como serviço do Spring
 
 /**
- * ENVIA as linhas válidas para o serviço Python (aula 12). O Python cria o lote, limpa, calcula e
+ * ENVIA as linhas válidas para o serviço Python. O Python cria o lote, limpa, calcula e
  * GRAVA no banco (inclusive a telemetria); o Java só espera a resposta {"ok": true, "loteId": ...}.
  * É um POST HTTP com o JSON em ETL_URL (padrão http://localhost:8000/etl).
  */

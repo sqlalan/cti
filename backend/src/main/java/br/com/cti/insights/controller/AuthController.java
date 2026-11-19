@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Cadastro, login e "quem sou eu", nas rotas da aula de login. Administrar contas fica em /api/usuarios.
+ * Cadastro, login e "quem sou eu" (/api/auth). Administrar contas fica em /api/usuarios.
  */
 @RestController
 @RequestMapping("/api/auth")

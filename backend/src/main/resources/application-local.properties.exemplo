@@ -1,4 +1,4 @@
-# Modelo do application-local.properties (GUIA 1 da disciplina).
+# Modelo do application-local.properties (credenciais locais, fora do Git).
 #
 # 1. Copie este arquivo para application-local.properties, na mesma pasta.
 # 2. Troque os valores pelos do SEU banco no Azure.

@@ -142,7 +142,7 @@ separação sob daltonismo e contraste) — não ajuste no olho.
 
 ## Planilha de exemplo
 
-`planilhas-exemplo/dados.xlsx` é a planilha modelo fornecida pela professora.
+`planilhas-exemplo/dados.xlsx` é uma planilha modelo para testes.
 A pasta fica fora de `src/` e de `public/`, então nada dali entra no build.
 
 O arquivo tem 6 abas; a aplicação lê **só a primeira** (`upload_clientes`) e

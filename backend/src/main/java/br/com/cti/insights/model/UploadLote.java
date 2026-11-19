@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import java.time.Instant;
 
 /**
- * Um envio de planilha. Quem cria e atualiza o lote é o Python (banco.py, aula 12); o Java só lê,
+ * Um envio de planilha. Quem cria e atualiza o lote é o Python (banco.py); o Java só lê,
  * para a tela de envio e o dashboard.
  */
 @Entity

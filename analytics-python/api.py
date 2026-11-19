@@ -64,7 +64,7 @@ def testar(linhas: list[dict[str, Any]]) -> dict:                               
     return calcular(res, len(linhas))                                               # calcula e devolve os números e as frases
 
 
-@app.get("/lotes")                                                                  # desafio da aula 12: GET /lotes lista os lotes gravados no banco
+@app.get("/lotes")                                                                  # GET /lotes: lista os lotes gravados no banco (confere sem abrir o DBeaver)
 def listar_lotes():                                                                 # função que será executada
     with _engine_azure().connect() as conn:                                         # conecta no banco do .env (Neon ou Azure)
         sql = text("SELECT id, arquivo_nome, status FROM upload_lote")              # a consulta: quais lotes existem

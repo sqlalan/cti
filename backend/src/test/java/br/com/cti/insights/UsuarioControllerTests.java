@@ -65,7 +65,7 @@ class UsuarioControllerTests {
 
 	@Test
 	void semConsultorOProprioNomeEhOConsultor() throws Exception {
-		// JSON do GUIA 1 (TESTE 1), sem o campo consultor.
+		// Cadastro sem o campo consultor.
 		this.mockMvc
 			.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON).content("""
 					{"nome":"Paula Reis","email":"paula@exemplo.com","senha":"Senha1234"}
@@ -140,7 +140,7 @@ class UsuarioControllerTests {
 	void senhaVaiParaOBancoComoBcryptPuro() throws Exception {
 		cadastrar("kiko@exemplo.com");
 		String hash = usuarioRepository.findByEmailIgnoreCase("kiko@exemplo.com").orElseThrow().getSenha();
-		// O que o GUIA 3 confere no DBeaver: comeca com $2a$10$ e tem 60 caracteres.
+		// Conferido no DBeaver: comeca com $2a$10$ e tem 60 caracteres.
 		assertThat(hash).startsWith("$2a$10$").hasSize(60);
 	}
 
@@ -175,7 +175,7 @@ class UsuarioControllerTests {
 	void adminDefinidoNoBancoRecebeOPerfilNoTokenENoMe() throws Exception {
 		cadastrar("otto@exemplo.com");
 		Usuario otto = usuarioRepository.findByEmailIgnoreCase("otto@exemplo.com").orElseThrow();
-		// O GUIA promove pelo DBeaver: UPDATE usuario SET perfil = 'ADMIN' WHERE email = '...'
+		// Promover pelo DBeaver: UPDATE usuario SET perfil = 'ADMIN' WHERE email = '...'
 		otto.setPerfil(Perfil.ADMIN);
 		otto.setStatus(StatusUsuario.APROVADO);
 		usuarioRepository.save(otto);

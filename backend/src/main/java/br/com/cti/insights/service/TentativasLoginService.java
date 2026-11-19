@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
  * Defesa contra forca bruta: depois de N senhas erradas seguidas para o mesmo e-mail, o login fica
  * bloqueado por um tempo. Acertar a senha zera a contagem.
  *
- * Em memoria: vale para uma instancia so do back-end (o caso do deploy da aula) e zera ao reiniciar.
+ * Em memoria: vale para uma instancia so do back-end (o caso do deploy no Azure App Service) e zera ao reiniciar.
  */
 @Service
 public class TentativasLoginService {

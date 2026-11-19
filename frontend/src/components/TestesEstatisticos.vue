@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 
-// Testes estatísticos do lote (Plano PI): o resultado e a interpretação em
+// Testes estatísticos do lote: o resultado e a interpretação em
 // português. Os números vêm prontos do processamento; aqui só se mostra.
 const props = defineProps({
   testes: { type: Object, required: true }, // { normalidade, associacao }

@@ -29,7 +29,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
- * Um servidor HTTP falso faz o papel da API do Python (POST /etl, aula 12): guarda o que o Spring
+ * Um servidor HTTP falso faz o papel da API do Python (POST /etl): guarda o que o Spring
  * enviou e, como o banco.py, cria o lote e devolve {"ok": true, "loteId": ...}.
  */
 @SpringBootTest
@@ -129,7 +129,7 @@ class PythonEtlServiceTests {
 		assertThat(pedido).as("o Spring nao chamou o POST /etl").isNotNull();
 		assertThat(pedido.chave()).isEqualTo("segredo");
 
-		// Os campos do Pedido da aula 12, com as linhas padronizadas pelo Service da aula 10.
+		// Os campos do Pedido do api.py, com as linhas padronizadas pelo ClienteValidacaoService.
 		String json = pedido.corpo();
 		assertThat((String) JsonPath.read(json, "$.arquivoNome")).isEqualTo("dados.xlsx");
 		assertThat((Integer) JsonPath.read(json, "$.recebidas")).isEqualTo(38);

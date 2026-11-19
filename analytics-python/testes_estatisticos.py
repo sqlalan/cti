@@ -1,4 +1,4 @@
-"""Testes estatísticos do Plano PI (Ciência de Dados, tópico 1.6), com a interpretação em texto.
+"""Testes estatísticos do lote (Shapiro-Wilk e qui-quadrado), com a interpretação em texto.
 
 - Shapiro-Wilk: o faturamento segue uma distribuição normal? Decide se média ou mediana descreve melhor.
 - Qui-quadrado: segmento e nível do cliente (A/B/C) estão associados?

@@ -1,13 +1,13 @@
--- Migração para a aula 12 (FastAPI): o Python cria o lote e grava segmento, consultor e serviço
+-- Migração 02: o Python cria o lote e grava segmento, consultor e serviço
 -- sem repetir; o Java não grava mais as linhas da planilha.
 --
 -- Só para um banco que já existia ANTES desta versão (um banco novo é criado certo pelo backend).
 -- Rode UMA vez no DBeaver (ou no SQL Editor do Neon), com o backend DESLIGADO, e depois ligue o
--- backend novo. Se o banco veio de antes da aula 11, rode primeiro o migracao-aula11.sql.
+-- backend novo. Se o banco ainda tem as tabelas com os nomes antigos, rode primeiro o migracao-01-nomes-das-tabelas.sql.
 
 BEGIN;
 
--- 1. A tabela de login passa a se chamar usuario (como no slide da aula 12).
+-- 1. A tabela de login passa a se chamar usuario.
 DO $$
 BEGIN
     IF to_regclass('public.usuarios') IS NOT NULL THEN

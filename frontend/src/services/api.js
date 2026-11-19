@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // Endereço do Spring Boot. Em produção vem de VITE_API_URL (ex.: no painel da
 // Vercel); sem ela, usa o back-end rodando na máquina. As rotas da API ficam
-// em /api: o guia da disciplina escreve VITE_API_URL=http://localhost:8080,
+// em /api: é comum escrever VITE_API_URL=http://localhost:8080,
 // então o /api é acrescentado quando falta, e as duas formas funcionam.
 function enderecoDaApi(configurado) {
   const base = (configurado || 'http://localhost:8080').replace(/\/+$/, '')

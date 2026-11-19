@@ -23,7 +23,7 @@ def processar_lote(engine, arquivo_nome: str, linhas: list[dict], recebidas: int
     inicio = time.perf_counter()                                                    # início, para a duração na telemetria
     ms = lambda: int((time.perf_counter() - inicio) * 1000)                         # ms: milissegundos desde o início
     lote_id = banco.criar_lote(engine, arquivo_nome, recebidas, len(linhas), invalidas, com_aviso)  # 1. cria o lote (PROCESSANDO)
-    banco.registrar_telemetria(engine, "UPLOAD_PLANILHA", True, len(linhas), ms(),  # Plano PI: registra o envio da planilha
+    banco.registrar_telemetria(engine, "UPLOAD_PLANILHA", True, len(linhas), ms(),  # telemetria: registra o envio da planilha
                                f"{arquivo_nome}: lote {lote_id} criado com {len(linhas)} linha(s) válida(s)")
     try:                                                                            # tenta processar
         if not linhas:                                                              # o backend não mandou nenhuma linha?
@@ -33,12 +33,12 @@ def processar_lote(engine, arquivo_nome: str, linhas: list[dict], recebidas: int
         payload = calcular(res, recebidas)                                          # 3. calcula média, mediana, agrupamentos e frases
         banco.gravar_resultado(engine, lote_id, res.tratado, payload, len(res.rejeitadas))  # 4. GRAVA clientes, contratos e o JSON; lote PROCESSADO
         log.info("Lote %s processado.", lote_id)                                    # registra no terminal
-        banco.registrar_telemetria(engine, "EXECUCAO_SCRIPT", True, len(res.tratado), ms(),  # Plano PI: execução que deu certo
+        banco.registrar_telemetria(engine, "EXECUCAO_SCRIPT", True, len(res.tratado), ms(),  # telemetria: execução que deu certo
                                    f"Lote {lote_id} processado pelo Python")
         return lote_id                                                              # deu certo: devolve o id
     except Exception as e:  # noqa: BLE001 - qualquer falha deve ficar registrada no lote
         log.exception("Falha no lote %s", lote_id)                                  # escreve o erro completo no terminal
         banco.marcar_erro(engine, lote_id, f"Falha no ETL: {e}")                    # grava ERRO no lote para a tela mostrar
-        banco.registrar_telemetria(engine, "EXECUCAO_SCRIPT", False, None, ms(),    # Plano PI: execução que falhou
+        banco.registrar_telemetria(engine, "EXECUCAO_SCRIPT", False, None, ms(),    # telemetria: execução que falhou
                                    f"Lote {lote_id}: Falha no ETL: {e}")
         raise                                                                       # repassa o erro para a API responder 500

@@ -24,7 +24,7 @@ const routes = [
   {
     // O layout não acrescenta segmento à URL: a sidebar é como a tela é
     // desenhada, não uma área do sistema. As telas ficam em /upload,
-    // /dashboard e /relatorio, como na aula. Dividir o caminho '/' com a home
+    // /dashboard e /relatorio. Dividir o caminho '/' com a home
     // é seguro porque este registro não tem filho vazio — ele só casa quando
     // há um dos segmentos abaixo, e '/' sozinho continua sendo a home.
     path: '/',
@@ -40,7 +40,7 @@ const routes = [
     ],
   },
 
-  // Endereços antigos (até a aula 07 as telas moravam em /sidebar/...).
+  // Endereços antigos (as telas já moraram em /sidebar/...).
   // Mantidos para não quebrar link salvo, favorito ou o que já foi publicado.
   { path: '/sidebar', redirect: { name: 'upload' } },
   { path: '/sidebar/:tela', redirect: (to) => `/${to.params.tela}` },

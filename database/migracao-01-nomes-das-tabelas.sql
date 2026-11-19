@@ -1,4 +1,4 @@
--- Migracao para a aula 11: as tabelas da aula de Model passam a ter os nomes que o banco.py usa.
+-- Migracao 01: as tabelas antigas passam a ter os nomes que o banco.py usa.
 --
 -- Rode UMA vez no banco que ja tem as tabelas antigas (clientes, contratos, consultores, servicos),
 -- ANTES de subir o backend novo. Os dados sao mantidos: usuarios continuam ligados aos consultores.

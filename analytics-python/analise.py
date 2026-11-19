@@ -12,7 +12,7 @@ from scipy import stats as sp                                                   
 
 from insights import gerar_insights                                                 # gerar_insights: monta as frases (insights.py)
 from limpeza import ResultadoTransformacao                                          # o resultado da limpeza (limpeza.py)
-import testes_estatisticos                                                          # [Plano PI] Shapiro-Wilk e qui-quadrado (testes_estatisticos.py)
+import testes_estatisticos                                                          # Shapiro-Wilk e qui-quadrado (testes_estatisticos.py)
 
 
 # ------------------------------------------------------------------ utilitários
@@ -130,7 +130,7 @@ def calcular(res: ResultadoTransformacao, linhas_recebidas: int) -> dict:       
         "consultores": int(df["consultor"].nunique()),                              # número de consultores
     }                                                                               # fim do resumo
     top = df.sort_values("faturamento_anual", ascending=False).head(5)              # os 5 maiores clientes
-    testes = testes_estatisticos.calcular(df)                                       # [Plano PI] testes estatísticos aplicados e interpretados
+    testes = testes_estatisticos.calcular(df)                                       # testes estatísticos aplicados e interpretados
 
     return {                                                                        # devolve o dicionário que vira JSON no banco
         "geradoEm": datetime.now(timezone.utc).isoformat(timespec="seconds"),       # quando foi gerado
@@ -154,6 +154,6 @@ def calcular(res: ResultadoTransformacao, linhas_recebidas: int) -> dict:       
             "avisos": res.avisos,                                                   # avisos
         },                                                                          # fim da qualidade
         "insights": gerar_insights(resumo, por_segmento, por_nivel, por_consultor, por_servico, por_mes, correlacao)  # frases de insights
-                    + testes["frases"],                                             # [Plano PI] + a interpretação dos testes
-        "testes": {"normalidade": testes["normalidade"], "associacao": testes["associacao"]},  # [Plano PI] resultado dos testes para o dashboard
+                    + testes["frases"],                                             # + a interpretação dos testes
+        "testes": {"normalidade": testes["normalidade"], "associacao": testes["associacao"]},  # resultado dos testes para o dashboard
     }                                                                               # fim do dicionário

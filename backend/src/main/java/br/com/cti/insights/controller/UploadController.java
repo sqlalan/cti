@@ -24,8 +24,8 @@ public class UploadController {
 	}
 
 	// POST /api/uploads/validadas?arquivo=dados.xlsx&recebidas=38&comAviso=2 com as linhas do Pinia no
-	// corpo, no formato do ClienteDTO (aula 10). O Java revalida e chama o Python, que cria o lote e grava
-	// tudo (aula 12). Responde com o lote ja processado (ou erro, se o Python nao respondeu).
+	// corpo, no formato do ClienteDTO. O Java revalida e chama o Python, que cria o lote e grava
+	// tudo. Responde com o lote ja processado (ou erro, se o Python nao respondeu).
 	// Sem @Valid aqui: o UploadService revalida na ordem da planilha (arquivo, colunas, linhas).
 	@PostMapping("/validadas")
 	public ResponseEntity<UploadLoteDTO> enviarValidadas(@RequestParam(required = false) String arquivo,

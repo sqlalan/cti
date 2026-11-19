@@ -1,8 +1,8 @@
-"""Relatório de insights em arquivos (Plano PI: pasta output/), sem banco e sem Spring.
+"""Relatório de insights em arquivos (pasta output/), sem banco e sem Spring.
 
 Uso (com o .venv ligado):
     python relatorio.py                          # usa amostras/lote_exemplo.json
-    python relatorio.py amostras/clientes.json   # qualquer JSON no formato da aula 10
+    python relatorio.py amostras/clientes.json   # qualquer JSON no formato do ClienteDTO
 
 Gera em output/:
     indicadores.json   o JSON do dashboard (analise.calcular) + os testes estatísticos

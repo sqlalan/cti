@@ -14,7 +14,7 @@
 	<name>cti-api</name>
 	<description>API do Sistema CTI Insights</description>
 	<properties>
-		<!-- 21 (LTS): roda em quem segue o guia da disciplina (JDK 17+) e em JDK mais novo, como o 25. -->
+		<!-- 21 (LTS): roda em JDK 21 ou mais novo, como o 25, e é o runtime Java do Azure App Service. -->
 		<java.version>21</java.version>
 	</properties>
 	<dependencies>

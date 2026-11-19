@@ -15,7 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 /**
- * POST /api/clientes/validar, com os JSONs dos slides da aula de validacao (DTO + Service + ErroHandler).
+ * POST /api/clientes/validar: JSON valido e invalido passando por DTO + Service + ErroHandler.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -37,7 +37,7 @@ class ClienteValidacaoControllerTests {
 	}
 
 	@Test
-	void jsonValidoDoSlide26VoltaPadronizado() throws Exception {
+	void jsonValidoVoltaPadronizado() throws Exception {
 		validar("[" + VALIDO + "]").andExpect(status().isOk())
 			.andExpect(jsonPath("$.length()").value(1))
 			.andExpect(jsonPath("$[0].codigoCliente").value("CTI001"))
@@ -46,7 +46,7 @@ class ClienteValidacaoControllerTests {
 	}
 
 	@Test
-	void jsonInvalidoDoSlide27ApontaOPrimeiroCampo() throws Exception {
+	void jsonInvalidoApontaOPrimeiroCampo() throws Exception {
 		validar("""
 				[{"codigoCliente":"CTI002","nomeCliente":"","consultor":"Carlos Lima","segmento":"Comercio",
 				  "nivelCliente":"D","faturamentoAnual":-10,"servicosContratados":"","dataContratacao":"2025-01-30",

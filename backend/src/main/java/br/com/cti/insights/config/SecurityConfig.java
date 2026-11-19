@@ -104,7 +104,7 @@ public class SecurityConfig {
 	}
 
 	/**
-	 * O claim "perfil" do token vira ROLE_USER ou ROLE_ADMIN, como o getAuthorities() do guia.
+	 * O claim "perfil" do token vira ROLE_USER ou ROLE_ADMIN.
 	 * As rotas de administracao de contas exigem ROLE_ADMIN (regra no securityFilterChain).
 	 */
 	@Bean
@@ -130,7 +130,7 @@ public class SecurityConfig {
 	}
 
 	/**
-	 * Grava BCrypt puro ("$2a$10$...", 60 caracteres), como o guia confere no banco. Hash antigo
+	 * Grava BCrypt puro ("$2a$10$...", 60 caracteres), o formato padrão do BCrypt. Hash antigo
 	 * com prefixo ("{bcrypt}$2a$10$...") continua entrando: quem se cadastrou antes nao perde a conta.
 	 */
 	@Bean

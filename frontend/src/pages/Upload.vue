@@ -176,7 +176,7 @@ const etapas = computed(() => {
     envio = { situacao: 'erro', detalhe: 'Não concluído — motivo abaixo' }
   }
 
-  // O envio só responde depois do processamento (aula 12): enquanto envia, os dados já estão sendo processados.
+  // O envio só responde depois do processamento: enquanto envia, os dados já estão sendo processados.
   let python = { situacao: 'pendente', detalhe: '' }
   if (estado === 'enviando' || planilha.etapaEtl === 'processando') {
     python = { situacao: 'andamento', detalhe: `Calculando os indicadores… ${tempo(agora.value - planilha.inicioEnvio)}` }
@@ -398,8 +398,8 @@ async function processar() {
       </p>
     </section>
 
-    <!-- Pinia valida na tela, o servidor valida de novo (aula 10) e, no envio,
-         grava o lote e chama o Python (aula 11). O botão só libera quando o
+    <!-- Pinia valida na tela, o servidor valida de novo e, no envio,
+         chama o Python, que grava o lote. O botão só libera quando o
          servidor aprovou. Fica logo abaixo do resumo: com os avisos, os erros e
          a prévia antes dele, era preciso rolar a página inteira para enviar. -->
     <EtapasEnvio class="mt-6" :etapas="etapas" />

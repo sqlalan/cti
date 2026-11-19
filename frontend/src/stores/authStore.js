@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { api, mensagemDeErro } from '../services/api'
 
-// Formato de opções (state / getters / actions), como na aula 07. As outras
+// Formato de opções (state / getters / actions). As outras
 // stores do projeto usam o formato setup; os dois são Pinia e convivem sem
 // problema.
 

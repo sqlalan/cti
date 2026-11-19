@@ -41,7 +41,7 @@ function dataIso(data) {
   return `${data.getFullYear()}-${mes}-${dia}`
 }
 
-// Uma linha já tratada → o ClienteDTO do back-end (campos da aula de validação).
+// Uma linha já tratada → o ClienteDTO do back-end (mesmos campos do DTO).
 function paraClienteDTO(registro) {
   return {
     codigoCliente: registro.codigo,
@@ -140,7 +140,7 @@ export const useUploadStore = defineStore('upload', () => {
   // de LINHA mora em dadosInvalidos.
   const falha = ref('')
 
-  // O lote que o Python criou e processou (aula 12): o envio só responde
+  // O lote que o Python criou e processou: o envio só responde
   // depois que o Python termina, então ele já chega PROCESSADO (ou o envio falha).
   const lote = ref(null)
   // Resumo que o Python calculou (média, clientes...), quando o lote termina.
@@ -516,7 +516,7 @@ export const useUploadStore = defineStore('upload', () => {
   // -------------------------------------------------------------------------
   // Envio ao Spring Boot (POST /api/uploads/validadas): só as linhas que o
   // Pinia aprovou, em JSON. O servidor valida de novo e chama o Python
-  // (POST /etl), que cria o lote, limpa, calcula e grava no banco (aula 12).
+  // (POST /etl), que cria o lote, limpa, calcula e grava no banco.
   // -------------------------------------------------------------------------
   async function enviar() {
     if (!podeEnviar.value) return false

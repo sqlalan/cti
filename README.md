@@ -19,9 +19,114 @@ Planilha ─▶ Pinia valida ─▶ Spring valida ─▶ POST /etl ─▶ Python
    Gráficos (Chart.js) ◀── GET /api/dashboard ◀── Spring lê ◀── PostgreSQL ◀─┘
 ```
 
-É um ETL (aulas 11 e 12): **E**xtrair, o Spring entrega ao Python só as linhas válidas, em JSON; **T**ransformar, o Python limpa, padroniza, calcula e escreve as frases; **C**arregar, o Python grava no banco. Como na aula 12 (FastAPI), o Java valida e encaminha; quem grava a planilha no banco é só o Python.
+### Arquitetura
 
-1. O consultor faz login no front e carrega a planilha. O Pinia valida no navegador e o Spring valida de novo (`ClienteDTO` + `ClienteValidacaoService`, aula 10).
+```mermaid
+flowchart TD
+
+subgraph group_frontend["Aplicação web (Vue 3)"]
+  node_upload_ui["Envio da planilha<br/>[Upload.vue]"]
+  node_sheet_schema["Validação da planilha<br/>[esquemaPlanilha.js]"]
+  node_upload_store["Estado do envio<br/>[uploadStore.js]"]
+  node_api_client["Cliente da API<br/>[api.js]"]
+  node_history["Histórico de lotes<br/>[HistoricoProcessamentos.vue]"]
+  node_dashboard_ui["Tela de gráficos<br/>[DashboardView.vue]"]
+  node_charts["Gráficos<br/>[BaseChart.vue]"]
+end
+
+subgraph group_backend["API Spring Boot"]
+  node_upload_controller["Rota de envio<br/>[UploadController.java]"]
+  node_upload_service["Revalidação do lote<br/>[UploadService.java]"]
+  node_etl_dispatch["Chamada ao Python<br/>[PythonEtlService.java]"]
+  node_dashboard_service["Leitura dos gráficos<br/>[DashboardService.java]"]
+end
+
+subgraph group_etl["Análise em Python (FastAPI)"]
+  node_python_api["API do ETL<br/>[api.py]"]
+  node_etl_orchestrator["Orquestração do ETL<br/>[main.py]"]
+  node_cleaning["Limpeza dos dados<br/>[limpeza.py]"]
+  node_analysis["Análise estatística<br/>[analise.py]"]
+  node_insights["Geração de insights<br/>[insights.py]"]
+  node_python_storage["Gravação no banco<br/>[banco.py]"]
+  node_telemetry["Telemetria da execução"]
+end
+
+subgraph group_data["Persistência"]
+  node_postgres[("PostgreSQL")]
+end
+
+subgraph group_access["Contas e relatórios"]
+  node_auth_service["Gestão de contas<br/>[UsuarioService.java]"]
+  node_admin_controller["Rotas de administração<br/>[AdminUsuarioController.java]"]
+  node_reporting["Relatório estatístico<br/>[relatorio.py]"]
+  node_statistics["Testes estatísticos<br/>[testes_estatisticos.py]"]
+end
+
+node_consultant(("Consultor"))
+
+node_consultant -->|"envia a planilha"| node_upload_ui
+node_upload_ui -->|"valida as linhas"| node_sheet_schema
+node_upload_ui -->|"envia as linhas"| node_upload_store
+node_upload_store -->|"manda as linhas validadas"| node_api_client
+node_api_client -->|"chama a API de envio"| node_upload_controller
+node_upload_controller -->|"trata o lote"| node_upload_service
+node_upload_service -->|"encaminha as linhas"| node_etl_dispatch
+node_etl_dispatch -->|"POST /etl com as linhas válidas"| node_python_api
+node_python_api -->|"executa o ETL"| node_etl_orchestrator
+node_etl_orchestrator -->|"limpa as linhas"| node_cleaning
+node_etl_orchestrator -->|"calcula as estatísticas"| node_analysis
+node_analysis -->|"gera as frases"| node_insights
+node_etl_orchestrator -->|"grava o resultado"| node_python_storage
+node_python_storage -->|"grava lote, clientes e estatísticas"| node_postgres
+node_etl_orchestrator -.->|"registra a execução"| node_telemetry
+node_telemetry -.->|"grava"| node_postgres
+node_dashboard_ui -->|"pede os gráficos"| node_api_client
+node_api_client -->|"pede os dados dos gráficos"| node_dashboard_service
+node_dashboard_service -->|"lê os dados"| node_postgres
+node_dashboard_ui -.->|"desenha os gráficos"| node_charts
+node_history -->|"carrega o histórico"| node_api_client
+node_admin_controller -->|"administra as contas"| node_auth_service
+node_api_client -->|"chama a API de administração"| node_admin_controller
+node_reporting -->|"roda os testes estatísticos"| node_statistics
+
+click node_upload_ui "https://github.com/sqlalan/cti/blob/main/frontend/src/pages/Upload.vue"
+click node_sheet_schema "https://github.com/sqlalan/cti/blob/main/frontend/src/dados/esquemaPlanilha.js"
+click node_upload_store "https://github.com/sqlalan/cti/blob/main/frontend/src/stores/uploadStore.js"
+click node_api_client "https://github.com/sqlalan/cti/blob/main/frontend/src/services/api.js"
+click node_history "https://github.com/sqlalan/cti/blob/main/frontend/src/components/HistoricoProcessamentos.vue"
+click node_dashboard_ui "https://github.com/sqlalan/cti/blob/main/frontend/src/views/DashboardView.vue"
+click node_charts "https://github.com/sqlalan/cti/blob/main/frontend/src/components/BaseChart.vue"
+click node_upload_controller "https://github.com/sqlalan/cti/blob/main/backend/src/main/java/br/com/cti/insights/controller/UploadController.java"
+click node_upload_service "https://github.com/sqlalan/cti/blob/main/backend/src/main/java/br/com/cti/insights/service/UploadService.java"
+click node_etl_dispatch "https://github.com/sqlalan/cti/blob/main/backend/src/main/java/br/com/cti/insights/service/PythonEtlService.java"
+click node_dashboard_service "https://github.com/sqlalan/cti/blob/main/backend/src/main/java/br/com/cti/insights/service/DashboardService.java"
+click node_python_api "https://github.com/sqlalan/cti/blob/main/analytics-python/api.py"
+click node_etl_orchestrator "https://github.com/sqlalan/cti/blob/main/analytics-python/main.py"
+click node_cleaning "https://github.com/sqlalan/cti/blob/main/analytics-python/limpeza.py"
+click node_analysis "https://github.com/sqlalan/cti/blob/main/analytics-python/analise.py"
+click node_insights "https://github.com/sqlalan/cti/blob/main/analytics-python/insights.py"
+click node_python_storage "https://github.com/sqlalan/cti/blob/main/analytics-python/banco.py"
+click node_telemetry "https://github.com/sqlalan/cti/blob/main/analytics-python/banco.py"
+click node_auth_service "https://github.com/sqlalan/cti/blob/main/backend/src/main/java/br/com/cti/insights/service/UsuarioService.java"
+click node_admin_controller "https://github.com/sqlalan/cti/blob/main/backend/src/main/java/br/com/cti/insights/controller/AdminUsuarioController.java"
+click node_reporting "https://github.com/sqlalan/cti/blob/main/analytics-python/relatorio.py"
+click node_statistics "https://github.com/sqlalan/cti/blob/main/analytics-python/testes_estatisticos.py"
+
+classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
+classDef toneAmber fill:#fef3c7,stroke:#d97706,stroke-width:1.5px,color:#78350f
+classDef toneMint fill:#dcfce7,stroke:#16a34a,stroke-width:1.5px,color:#14532d
+classDef toneRose fill:#ffe4e6,stroke:#e11d48,stroke-width:1.5px,color:#881337
+classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+class node_upload_ui,node_sheet_schema,node_upload_store,node_api_client,node_history,node_dashboard_ui,node_charts toneBlue
+class node_upload_controller,node_upload_service,node_etl_dispatch,node_dashboard_service toneAmber
+class node_python_api,node_etl_orchestrator,node_cleaning,node_analysis,node_insights,node_python_storage,node_telemetry toneMint
+class node_postgres toneRose
+class node_auth_service,node_admin_controller,node_reporting,node_statistics,node_consultant toneIndigo
+```
+
+É um ETL: **E**xtrair, o Spring entrega ao Python só as linhas válidas, em JSON; **T**ransformar, o Python limpa, padroniza, calcula e escreve as frases; **C**arregar, o Python grava no banco. O Java valida e encaminha; quem grava a planilha no banco é só o Python.
+
+1. O consultor faz login no front e carrega a planilha. O Pinia valida no navegador e o Spring valida de novo (`ClienteDTO` + `ClienteValidacaoService`).
 2. No envio, o `PythonEtlService` faz `POST /etl` na API do Python com `{arquivoNome, recebidas, invalidas, comAviso, linhas}` (o modelo `Pedido` do `api.py`) e espera a resposta `{"ok": true, "loteId": ...}`.
 3. O Python (`analytics-python/`) cria o lote (`upload_lote`, status `PROCESSANDO`), limpa (`limpeza.py`), calcula média, mediana, desvio e agrupamentos (`analise.py`), escreve os insights (`insights.py`) e grava consultores, segmentos e serviços sem repetir, os clientes, os contratos e o JSON dos gráficos em `estatistica_lote` (`banco.py`). O lote vira `PROCESSADO`, ou `ERRO` com a mensagem.
 4. A tela **Gráficos** lê esse JSON por `GET /api/dashboard` e desenha com Chart.js; a caixa "Planilha (lote)" troca de lote (`GET /api/dashboard/lotes`).
@@ -33,15 +138,15 @@ Planilha ─▶ Pinia valida ─▶ Spring valida ─▶ POST /etl ─▶ Python
 | [`frontend/`](frontend/) | Vue 3, Vite, Tailwind, Pinia, Vue Router e Axios | Frameworks Front-end |
 | [`backend/`](backend/) | Java 21 e Spring Boot 4 (Web MVC, Data JPA, Security com JWT, Validation) | Desenvolvimento Back-end |
 | [`analytics-python/`](analytics-python/) | Python com FastAPI, pandas, SciPy, SQLAlchemy e Matplotlib: o ETL que limpa, calcula, gera os insights e grava no banco, e o relatório com os testes estatísticos e os 4 gráficos (`output/`) | Ciência de Dados |
-| [`database/`](database/) | `schema.sql`: a estrutura do banco no PostgreSQL. `migracao-aula11.sql` e `migracao-aula12.sql`: ajustam um banco antigo para as aulas 11 e 12 | Back-end / Nuvem |
-| [`sample-data/`](sample-data/) | `dados.xlsx`: a planilha modelo da aula, para testar o upload depois do deploy | Todas |
+| [`database/`](database/) | `schema.sql`: a estrutura do banco no PostgreSQL. `migracao-01-nomes-das-tabelas.sql` e `migracao-02-python-grava-o-lote.sql`: atualizam um banco criado por uma versão anterior do projeto | Back-end / Nuvem |
+| [`sample-data/`](sample-data/) | `dados.xlsx`: a planilha modelo, para testar o upload depois do deploy | Todas |
 
-O código do back-end fica em `backend/src/main/java/br/com/cti/insights/` e segue as camadas vistas em aula:
+O código do back-end fica em `backend/src/main/java/br/com/cti/insights/` e segue as camadas do Spring:
 
 | Pacote | Papel |
 | --- | --- |
 | `controller` | Porta HTTP. Recebe o JSON ou o arquivo e devolve a resposta com o status certo. Aqui também fica o `ErroHandler`, que transforma cada erro numa resposta JSON clara. |
-| `service` | Regras de negócio: e-mail único, login, revalidação do envio (`UploadService`), chamada ao Python (`PythonEtlService`) e leitura do dashboard. Como na aula 12, o Java só grava a tabela `usuario`: a `Telemetria` de cada envio e de cada execução quem grava é o Python (`banco.registrar_telemetria`). |
+| `service` | Regras de negócio: e-mail único, login, revalidação do envio (`UploadService`), chamada ao Python (`PythonEtlService`) e leitura do dashboard. O Java só grava a tabela `usuario`: a `Telemetria` de cada envio e de cada execução quem grava é o Python (`banco.registrar_telemetria`). |
 | `repository` | Acesso ao banco com Spring Data JPA. |
 | `model` | Entidades: `Cliente`, `Consultor`, `Segmento`, `Contrato`, `Servico`, `UploadLote`, `EstatisticaLote`, `Insight` (com subclasses), `Telemetria` e `Usuario`. |
 | `dto` | O que entra e sai da API, com as validações declarativas (`@NotBlank`, `@Positive`, `@Pattern`...). `ClienteDTO` é uma linha da planilha; os `...RespostaDTO` são o que a API devolve. A senha nunca sai. |
@@ -72,11 +177,11 @@ uvicorn api:app --port 8000                # confira http://localhost:8000/saude
 
 Relatório em arquivos, sem banco: `python relatorio.py` lê `amostras/lote_exemplo.json` e gera em `output/` o `indicadores.json` (com os testes de Shapiro-Wilk e qui-quadrado), o `insights.json` e os 4 gráficos (linha, dispersão, histograma e boxplot).
 
-Sem o Python no ar, nada é gravado: a tela avisa que o processamento está indisponível e o motivo técnico ("Não foi possível falar com o serviço Python") fica no log do backend. Para testar só o Python, sem banco: `http://localhost:8000/docs` > `POST /testar` com o conteúdo de `amostras/clientes.json`. Para ver os lotes gravados sem abrir o DBeaver: `GET /lotes` (desafio da aula 12).
+Sem o Python no ar, nada é gravado: a tela avisa que o processamento está indisponível e o motivo técnico ("Não foi possível falar com o serviço Python") fica no log do backend. Para testar só o Python, sem banco: `http://localhost:8000/docs` > `POST /testar` com o conteúdo de `amostras/clientes.json`. Para ver os lotes gravados sem abrir o DBeaver: `GET /lotes`.
 
-**Banco que já existia antes da aula 11:** rode [`database/migracao-aula11.sql`](database/migracao-aula11.sql) uma vez (no DBeaver) **antes** de subir o back-end novo. Ele renomeia `clientes`, `contratos`, `consultores` e `servicos` para os nomes que o `banco.py` usa, sem perder dados.
+**Banco com as tabelas antigas (`clientes`, `contratos`...):** rode [`database/migracao-01-nomes-das-tabelas.sql`](database/migracao-01-nomes-das-tabelas.sql) uma vez (no DBeaver) **antes** de subir o back-end novo. Ele renomeia `clientes`, `contratos`, `consultores` e `servicos` para os nomes que o `banco.py` usa, sem perder dados.
 
-**Banco que já existia antes da aula 12:** rode [`database/migracao-aula12.sql`](database/migracao-aula12.sql) uma vez, com o back-end desligado. Ele renomeia `usuarios` para `usuario`, cria a tabela `segmento` (e liga os clientes a ela), tira `enviado_por` do lote, cria `linhas_com_aviso` e apaga a `upload_linha`, que o Java não usa mais. Um banco novo já nasce certo.
+**Banco com a tabela `usuarios` e a `upload_linha`:** rode [`database/migracao-02-python-grava-o-lote.sql`](database/migracao-02-python-grava-o-lote.sql) uma vez, com o back-end desligado. Ele renomeia `usuarios` para `usuario`, cria a tabela `segmento` (e liga os clientes a ela), tira `enviado_por` do lote, cria `linhas_com_aviso` e apaga a `upload_linha`, que o Java não usa mais. Um banco novo já nasce certo.
 
 **2. Back-end** (`http://localhost:8080`):
 
@@ -112,7 +217,7 @@ Abra `/cadastro`, crie a conta de consultor e envie a planilha de exemplo [`fron
 
 | Variável | Onde | Para quê | Padrão |
 | --- | --- | --- | --- |
-| `DB_URL` | Back-end | Endereço JDBC completo, como no deploy da aula: `jdbc:postgresql://SERVIDOR.postgres.database.azure.com:5432/ctiinsights?sslmode=require`. Quando definido, vale no lugar de `DB_HOST`/`DB_PORT`/`DB_NAME`/`DB_SSLMODE` | vazio |
+| `DB_URL` | Back-end | Endereço JDBC completo, como no Azure: `jdbc:postgresql://SERVIDOR.postgres.database.azure.com:5432/ctiinsights?sslmode=require`. Quando definido, vale no lugar de `DB_HOST`/`DB_PORT`/`DB_NAME`/`DB_SSLMODE` | vazio |
 | `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Back-end | Conexão com o PostgreSQL (`DB_USER` e `DB_PASSWORD` valem também com `DB_URL`) | `localhost`, `5432`, `cti`, `postgres`, `postgres` |
 | `DB_SSLMODE` | Back-end | Use `require` no Azure e em qualquer banco na nuvem | `prefer` |
 | `JWT_SECRET` | Back-end | Chave que assina o token de login. **Obrigatória em produção**, com 32 caracteres ou mais. (`JWT_SEGREDO` também é aceito.) | Aleatória a cada inicialização |
@@ -176,7 +281,7 @@ Os erros vêm no formato `{ "mensagem": "..." }`. Na validação vêm também `c
 
 ## Deploy
 
-Como na aula de deploy: back-end no **Azure App Service** (Java 21), banco no **Azure Database for PostgreSQL** e front-end na **Vercel**.
+Back-end no **Azure App Service** (Java 21), banco no **Azure Database for PostgreSQL** e front-end na **Vercel**.
 
 1. **Back-end (Azure):** publique a pasta `backend/` e configure no App Service `DB_URL` (com `sslmode=require`), `DB_USER`, `DB_PASSWORD`, `JWT_SECRET` e `CORS_ORIGINS` com o endereço da Vercel. Se usar o Python, defina também `ETL_URL` e `ETL_KEY`.
 2. **Teste:** abra `https://SEU-BACKEND.azurewebsites.net/api/health`; a resposta precisa ser `{"status":"ok"}`.
@@ -192,7 +297,7 @@ cd backend && ./mvnw test                                  # API, regras, envio 
 
 Os testes do back-end usam o H2 em memória, então não precisam de PostgreSQL nem do Python: o teste do `PythonEtlService` sobe um servidor HTTP falso no lugar da API do Python, que cria o lote como o `banco.py`, e confere o JSON e a chave enviados.
 
-O Python se testa como na aula: `POST /testar` com `amostras/clientes.json` deve dar 2 clientes e média 1.135.000. Com a planilha da aula (`sample-data/dados.xlsx`), o lote deve terminar `PROCESSADO` com 32 clientes, 61 contratos, 6 segmentos, 4 consultores, 6 serviços, faturamento total de R$ 72.360.000,00 e média 2.261.250 (consultas no DBeaver no PASSO 12 do guia da aula).
+Para testar o Python: `POST /testar` com `amostras/clientes.json` deve dar 2 clientes e média 1.135.000. Com a planilha modelo (`sample-data/dados.xlsx`), o lote deve terminar `PROCESSADO` com 32 clientes, 61 contratos, 6 segmentos, 4 consultores, 6 serviços, faturamento total de R$ 72.360.000,00 e média 2.261.250 (confira no DBeaver com `SELECT COUNT(*)` em `cliente` e `contrato`).
 
 Mudou uma entidade? Regere o [`database/schema.sql`](database/schema.sql) com:
 
@@ -202,7 +307,7 @@ cd backend && ./mvnw test -Dtest=SchemaSqlTests -DatualizarSchema=true
 
 ## Dados e privacidade
 
-A planilha deste repositório é **fictícia**, feita para a aula. Os dados reais da CTI são confidenciais e usados só para fins acadêmicos: não devem ser commitados nem publicados.
+A planilha deste repositório é **fictícia**, feita para testes. Os dados reais da CTI são confidenciais e usados só para fins acadêmicos: não devem ser commitados nem publicados.
 
 No sistema:
 - as senhas ficam guardadas só como hash;

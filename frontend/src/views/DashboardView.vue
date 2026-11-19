@@ -7,7 +7,7 @@ import { explicarLote } from '../dados/lote' // situação do lote sem termos t�
 import BaseChart from '../components/BaseChart.vue' // desenha gráficos
 import KpiCard from '../components/KpiCard.vue' // cartão de número
 import StatusBadge from '../components/StatusBadge.vue' // etiqueta de status
-import TestesEstatisticos from '../components/TestesEstatisticos.vue' // Shapiro-Wilk e qui-quadrado (Plano PI)
+import TestesEstatisticos from '../components/TestesEstatisticos.vue' // Shapiro-Wilk e qui-quadrado
 
 const moeda = (n) => (n == null ? '—' : Number(n).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })) // 1500 -> R$ 1.500,00
 const numero = (n) => (n == null ? '—' : Number(n).toLocaleString('pt-BR', { maximumFractionDigits: 2 })) // 1234.5 -> 1.234,5

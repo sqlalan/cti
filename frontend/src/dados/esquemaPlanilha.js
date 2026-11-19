@@ -130,7 +130,7 @@ export const ESQUEMA = [
     chave: 'cidade',
     rotulo: 'Cidade',
     apelidos: ['cidade', 'municipio'],
-    // Opcionais pela aba dicionario_dados da planilha. O guia do Pinia lista as
+    // Opcionais pela aba dicionario_dados da planilha. A validação do Pinia lista as
     // duas como obrigatórias; os documentos divergem e prevaleceu o dicionário.
     // Se a regra mudar, é só esta flag.
     obrigatoria: false,

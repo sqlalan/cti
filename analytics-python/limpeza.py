@@ -145,7 +145,7 @@ class ResultadoTransformacao:                                                   
 def tratar(bruto: pd.DataFrame) -> ResultadoTransformacao:                          # tratar: função principal da limpeza
     """Recebe as linhas como texto e devolve o DataFrame tratado + as linhas que o ETL recusou."""
     df = bruto.copy().reset_index(drop=True)                                        # cópia da tabela com índice 0,1,2...
-    df.columns = [re.sub(r"(?<!^)(?=[A-Z])", "_", str(c)).lower() for c in df.columns]  # codigoCliente (JSON da aula 10) vira codigo_cliente
+    df.columns = [re.sub(r"(?<!^)(?=[A-Z])", "_", str(c)).lower() for c in df.columns]  # codigoCliente (JSON do ClienteDTO) vira codigo_cliente
     for c in COLUNAS:                                                               # para cada coluna esperada
         if c not in df.columns:                                                     # se não veio na tabela
             df[c] = None                                                            # cria vazia
