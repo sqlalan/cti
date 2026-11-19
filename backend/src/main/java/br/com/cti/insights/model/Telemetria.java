@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 
 /**
  * Registro de um evento de processamento: upload de planilha ou execucao do script Python.
+ * Quem grava e o Python (banco.py, registrar_telemetria); o Java so mapeia a tabela.
  */
 @Entity
 @Table(name = "telemetria")

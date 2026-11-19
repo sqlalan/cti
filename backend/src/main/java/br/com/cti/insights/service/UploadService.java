@@ -6,7 +6,6 @@ import br.com.cti.insights.exception.ColunaObrigatoriaException;
 import br.com.cti.insights.exception.ExcelInvalidoException;
 import br.com.cti.insights.exception.LinhaInvalidaException;
 import br.com.cti.insights.exception.RecursoNaoEncontradoException;
-import br.com.cti.insights.model.Telemetria;
 import br.com.cti.insights.repository.UploadLoteRepository;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
@@ -61,15 +60,12 @@ public class UploadService {
 
 	private final PythonEtlService etl;
 
-	private final TelemetriaService telemetria;
-
 	public UploadService(ClienteValidacaoService validacao, Validator validador, UploadLoteRepository lotes,
-			PythonEtlService etl, TelemetriaService telemetria) {
+			PythonEtlService etl) {
 		this.validacao = validacao;
 		this.validador = validador;
 		this.lotes = lotes;
 		this.etl = etl;
-		this.telemetria = telemetria;
 	}
 
 	/**
@@ -77,27 +73,19 @@ public class UploadService {
 	 * comAviso = linhas boas com algum aviso (o Pinia sabe quais).
 	 */
 	public UploadLoteDTO registrar(String arquivo, Integer recebidas, Integer comAviso, List<ClienteDTO> clientes) {
-		long inicio = System.nanoTime();
 		String nome = StringUtils.hasText(arquivo) ? StringUtils.getFilename(arquivo.trim()) : "planilha";
-		try {
-			validarArquivo(nome, clientes);
-			validarColunas(clientes);
-			validarLinhas(clientes);
-			List<ClienteDTO> prontos = validacao.validarEPreparar(clientes);
-			int total = recebidas == null ? prontos.size() : Math.max(recebidas, prontos.size());
-			int avisos = comAviso == null ? 0 : Math.min(Math.max(comAviso, 0), prontos.size());
+		validarArquivo(nome, clientes);
+		validarColunas(clientes);
+		validarLinhas(clientes);
+		List<ClienteDTO> prontos = validacao.validarEPreparar(clientes);
+		int total = recebidas == null ? prontos.size() : Math.max(recebidas, prontos.size());
+		int avisos = comAviso == null ? 0 : Math.min(Math.max(comAviso, 0), prontos.size());
 
-			Long loteId = etl.enviar(nome, total, total - prontos.size(), avisos, prontos);
-			telemetria.registrar(Telemetria.UPLOAD_PLANILHA, true, prontos.size(), inicio,
-					nome + ": " + prontos.size() + " linha(s) válida(s) enviada(s); lote " + loteId);
-			return lotes.findById(loteId)
-				.map(UploadLoteDTO::de)
-				.orElseThrow(() -> new RecursoNaoEncontradoException("lote", loteId));
-		}
-		catch (RuntimeException ex) {
-			telemetria.registrar(Telemetria.UPLOAD_PLANILHA, false, null, inicio, nome + ": " + ex.getMessage());
-			throw ex;
-		}
+		// Quem grava o lote (e a telemetria) e o Python.
+		Long loteId = etl.enviar(nome, total, total - prontos.size(), avisos, prontos);
+		return lotes.findById(loteId)
+			.map(UploadLoteDTO::de)
+			.orElseThrow(() -> new RecursoNaoEncontradoException("lote", loteId));
 	}
 
 	@Transactional(readOnly = true)

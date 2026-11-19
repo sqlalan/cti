@@ -41,7 +41,7 @@ O código do back-end fica em `backend/src/main/java/br/com/cti/insights/` e seg
 | Pacote | Papel |
 | --- | --- |
 | `controller` | Porta HTTP. Recebe o JSON ou o arquivo e devolve a resposta com o status certo. Aqui também fica o `ErroHandler`, que transforma cada erro numa resposta JSON clara. |
-| `service` | Regras de negócio: e-mail único, login, revalidação do envio (`UploadService`), chamada ao Python (`PythonEtlService`), leitura do dashboard e a `Telemetria` de cada envio e de cada execução do Python (`TelemetriaService`). |
+| `service` | Regras de negócio: e-mail único, login, revalidação do envio (`UploadService`), chamada ao Python (`PythonEtlService`) e leitura do dashboard. Como na aula 12, o Java só grava a tabela `usuario`: a `Telemetria` de cada envio e de cada execução quem grava é o Python (`banco.registrar_telemetria`). |
 | `repository` | Acesso ao banco com Spring Data JPA. |
 | `model` | Entidades: `Cliente`, `Consultor`, `Segmento`, `Contrato`, `Servico`, `UploadLote`, `EstatisticaLote`, `Insight` (com subclasses), `Telemetria` e `Usuario`. |
 | `dto` | O que entra e sai da API, com as validações declarativas (`@NotBlank`, `@Positive`, `@Pattern`...). `ClienteDTO` é uma linha da planilha; os `...RespostaDTO` são o que a API devolve. A senha nunca sai. |
@@ -72,7 +72,7 @@ uvicorn api:app --port 8000                # confira http://localhost:8000/saude
 
 Relatório em arquivos, sem banco: `python relatorio.py` lê `amostras/lote_exemplo.json` e gera em `output/` o `indicadores.json` (com os testes de Shapiro-Wilk e qui-quadrado), o `insights.json` e os 4 gráficos (linha, dispersão, histograma e boxplot).
 
-Sem o Python no ar, nada é gravado: a tela avisa que o processamento está indisponível e o motivo técnico ("Não foi possível falar com o serviço Python") fica no log e na tabela `telemetria`. Para testar só o Python, sem banco: `http://localhost:8000/docs` > `POST /testar` com o conteúdo de `amostras/clientes.json`. Para ver os lotes gravados sem abrir o DBeaver: `GET /lotes` (desafio da aula 12).
+Sem o Python no ar, nada é gravado: a tela avisa que o processamento está indisponível e o motivo técnico ("Não foi possível falar com o serviço Python") fica no log do backend. Para testar só o Python, sem banco: `http://localhost:8000/docs` > `POST /testar` com o conteúdo de `amostras/clientes.json`. Para ver os lotes gravados sem abrir o DBeaver: `GET /lotes` (desafio da aula 12).
 
 **Banco que já existia antes da aula 11:** rode [`database/migracao-aula11.sql`](database/migracao-aula11.sql) uma vez (no DBeaver) **antes** de subir o back-end novo. Ele renomeia `clientes`, `contratos`, `consultores` e `servicos` para os nomes que o `banco.py` usa, sem perder dados.
 

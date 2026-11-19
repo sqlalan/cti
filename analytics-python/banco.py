@@ -39,6 +39,20 @@ def criar_lote(engine: Engine, arquivo_nome: str, recebidas: int, validas: int, 
         }).scalar_one()                                                             # devolve o id do lote criado
 
 
+def registrar_telemetria(engine: Engine, evento: str, sucesso: bool, registros: int | None,  # registrar_telemetria: grava um evento (Plano PI: Telemetria)
+                         duracao_ms: int, mensagem: str) -> None:
+    """Uma linha na tabela telemetria. Falhar aqui não pode derrubar o processamento."""
+    try:                                                                            # tenta gravar
+        with engine.begin() as conn:                                                # transação própria: fica gravado mesmo se o lote der erro
+            conn.execute(text("""
+                INSERT INTO telemetria (evento, sucesso, registros_processados, duracao_ms, mensagem, data_hora)
+                VALUES (:evento, :sucesso, :registros, :duracao, :mensagem, :data)
+            """), {"evento": evento, "sucesso": sucesso, "registros": registros, "duracao": duracao_ms,
+                    "mensagem": mensagem[:500], "data": agora_utc()})               # mensagem limitada a 500 caracteres
+    except Exception:  # noqa: BLE001 - telemetria é registro auxiliar
+        log.exception("Não foi possível gravar a telemetria (%s)", evento)          # só avisa no terminal
+
+
 def marcar_erro(engine: Engine, lote_id: int, mensagem: str) -> None:               # marcar_erro: grava ERRO no lote
     with engine.begin() as conn:                                                    # abre uma transação
         conn.execute(text("UPDATE upload_lote SET status = 'ERRO', mensagem = :m WHERE id = :id"),  # SQL: status ERRO e a mensagem

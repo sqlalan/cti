@@ -7,11 +7,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import br.com.cti.insights.model.EstatisticaLote;
-import br.com.cti.insights.model.Telemetria;
 import br.com.cti.insights.model.StatusLote;
 import br.com.cti.insights.model.UploadLote;
 import br.com.cti.insights.repository.EstatisticaLoteRepository;
-import br.com.cti.insights.repository.TelemetriaRepository;
 import br.com.cti.insights.repository.UploadLoteRepository;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,12 +45,8 @@ class UploadControllerTests {
 	@Autowired
 	private EstatisticaLoteRepository estatisticas;
 
-	@Autowired
-	private TelemetriaRepository telemetria;
-
 	@BeforeEach
 	void limpar() {
-		telemetria.deleteAll();
 		estatisticas.deleteAll();
 		lotes.deleteAll();
 	}
@@ -63,7 +57,7 @@ class UploadControllerTests {
 	}
 
 	// Teste de falha: sem o Python no ar (porta 1, application.properties de teste) nada e gravado e a
-	// tela recebe 503 com uma mensagem sem nome de tecnologia. O motivo tecnico vai para a telemetria.
+	// tela recebe 503 com uma mensagem sem nome de tecnologia. O motivo tecnico vai para o log.
 	@Test
 	void pythonDesligadoDevolve503ENaoGravaLote() throws Exception {
 		mockMvc
@@ -75,16 +69,6 @@ class UploadControllerTests {
 			.andExpect(jsonPath("$.mensagem")
 				.value("O processamento está indisponível no momento. Tente enviar de novo em alguns minutos."));
 		assertThat(lotes.count()).isZero();
-
-		assertThat(telemetria.findAll()).anySatisfy(t -> {
-			assertThat(t.getEvento()).isEqualTo(Telemetria.EXECUCAO_SCRIPT);
-			assertThat(t.isSucesso()).isFalse();
-			assertThat(t.getMensagem()).startsWith("Não foi possível falar com o serviço Python em");
-		});
-		assertThat(telemetria.findAll()).anySatisfy(t -> {
-			assertThat(t.getEvento()).isEqualTo(Telemetria.UPLOAD_PLANILHA);
-			assertThat(t.isSucesso()).isFalse();
-		});
 	}
 
 	@Test
@@ -95,13 +79,6 @@ class UploadControllerTests {
 			.andExpect(status().isBadRequest())
 			.andExpect(jsonPath("$.erro").value("Código repetido na planilha: CTI001"));
 		assertThat(lotes.count()).isZero();
-
-		// A falha tambem fica registrada, mesmo com o envio desfeito.
-		assertThat(telemetria.findAll()).anySatisfy(t -> {
-			assertThat(t.getEvento()).isEqualTo(Telemetria.UPLOAD_PLANILHA);
-			assertThat(t.isSucesso()).isFalse();
-			assertThat(t.getMensagem()).contains("Código repetido");
-		});
 	}
 
 	@Test

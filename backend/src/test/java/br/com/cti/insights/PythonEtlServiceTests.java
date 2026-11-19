@@ -7,9 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import br.com.cti.insights.model.StatusLote;
-import br.com.cti.insights.model.Telemetria;
 import br.com.cti.insights.model.UploadLote;
-import br.com.cti.insights.repository.TelemetriaRepository;
 import br.com.cti.insights.repository.UploadLoteRepository;
 import com.jayway.jsonpath.JsonPath;
 import com.sun.net.httpserver.HttpServer;
@@ -54,9 +52,6 @@ class PythonEtlServiceTests {
 
 	@Autowired
 	private UploadLoteRepository lotes;
-
-	@Autowired
-	private TelemetriaRepository telemetria;
 
 	record Pedido(String chave, String corpo) {
 	}
@@ -106,7 +101,6 @@ class PythonEtlServiceTests {
 	void preparar() {
 		banco = lotes;
 		PEDIDOS.clear();
-		telemetria.deleteAll();
 	}
 
 	@Test
@@ -151,18 +145,6 @@ class PythonEtlServiceTests {
 			.isEqualTo("Internet Dedicada;Firewall");
 		assertThat((String) JsonPath.read(json, "$.linhas[0].data_contratacao")).isEqualTo("2025-01-15");
 		assertThat((Object) JsonPath.read(json, "$.linhas[1].cidade")).isNull();
-
-		// Plano PI: a Telemetria registra o envio da planilha e a execucao do Python.
-		assertThat(telemetria.findAll()).anySatisfy(t -> {
-			assertThat(t.getEvento()).isEqualTo(Telemetria.EXECUCAO_SCRIPT);
-			assertThat(t.isSucesso()).isTrue();
-			assertThat(t.getMensagem()).isEqualTo("Lote " + id + " processado pelo Python");
-		});
-		assertThat(telemetria.findAll()).anySatisfy(t -> {
-			assertThat(t.getEvento()).isEqualTo(Telemetria.UPLOAD_PLANILHA);
-			assertThat(t.isSucesso()).isTrue();
-			assertThat(t.getRegistrosProcessados()).isEqualTo(2);
-		});
 	}
 
 	@Test
@@ -176,12 +158,6 @@ class PythonEtlServiceTests {
 			.andExpect(status().isBadGateway())
 			.andExpect(jsonPath("$.mensagem").value(
 					"Não foi possível processar esta planilha. Tente enviar de novo em alguns minutos; se continuar, avise o suporte."));
-
-		assertThat(telemetria.findAll()).anySatisfy(t -> {
-			assertThat(t.getEvento()).isEqualTo(Telemetria.EXECUCAO_SCRIPT);
-			assertThat(t.isSucesso()).isFalse();
-			assertThat(t.getMensagem()).startsWith("O serviço Python respondeu 500:");
-		});
 	}
 
 }

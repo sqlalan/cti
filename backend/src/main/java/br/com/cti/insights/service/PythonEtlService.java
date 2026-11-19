@@ -3,7 +3,6 @@ package br.com.cti.insights.service;                        // pacote desta clas
 import br.com.cti.insights.config.AppProperties;                                   // import: configurações (endereço e chave do Python)
 import br.com.cti.insights.dto.ClienteDTO;                                          // import: uma linha da planilha, já validada
 import br.com.cti.insights.exception.ProcessamentoException;                        // import: erro com o código HTTP para a tela
-import br.com.cti.insights.model.Telemetria;                                        // import: nomes dos eventos de telemetria
 import tools.jackson.databind.JsonNode;                                             // import: JSON já lido (árvore de campos)
 import tools.jackson.databind.ObjectMapper;                                         // import: ObjectMapper transforma objetos Java em texto JSON (Jackson 3, o do Spring Boot 4)
 import java.io.IOException;                                                         // import: erro de entrada/saída
@@ -26,14 +25,14 @@ import org.springframework.stereotype.Service;                                  
 
 /**
  * ENVIA as linhas válidas para o serviço Python (aula 12). O Python cria o lote, limpa, calcula e
- * GRAVA no banco; o Java só espera a resposta {"ok": true, "loteId": ...}.
+ * GRAVA no banco (inclusive a telemetria); o Java só espera a resposta {"ok": true, "loteId": ...}.
  * É um POST HTTP com o JSON em ETL_URL (padrão http://localhost:8000/etl).
  */
 @Service                                                                            // serviço do Spring
 public class PythonEtlService {                                                     // CHAMA O PYTHON com as linhas aprovadas
     private static final Logger log = LoggerFactory.getLogger(PythonEtlService.class);  // logger desta classe
 
-    // Mensagens para a tela, sem nome de tecnologia; o motivo técnico vai para o log e a telemetria.
+    // Mensagens para a tela, sem nome de tecnologia; o motivo técnico vai para o log.
     static final String INDISPONIVEL = "O processamento está indisponível no momento. Tente enviar de novo em alguns minutos.";
     static final String FALHOU = "Não foi possível processar esta planilha. Tente enviar de novo em alguns minutos; se continuar, avise o suporte.";
 
@@ -41,19 +40,15 @@ public class PythonEtlService {                                                 
     private final String chave;                                                     // chave combinada com o Python (ETL_KEY; vazia = sem chave)
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();  // cliente HTTP (espera até 10 s para conectar)
     private final ObjectMapper json;                                                // transforma o pedido em JSON e lê a resposta
-    private final TelemetriaService telemetria;                                     // registra cada chamada ao Python (Plano PI: Telemetria)
-
-    public PythonEtlService(AppProperties props, ObjectMapper json, TelemetriaService telemetria) {  // construtor: o Spring entrega as peças
+    public PythonEtlService(AppProperties props, ObjectMapper json) {                // construtor: o Spring entrega as peças
         this.url = props.etl() == null || props.etl().url() == null || props.etl().url().isBlank()  // endereço não configurado?
                 ? "http://localhost:8000/etl" : props.etl().url().trim();           // usa o padrão; senão o configurado
         this.chave = props.etl() == null || props.etl().key() == null ? "" : props.etl().key().trim();  // lê a chave (pode ser vazia)
         this.json = json;                                                           // guarda o conversor de JSON
-        this.telemetria = telemetria;                                               // guarda o registro de telemetria
     }                                                                               // fecha o bloco
 
     /** Manda as linhas ao Python e devolve o id do lote que ele criou. */
     public Long enviar(String arquivoNome, int recebidas, int invalidas, int comAviso, List<ClienteDTO> linhas) {  // enviar: monta o pedido e espera o Python
-        long inicio = System.nanoTime();                                            // início, para a duração na telemetria
         List<Map<String, Object>> validas = new ArrayList<>();                      // lista das linhas válidas
         for (int i = 0; i < linhas.size(); i++) {                                   // para cada linha aprovada
             ClienteDTO c = linhas.get(i);                                           // a linha
@@ -88,24 +83,23 @@ public class PythonEtlService {                                                 
             if (!chave.isEmpty()) req.header("X-ETL-Key", chave);                   // envia a "senha" combinada entre o Java e o Python
             HttpResponse<String> resp = http.send(req.build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));  // dispara e espera o Python responder
             if (resp.statusCode() != 200) {                                         // o Python respondeu erro?
-                throw falha("O serviço Python respondeu " + resp.statusCode() + ": " + resp.body(), HttpStatus.BAD_GATEWAY, FALHOU, inicio);  // a tela mostra a mensagem amigável
+                throw falha("O serviço Python respondeu " + resp.statusCode() + ": " + resp.body(), HttpStatus.BAD_GATEWAY, FALHOU);  // a tela mostra a mensagem amigável
             }                                                                       // fecha o bloco
             JsonNode corpo = json.readTree(resp.body());                            // lê a resposta {"ok": true, "loteId": 3}
             Long loteId = corpo.path("loteId").asLong();                            // id do lote que o Python criou
-            telemetria.registrar(Telemetria.EXECUCAO_SCRIPT, true, validas.size(), inicio, "Lote " + loteId + " processado pelo Python");  // registra a execução que deu certo
+            log.info("Lote {} processado pelo Python", loteId);                     // escreve no terminal
             return loteId;                                                          // devolve o id para a tela acompanhar
         } catch (IOException e) {                                                   // não conseguiu falar com o Python (serviço desligado?)
             throw falha("Não foi possível falar com o serviço Python em " + url + " (ele está ligado? uvicorn api:app --port 8000).",
-                    HttpStatus.SERVICE_UNAVAILABLE, INDISPONIVEL, inicio);          // 503: serviço indisponível
+                    HttpStatus.SERVICE_UNAVAILABLE, INDISPONIVEL);                  // 503: serviço indisponível
         } catch (InterruptedException e) {                                          // thread interrompida
             Thread.currentThread().interrupt();                                     // restaura o sinal de interrupção
-            throw falha("Envio ao Python interrompido.", HttpStatus.SERVICE_UNAVAILABLE, INDISPONIVEL, inicio);  // 503
+            throw falha("Envio ao Python interrompido.", HttpStatus.SERVICE_UNAVAILABLE, INDISPONIVEL);  // 503
         }                                                                           // fecha o bloco
     }                                                                               // fecha o bloco
 
-    private ProcessamentoException falha(String motivo, HttpStatus status, String mensagem, long inicio) {  // falha: registra o motivo técnico e monta o erro da tela
+    private ProcessamentoException falha(String motivo, HttpStatus status, String mensagem) {  // falha: registra o motivo técnico e monta o erro da tela
         log.error("ETL de planilha: {}", motivo);                                   // registra no terminal
-        telemetria.registrar(Telemetria.EXECUCAO_SCRIPT, false, null, inicio, motivo);  // registra a execução que falhou
         return new ProcessamentoException(status, mensagem);                        // erro com a mensagem amigável
     }                                                                               // fecha o bloco
 }                                                                                   // fecha o bloco

@@ -4,7 +4,7 @@ import org.springframework.http.HttpStatus;
 
 /**
  * O serviço de processamento (Python) não respondeu ou falhou. A mensagem é para quem usa a tela;
- * o motivo técnico fica no log e na telemetria.
+ * o motivo técnico fica no log do backend.
  */
 public class ProcessamentoException extends RuntimeException {
 
