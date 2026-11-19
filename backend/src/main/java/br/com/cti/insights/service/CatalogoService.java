@@ -2,15 +2,17 @@ package br.com.cti.insights.service;
 
 import br.com.cti.insights.exception.MatriculaDuplicadaException;
 import br.com.cti.insights.model.Consultor;
+import br.com.cti.insights.model.Segmento;
 import br.com.cti.insights.model.Servico;
 import br.com.cti.insights.repository.ConsultorRepository;
+import br.com.cti.insights.repository.SegmentoRepository;
 import br.com.cti.insights.repository.ServicoRepository;
 import java.util.Locale;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Consultores e servicos chegam pelo nome, como na planilha: acha o existente (sem diferenciar
+ * Consultores, segmentos e servicos chegam pelo nome, como na planilha: acha o existente (sem diferenciar
  * maiusculas) ou cadastra. Regra unica para cliente, usuario e importacao.
  */
 @Service
@@ -19,10 +21,14 @@ public class CatalogoService {
 
 	private final ConsultorRepository consultorRepository;
 
+	private final SegmentoRepository segmentoRepository;
+
 	private final ServicoRepository servicoRepository;
 
-	public CatalogoService(ConsultorRepository consultorRepository, ServicoRepository servicoRepository) {
+	public CatalogoService(ConsultorRepository consultorRepository, SegmentoRepository segmentoRepository,
+			ServicoRepository servicoRepository) {
 		this.consultorRepository = consultorRepository;
+		this.segmentoRepository = segmentoRepository;
 		this.servicoRepository = servicoRepository;
 	}
 
@@ -45,6 +51,11 @@ public class CatalogoService {
 				throw new MatriculaDuplicadaException(normalizada);
 			});
 		consultor.setMatricula(normalizada);
+	}
+
+	public Segmento segmentoPorNome(String nome) {
+		return segmentoRepository.findByNomeIgnoreCase(nome.trim())
+			.orElseGet(() -> segmentoRepository.save(new Segmento(nome)));
 	}
 
 	public Servico servicoPorNome(String nome) {

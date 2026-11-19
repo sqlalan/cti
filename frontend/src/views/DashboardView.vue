@@ -1,6 +1,6 @@
 <script setup>
 // DashboardView.vue — gráficos com os dados que o Python calculou e o banco Azure guardou.
-import { computed, onBeforeUnmount, onMounted, reactive } from 'vue' // reactive: objeto reativo só desta tela
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue' // reactive: objeto reativo só desta tela
 import { dashboardService, mensagemDeErro } from '../services/api' // chamada ao backend (sem store: só esta tela usa)
 import { useUploadStore } from '../stores/uploadStore' // para abrir o lote recém-enviado
 import { explicarLote } from '../dados/lote' // situação do lote sem termos técnicos
@@ -11,10 +11,13 @@ import TestesEstatisticos from '../components/TestesEstatisticos.vue' // Shapiro
 
 const moeda = (n) => (n == null ? '—' : Number(n).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })) // 1500 -> R$ 1.500,00
 const numero = (n) => (n == null ? '—' : Number(n).toLocaleString('pt-BR', { maximumFractionDigits: 2 })) // 1234.5 -> 1.234,5
+const dataHora = (t) => (t ? new Date(t).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '—') // 28/10/2026 17:05
+const SITUACAO = { PROCESSANDO: 'Processando', PROCESSADO: 'Processado', ERRO: 'Erro' } // status do lote na caixa de escolha
 
 const dash = reactive({ // dados só desta tela (por isso não precisa de Pinia)
   lote: null, // o lote mostrado (status, totais)
   estatisticas: null, // JSON do Python (null enquanto o ETL não terminou)
+  lotes: [], // os últimos lotes gravados no banco (para a caixa de escolha)
   erro: '', // mensagem de erro
   carregando: false, // true durante a busca
   async carregar(loteId) { // GET /api/dashboard
@@ -28,8 +31,12 @@ const dash = reactive({ // dados só desta tela (por isso não precisa de Pinia)
       this.carregando = false
     }
   },
+  async carregarLotes() { // GET /api/dashboard/lotes
+    try { this.lotes = await dashboardService.lotes() } catch { this.lotes = [] } // se falhar, a caixa fica vazia
+  },
 })
 const upload = useUploadStore() // acesso ao upload
+const escolhido = ref(upload.lote?.id ?? '') // lote escolhido na caixa ('' = o mais recente processado)
 const d = computed(() => dash.estatisticas) // atalho: d.value.resumo, d.value.porSegmento...
 let relogio = null // guarda o timer de atualização
 
@@ -39,6 +46,7 @@ const niv = computed(() => d.value?.porNivel ?? []) // clientes por nível
 const con = computed(() => d.value?.porConsultor ?? []) // faturamento por consultor
 const ser = computed(() => d.value?.porServico ?? []) // serviços mais contratados
 const mes = computed(() => d.value?.porMes ?? []) // contratações por mês
+const top = computed(() => d.value?.topClientes ?? []) // os 5 maiores clientes
 
 // A interpretação dos testes já aparece no quadro deles; aqui fica só o resto, para não repetir a frase.
 const frasesTestes = computed(() => Object.values(d.value?.testes ?? {}).map((t) => t.interpretacao))
@@ -48,22 +56,39 @@ const insights = computed(() => (d.value?.insights ?? []).filter((f) => !frasesT
 const CORES_NIVEL = { claro: ['#194675', '#3f77c4', '#7fb0e8'], escuro: ['#8fbdf0', '#4f8bd6', '#2a5c94'] }
 
 async function buscar() { // pede os dados ao Spring
-  await dash.carregar(upload.lote?.id) // se acabou de enviar, usa esse lote; senão o último processado
-  const esperando = ['AGUARDANDO_ETL', 'PROCESSANDO'].includes(dash.lote?.status) // o Python ainda não terminou (ERRO não espera)
+  await dash.carregar(escolhido.value || undefined) // sem escolha: o Spring devolve o último lote PROCESSADO
+  const esperando = dash.lote?.status === 'PROCESSANDO' // o Python ainda não terminou (ERRO não espera)
   if (esperando && !relogio) relogio = setInterval(buscar, 5000) // pergunta de novo a cada 5 s
   if (!esperando && relogio) { clearInterval(relogio); relogio = null } // terminou: para o timer
 }
 
-onMounted(buscar) // busca ao abrir a tela
+async function trocarLote() { // a pessoa escolheu outro lote na caixa
+  if (relogio) { clearInterval(relogio); relogio = null } // para o timer antigo
+  await buscar() // busca o lote escolhido
+}
+
+onMounted(async () => { await dash.carregarLotes(); await buscar() }) // ao abrir: lista os lotes e mostra o escolhido
 onBeforeUnmount(() => relogio && clearInterval(relogio)) // limpa o timer ao sair
 </script>
 
 <template>
   <section>
-    <h1 class="mb-1 text-2xl font-bold text-ink-900 dark:text-mist-100">Gráficos da carteira</h1>
-    <p v-if="dash.lote" class="mb-4 flex flex-wrap items-center gap-2 text-sm text-ink-600 dark:text-mist-300">
-      Lote {{ dash.lote.id }} · {{ dash.lote.arquivoNome }} <StatusBadge :status="dash.lote.status" />
-    </p>
+    <div class="mb-4 flex flex-wrap items-end justify-between gap-3"> <!-- título à esquerda, caixa de escolha à direita -->
+      <div class="min-w-0">
+        <h1 class="mb-1 text-2xl font-bold text-ink-900 dark:text-mist-100">Gráficos da carteira</h1>
+        <p v-if="dash.lote" class="flex flex-wrap items-center gap-2 text-sm text-ink-600 dark:text-mist-300">
+          <span class="min-w-0 break-all">Lote {{ dash.lote.id }} · {{ dash.lote.arquivoNome }} · enviado em {{ dataHora(dash.lote.enviadoEm) }}</span>
+          <StatusBadge :status="dash.lote.status" />
+        </p>
+      </div>
+      <label v-if="dash.lotes.length" class="flex w-full flex-col gap-1 text-sm text-ink-600 sm:w-72 dark:text-mist-300"> <!-- caixa de escolha do lote -->
+        Planilha (lote)
+        <select v-model="escolhido" class="w-full rounded border border-ink-200 bg-white px-3 py-2 text-ink-900 dark:border-night-700 dark:bg-night-900 dark:text-mist-100" @change="trocarLote">
+          <option value="">Mais recente processado</option>
+          <option v-for="l in dash.lotes" :key="l.id" :value="l.id">#{{ l.id }} · {{ l.arquivoNome }} · {{ SITUACAO[l.status] ?? l.status }}</option>
+        </select>
+      </label>
+    </div>
 
     <p v-if="dash.erro" class="rounded border border-warn-500 bg-warn-500/10 p-3 text-sm text-ink-900 dark:bg-warn-500/15 dark:text-mist-100">{{ dash.erro }} <RouterLink :to="{ name: 'upload' }" class="font-semibold text-brand-800 underline dark:text-brand-300">Enviar planilha</RouterLink></p>
     <p v-else-if="dash.carregando && !d" class="text-sm text-ink-600 dark:text-mist-300">Carregando...</p>
@@ -99,6 +124,22 @@ onBeforeUnmount(() => relogio && clearInterval(relogio)) // limpa o timer ao sai
         <div class="min-w-0 rounded border border-ink-200 bg-white p-4 shadow-cartao dark:border-night-700 dark:bg-night-900 lg:col-span-2">
           <h2 class="mb-2 font-semibold text-ink-900 dark:text-mist-100">Contratações por mês</h2>
           <BaseChart tipo="line" titulo="Clientes" :rotulos="mes.map((x) => x.mes)" :valores="mes.map((x) => x.clientes)" />
+        </div>
+      </div>
+
+      <div v-if="top.length" class="mt-6 min-w-0 rounded border border-ink-200 bg-white p-4 shadow-cartao dark:border-night-700 dark:bg-night-900"> <!-- os 5 maiores clientes -->
+        <h2 class="mb-2 font-semibold text-ink-900 dark:text-mist-100">Maiores clientes</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[34rem] text-sm">
+            <thead class="border-b border-ink-200 text-left text-ink-600 dark:border-night-700 dark:text-mist-300">
+              <tr><th class="p-2 font-semibold">Código</th><th class="p-2 font-semibold">Cliente</th><th class="p-2 font-semibold">Segmento</th><th class="p-2 font-semibold">Nível</th><th class="p-2 text-right font-semibold">Faturamento anual</th></tr>
+            </thead>
+            <tbody class="text-ink-900 dark:text-mist-100">
+              <tr v-for="c in top" :key="c.codigo" class="border-t border-ink-200/60 dark:border-night-700/60">
+                <td class="p-2 tabular-nums">{{ c.codigo }}</td><td class="p-2">{{ c.nome }}</td><td class="p-2">{{ c.segmento }}</td><td class="p-2">{{ c.nivel }}</td><td class="p-2 text-right tabular-nums">{{ moeda(c.faturamento) }}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 

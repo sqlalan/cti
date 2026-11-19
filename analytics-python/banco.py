@@ -1,4 +1,4 @@
-"""Banco: GRAVA no PostgreSQL (Azure) os clientes, contratos e o JSON do dashboard. As linhas chegam do backend."""
+"""Banco: único arquivo que fala com o PostgreSQL (Neon ou Azure). Cria o lote e grava clientes, contratos e o JSON do dashboard."""
 from __future__ import annotations                                                  # recurso do Python para tipos mais flexíveis
 
 import json                                                                         # json: transforma dicionário em texto JSON
@@ -24,14 +24,19 @@ def agora_utc() -> datetime:                                                    
 
 
 # ------------------------------------------------------------------- gravação
-def reservar_lote(engine: Engine, lote_id: int, so_pendente: bool) -> bool:         # reservar_lote: marca PROCESSANDO para ninguém rodar duas vezes
-    """Marca PROCESSANDO. Com so_pendente=True só pega lotes AGUARDANDO_ETL (evita dois ETLs no mesmo lote)."""
-    filtro = "status = 'AGUARDANDO_ETL'" if so_pendente else "status NOT IN ('PROCESSANDO', 'REJEITADO')"  # escolhe a condição do UPDATE
+def criar_lote(engine: Engine, arquivo_nome: str, recebidas: int, validas: int,     # criar_lote: grava o lote (a planilha enviada) com status PROCESSANDO
+               invalidas: int, com_aviso: int) -> int:
+    """Cria o lote em upload_lote e devolve o id. Fica gravado mesmo se o resto der erro (aí vira ERRO)."""
     with engine.begin() as conn:                                                    # abre uma transação (confirma ao sair do bloco)
-        r = conn.execute(                                                           # executa o UPDATE
-            text(f"UPDATE upload_lote SET status = 'PROCESSANDO', mensagem = 'ETL em andamento...' "  # troca o status para PROCESSANDO
-                 f"WHERE id = :id AND {filtro}"), {"id": lote_id})                  # só se o lote estiver no status esperado
-        return r.rowcount == 1                                                      # true se exatamente 1 lote foi alterado
+        return conn.execute(text("""
+            INSERT INTO upload_lote (arquivo_nome, enviado_em, status, total_linhas, linhas_validas,
+                                     linhas_invalidas, linhas_com_aviso, mensagem)
+            VALUES (:arquivo, :enviado, 'PROCESSANDO', :total, :validas, :invalidas, :aviso, 'Processando...')
+            RETURNING id
+        """), {
+            "arquivo": (arquivo_nome or "planilha")[:255], "enviado": datetime.now(timezone.utc),  # nome do arquivo e data/hora do envio
+            "total": recebidas, "validas": validas, "invalidas": invalidas, "aviso": com_aviso,  # contagens da planilha
+        }).scalar_one()                                                             # devolve o id do lote criado
 
 
 def marcar_erro(engine: Engine, lote_id: int, mensagem: str) -> None:               # marcar_erro: grava ERRO no lote
@@ -42,16 +47,13 @@ def marcar_erro(engine: Engine, lote_id: int, mensagem: str) -> None:           
 
 # ------------------------------------------------------------------------ carga
 def gravar_resultado(engine: Engine, lote_id: int, tratado: pd.DataFrame, payload: dict, rejeitadas_etl: int) -> None:  # gravar_resultado: grava clientes, contratos e o JSON
-    """Grava tudo em uma única transação: ou o lote inteiro é processado, ou nada muda."""
+    """Grava tudo em uma única transação: ou o lote inteiro é processado, ou nada muda (COMMIT ou ROLLBACK)."""
     with engine.begin() as conn:                                                    # uma transação só: ou grava tudo ou nada
-        # reprocessar o mesmo lote substitui o resultado anterior
-        conn.execute(text("DELETE FROM cliente WHERE lote_id = :l"), {"l": lote_id})   # contratos saem em cascata
-        conn.execute(text("DELETE FROM estatistica_lote WHERE lote_id = :l"), {"l": lote_id})  # apaga as estatísticas antigas
-
         consultores: dict[str, int] = {}                                            # cache: nome do consultor -> id
+        segmentos: dict[str, int] = {}                                              # cache: nome do segmento -> id
         servicos: dict[str, int] = {}                                               # cache: nome do serviço -> id
 
-        def id_de(tabela: str, nome: str, cache: dict[str, int]) -> int:            # id_de: acha ou cria um consultor/serviço e devolve o id
+        def id_de(tabela: str, nome: str, cache: dict[str, int]) -> int:            # id_de: acha ou cria um consultor/segmento/serviço e devolve o id
             if nome not in cache:                                                   # se ainda não está no cache
                 conn.execute(text(f"INSERT INTO {tabela} (nome) VALUES (:n) ON CONFLICT (nome) DO NOTHING"), {"n": nome})  # insere (ignora se já existe)
                 cache[nome] = conn.execute(text(f"SELECT id FROM {tabela} WHERE nome = :n"), {"n": nome}).scalar_one()  # busca o id e guarda no cache
@@ -59,13 +61,14 @@ def gravar_resultado(engine: Engine, lote_id: int, tratado: pd.DataFrame, payloa
 
         for r in tratado.itertuples(index=False):                                   # para cada cliente tratado
             cliente_id = conn.execute(text("""
-                INSERT INTO cliente (lote_id, codigo_cti, nome, consultor_id, segmento, nivel, faturamento_anual, cidade, uf)
+                INSERT INTO cliente (lote_id, codigo_cti, nome, consultor_id, segmento_id, nivel, faturamento_anual, cidade, uf)
                 VALUES (:lote, :codigo, :nome, :consultor, :segmento, :nivel, :fat, :cidade, :uf)
                 RETURNING id
             """), {
                 "lote": lote_id, "codigo": r.codigo_cliente[:60], "nome": r.nome_cliente[:255],  # código e nome (cortados no tamanho da coluna)
                 "consultor": id_de("consultor", r.consultor[:120], consultores),    # consultor vira id
-                "segmento": r.segmento[:40], "nivel": r.nivel_cliente, "fat": round(float(r.faturamento_anual), 2),  # segmento, nível e faturamento com 2 casas
+                "segmento": id_de("segmento", r.segmento[:60], segmentos),          # segmento vira id (sem repetir)
+                "nivel": r.nivel_cliente, "fat": round(float(r.faturamento_anual), 2),  # nível e faturamento com 2 casas
                 "cidade": r.cidade[:120] if isinstance(r.cidade, str) else None,    # cidade (ou nulo)
                 "uf": r.uf if isinstance(r.uf, str) else None,                      # UF (ou nula)
             }).scalar_one()                                                         # fim do INSERT; devolve o id do cliente
@@ -83,5 +86,5 @@ def gravar_resultado(engine: Engine, lote_id: int, tratado: pd.DataFrame, payloa
             mensagem += f", {rejeitadas_etl} linhas recusadas na limpeza"           # acrescenta quantas
         conn.execute(text("UPDATE upload_lote SET status = 'PROCESSADO', mensagem = :m WHERE id = :id"),  # marca o lote como PROCESSADO
                      {"id": lote_id, "m": mensagem + "."})                          # com a mensagem de resumo
-    log.info("Lote %s gravado: %s clientes, %s consultores, %s serviços",           # escreve no terminal o resumo
-             lote_id, len(tratado), len(consultores), len(servicos))                # (continuação) contagens
+    log.info("Lote %s gravado: %s clientes, %s consultores, %s segmentos, %s serviços",  # escreve no terminal o resumo
+             lote_id, len(tratado), len(consultores), len(segmentos), len(servicos))  # (continuação) contagens

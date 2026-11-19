@@ -9,6 +9,7 @@ import br.com.cti.insights.exception.EmailDuplicadoException;
 import br.com.cti.insights.exception.ExcelInvalidoException;
 import br.com.cti.insights.exception.LinhaInvalidaException;
 import br.com.cti.insights.exception.MatriculaDuplicadaException;
+import br.com.cti.insights.exception.ProcessamentoException;
 import br.com.cti.insights.exception.RecursoNaoEncontradoException;
 import br.com.cti.insights.exception.TentativasExcedidasException;
 import java.lang.reflect.Field;
@@ -130,6 +131,12 @@ public class ErroHandler {
 	@ExceptionHandler(CredenciaisInvalidasException.class)
 	public ResponseEntity<Map<String, Object>> credenciaisInvalidas(CredenciaisInvalidasException ex) {
 		return resposta(HttpStatus.UNAUTHORIZED, ex.getMessage());
+	}
+
+	// O Python nao respondeu (503) ou falhou (502): a planilha continua na tela para enviar de novo.
+	@ExceptionHandler(ProcessamentoException.class)
+	public ResponseEntity<Map<String, Object>> processamento(ProcessamentoException ex) {
+		return resposta(ex.getStatus(), ex.getMessage());
 	}
 
 	@ExceptionHandler(RecursoNaoEncontradoException.class)

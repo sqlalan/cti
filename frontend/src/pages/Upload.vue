@@ -169,19 +169,19 @@ const etapas = computed(() => {
 
   let envio = { situacao: 'pendente', detalhe: servidor?.status === 'aprovado' ? 'Aguardando o seu comando' : '' }
   if (estado === 'enviando') {
-    envio = { situacao: 'andamento', detalhe: `Gravando o lote… ${tempo(agora.value - planilha.inicioEnvio)}` }
+    envio = { situacao: 'andamento', detalhe: `Enviando as linhas validadas… ${tempo(agora.value - planilha.inicioEnvio)}` }
   } else if (estado === 'enviado') {
     envio = { situacao: 'feito', detalhe: `Lote ${planilha.lote?.id} · ${plural(planilha.lote?.linhasValidas ?? 0, 'linha gravada', 'linhas gravadas')}` }
   } else if (falhouEnvio.value) {
     envio = { situacao: 'erro', detalhe: 'Não concluído — motivo abaixo' }
   }
 
-  // O processamento roda depois da resposta do envio; a store pergunta o status do lote.
+  // O envio só responde depois do processamento (aula 12): enquanto envia, os dados já estão sendo processados.
   let python = { situacao: 'pendente', detalhe: '' }
-  if (planilha.etapaEtl === 'processando') {
+  if (estado === 'enviando' || planilha.etapaEtl === 'processando') {
     python = { situacao: 'andamento', detalhe: `Calculando os indicadores… ${tempo(agora.value - planilha.inicioEnvio)}` }
   } else if (planilha.etapaEtl === 'concluido') {
-    python = { situacao: 'feito', detalhe: 'Indicadores prontos no Dashboard' }
+    python = { situacao: 'feito', detalhe: 'Indicadores prontos em Gráficos' }
   } else if (planilha.etapaEtl === 'erro') {
     python = { situacao: 'erro', detalhe: 'Falhou — motivo abaixo' }
   }
@@ -457,9 +457,9 @@ async function processar() {
       </button>
     </p>
 
-    <!-- Depois do envio: o lote foi gravado e o Python processa em seguida. O
-         cartão muda sozinho de "processando" para "concluído" ou "falhou",
-         porque a store pergunta o status do lote a cada 2 segundos. -->
+    <!-- Depois do envio: o Python já criou e processou o lote. O cartão mostra
+         "concluído" ou "falhou"; se o lote ainda estiver processando, a store
+         pergunta o status a cada 2 segundos. -->
     <section
       class="mt-4 rounded border p-5 focus:outline-none"
       :class="{
@@ -541,10 +541,10 @@ async function processar() {
         </div>
         <p class="mt-3 text-sm text-ink-600 dark:text-mist-300">
           O sistema está organizando os dados, calculando os indicadores e salvando o resultado. Esta
-          tela atualiza sozinha; você pode sair dela, o resultado também aparece no Dashboard.
+          tela atualiza sozinha; você pode sair dela, o resultado também aparece em Gráficos.
         </p>
         <p class="mt-2 text-sm text-alerta-600 dark:text-alerta-400" v-if="planilha.semRespostaEtl">
-          Está demorando mais que o normal. Acompanhe pelo Dashboard; se não terminar, tente enviar de
+          Está demorando mais que o normal. Acompanhe em Gráficos; se não terminar, tente enviar de
           novo mais tarde ou avise o suporte.
         </p>
       </template>

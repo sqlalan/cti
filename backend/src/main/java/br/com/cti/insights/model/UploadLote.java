@@ -4,8 +4,8 @@ import jakarta.persistence.*;
 import java.time.Instant;
 
 /**
- * Um envio de planilha. O Spring grava as linhas validas e o Python atualiza o status e a mensagem
- * direto no banco (banco.py).
+ * Um envio de planilha. Quem cria e atualiza o lote é o Python (banco.py, aula 12); o Java só lê,
+ * para a tela de envio e o dashboard.
  */
 @Entity
 @Table(name = "upload_lote")
@@ -17,10 +17,6 @@ public class UploadLote {
 
 	@Column(name = "arquivo_nome", nullable = false)
 	private String arquivoNome;
-
-	// E-mail de quem enviou (subject do token).
-	@Column(name = "enviado_por", nullable = false, length = 180)
-	private String enviadoPor;
 
 	@Column(name = "enviado_em", nullable = false, updatable = false)
 	private Instant enviadoEm;
@@ -35,9 +31,13 @@ public class UploadLote {
 	@Column(name = "linhas_invalidas", nullable = false)
 	private int linhasInvalidas;
 
+	// Linhas boas que tinham algum aviso (ex.: segmento fora do dicionário).
+	@Column(name = "linhas_com_aviso", nullable = false)
+	private int linhasComAviso;
+
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false, length = 20)
-	private StatusLote status = StatusLote.AGUARDANDO_ETL;
+	private StatusLote status = StatusLote.PROCESSANDO;
 
 	@Column(length = 500)
 	private String mensagem;
@@ -45,13 +45,11 @@ public class UploadLote {
 	public UploadLote() {
 	}
 
-	public UploadLote(String arquivoNome, String enviadoPor, int totalLinhas, int linhasValidas) {
+	public UploadLote(String arquivoNome, int totalLinhas, int linhasValidas) {
 		this.arquivoNome = arquivoNome;
-		this.enviadoPor = enviadoPor;
 		this.totalLinhas = totalLinhas;
 		this.linhasValidas = linhasValidas;
 		this.linhasInvalidas = totalLinhas - linhasValidas;
-		this.mensagem = "Aguardando o serviço Python.";
 	}
 
 	@PrePersist
@@ -75,14 +73,6 @@ public class UploadLote {
 
 	public void setArquivoNome(String arquivoNome) {
 		this.arquivoNome = arquivoNome;
-	}
-
-	public String getEnviadoPor() {
-		return enviadoPor;
-	}
-
-	public void setEnviadoPor(String enviadoPor) {
-		this.enviadoPor = enviadoPor;
 	}
 
 	public Instant getEnviadoEm() {
@@ -115,6 +105,14 @@ public class UploadLote {
 
 	public void setLinhasInvalidas(int linhasInvalidas) {
 		this.linhasInvalidas = linhasInvalidas;
+	}
+
+	public int getLinhasComAviso() {
+		return linhasComAviso;
+	}
+
+	public void setLinhasComAviso(int linhasComAviso) {
+		this.linhasComAviso = linhasComAviso;
 	}
 
 	public StatusLote getStatus() {

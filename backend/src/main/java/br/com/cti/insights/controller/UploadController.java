@@ -4,7 +4,6 @@ import br.com.cti.insights.dto.ClienteDTO;
 import br.com.cti.insights.dto.UploadLoteDTO;
 import br.com.cti.insights.service.UploadService;
 import java.net.URI;
-import java.security.Principal;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,14 +23,15 @@ public class UploadController {
 		this.service = service;
 	}
 
-	// POST /api/uploads/validadas?arquivo=dados.xlsx&recebidas=38 com as linhas do Pinia no corpo,
-	// no formato do ClienteDTO (aula 10). Responde com o lote em AGUARDANDO_ETL.
+	// POST /api/uploads/validadas?arquivo=dados.xlsx&recebidas=38&comAviso=2 com as linhas do Pinia no
+	// corpo, no formato do ClienteDTO (aula 10). O Java revalida e chama o Python, que cria o lote e grava
+	// tudo (aula 12). Responde com o lote ja processado (ou erro, se o Python nao respondeu).
 	// Sem @Valid aqui: o UploadService revalida na ordem da planilha (arquivo, colunas, linhas).
 	@PostMapping("/validadas")
 	public ResponseEntity<UploadLoteDTO> enviarValidadas(@RequestParam(required = false) String arquivo,
-			@RequestParam(required = false) Integer recebidas, @RequestBody List<ClienteDTO> linhas,
-			Principal usuario) {
-		UploadLoteDTO lote = service.registrar(arquivo, recebidas, linhas, usuario.getName());
+			@RequestParam(required = false) Integer recebidas, @RequestParam(required = false) Integer comAviso,
+			@RequestBody List<ClienteDTO> linhas) {
+		UploadLoteDTO lote = service.registrar(arquivo, recebidas, comAviso, linhas);
 		return ResponseEntity.created(URI.create("/api/dashboard?loteId=" + lote.id())).body(lote);
 	}
 

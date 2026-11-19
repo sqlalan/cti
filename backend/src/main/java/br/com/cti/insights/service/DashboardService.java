@@ -9,6 +9,7 @@ import br.com.cti.insights.model.UploadLote;
 import br.com.cti.insights.repository.EstatisticaLoteRepository;
 import br.com.cti.insights.repository.UploadLoteRepository;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,12 +44,17 @@ public class DashboardService {
 				: lotes.findFirstByStatusOrderByIdDesc(StatusLote.PROCESSADO)
 					.or(lotes::findFirstByOrderByIdDesc)
 					.orElseThrow(() -> new RecursoNaoEncontradoException(
-							"Ainda não há lote processado: envie a planilha em Upload"));
+							"Nenhuma planilha foi processada ainda. Envie uma planilha para ver os gráficos."));
 
 		Optional<EstatisticaLote> resultado = estatisticas.findByLoteId(lote.getId());
 		return new DashboardDTO(UploadLoteDTO.de(lote),
 				resultado.map(e -> e.getGeradoEm().toInstant(ZoneOffset.UTC)).orElse(null),
 				resultado.map(e -> json.readTree(e.getResultado())).orElse(null));
+	}
+
+	/** Os ultimos 20 lotes, do mais novo para o mais antigo (caixa de escolha do dashboard). */
+	public List<UploadLoteDTO> listarLotes() {
+		return lotes.findTop20ByOrderByIdDesc().stream().map(UploadLoteDTO::de).toList();
 	}
 
 }

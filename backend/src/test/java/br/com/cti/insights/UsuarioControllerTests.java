@@ -175,7 +175,7 @@ class UsuarioControllerTests {
 	void adminDefinidoNoBancoRecebeOPerfilNoTokenENoMe() throws Exception {
 		cadastrar("otto@exemplo.com");
 		Usuario otto = usuarioRepository.findByEmailIgnoreCase("otto@exemplo.com").orElseThrow();
-		// O GUIA promove pelo DBeaver: UPDATE usuarios SET perfil = 'ADMIN' WHERE email = '...'
+		// O GUIA promove pelo DBeaver: UPDATE usuario SET perfil = 'ADMIN' WHERE email = '...'
 		otto.setPerfil(Perfil.ADMIN);
 		otto.setStatus(StatusUsuario.APROVADO);
 		usuarioRepository.save(otto);

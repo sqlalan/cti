@@ -12,6 +12,8 @@ public interface UploadLoteRepository extends JpaRepository<UploadLote, Long> {
 
 	Optional<UploadLote> findFirstByOrderByIdDesc();
 
+	List<UploadLote> findTop20ByOrderByIdDesc();
+
 	Optional<UploadLote> findFirstByStatusOrderByIdDesc(StatusLote status);
 
 }

@@ -140,8 +140,8 @@ export const useUploadStore = defineStore('upload', () => {
   // de LINHA mora em dadosInvalidos.
   const falha = ref('')
 
-  // O lote que o servidor gravou (status AGUARDANDO_ETL). O Python processa
-  // depois, em segundo plano; o Dashboard acompanha pelo id do lote.
+  // O lote que o Python criou e processou (aula 12): o envio só responde
+  // depois que o Python termina, então ele já chega PROCESSADO (ou o envio falha).
   const lote = ref(null)
   // Resumo que o Python calculou (média, clientes...), quando o lote termina.
   const resumoEtl = ref(null)
@@ -294,7 +294,7 @@ export const useUploadStore = defineStore('upload', () => {
     const status = lote.value?.status
     if (!status) return null
     if (status === 'PROCESSADO') return 'concluido'
-    if (status === 'ERRO' || status === 'REJEITADO') return 'erro'
+    if (status === 'ERRO') return 'erro'
     return 'processando'
   })
 
@@ -514,9 +514,9 @@ export const useUploadStore = defineStore('upload', () => {
   }
 
   // -------------------------------------------------------------------------
-  // Envio ao Spring Boot (POST /api/uploads/validadas, aula 11): só as linhas
-  // que o Pinia aprovou, em JSON. O servidor valida de novo, grava o lote e
-  // chama o Python (POST /etl), que limpa, calcula e grava no banco.
+  // Envio ao Spring Boot (POST /api/uploads/validadas): só as linhas que o
+  // Pinia aprovou, em JSON. O servidor valida de novo e chama o Python
+  // (POST /etl), que cria o lote, limpa, calcula e grava no banco (aula 12).
   // -------------------------------------------------------------------------
   async function enviar() {
     if (!podeEnviar.value) return false
@@ -531,7 +531,7 @@ export const useUploadStore = defineStore('upload', () => {
     duracaoEnvio.value = null
 
     const notificacao = abrirOperacao(
-      'Enviando ao servidor…',
+      'Enviando e processando…',
       `${nomeArquivo.value} · ${linhas(quantidadeValidas.value)} validadas`,
     )
 
@@ -539,6 +539,7 @@ export const useUploadStore = defineStore('upload', () => {
       const data = await uploadService.enviarValidadas(dadosValidos.value.map(paraClienteDTO), {
         arquivo: nomeArquivo.value,
         recebidas: quantidadeLinhas.value,
+        comAviso: linhasComAviso(),
       })
       lote.value = data
       duracaoEnvio.value = Date.now() - inicioEnvio.value
@@ -546,8 +547,8 @@ export const useUploadStore = defineStore('upload', () => {
 
       notificacoes.atualizar(notificacao, {
         tipo: 'progresso',
-        titulo: `Lote ${data.id} enviado · processando…`,
-        texto: `${linhas(data.linhasValidas)} gravadas. Os indicadores estão sendo calculados.`,
+        titulo: `Lote ${data.id} enviado`,
+        texto: `${linhas(data.linhasValidas)} gravadas. Buscando os indicadores…`,
       })
       acompanharLote(notificacao)
 
@@ -567,9 +568,16 @@ export const useUploadStore = defineStore('upload', () => {
     }
   }
 
+  // Linhas aprovadas que tinham algum aviso (uma linha conta uma vez).
+  function linhasComAviso() {
+    const aprovadas = new Set(dadosValidos.value.map((d) => d.linha))
+    return new Set(avisos.value.map((a) => a.linha).filter((l) => aprovadas.has(l))).size
+  }
+
   // -------------------------------------------------------------------------
-  // Acompanhamento do lote: o Python roda depois da resposta do envio, então a
-  // tela pergunta o status (GET /api/dashboard?loteId=) até ele terminar.
+  // Acompanhamento do lote: busca os indicadores do lote (GET /api/dashboard?loteId=).
+  // O envio já volta com o lote processado; se ainda estiver PROCESSANDO, pergunta
+  // de novo até terminar.
   // -------------------------------------------------------------------------
   const INTERVALO_ETL = 2000
   const LIMITE_ETL = 5 * 60 * 1000
@@ -595,7 +603,7 @@ export const useUploadStore = defineStore('upload', () => {
           notificacoes.atualizar(notificacao, {
             tipo: 'sucesso',
             titulo: 'Planilha processada',
-            texto: `Lote ${id}: ${linhas(resposta.lote.linhasValidas)} gravadas e indicadores prontos no Dashboard.`,
+            texto: `Lote ${id}: ${linhas(resposta.lote.linhasValidas)} gravadas e indicadores prontos em Gráficos.`,
           })
           return
         }
@@ -617,7 +625,7 @@ export const useUploadStore = defineStore('upload', () => {
       timerEtl = setTimeout(perguntar, INTERVALO_ETL)
     }
 
-    timerEtl = setTimeout(perguntar, INTERVALO_ETL)
+    perguntar()
   }
 
   return {

@@ -13,7 +13,7 @@ public record ClienteRespostaDTO(Long id, String codigo, String nome, String con
 
 	public static ClienteRespostaDTO de(Cliente cliente) {
 		return new ClienteRespostaDTO(cliente.getId(), cliente.getCodigo(), cliente.getNome(), cliente.getConsultor().getNome(),
-				cliente.getSegmento(), cliente.getNivel(), cliente.getFaturamentoAnual(),
+				cliente.getSegmento().getNome(), cliente.getNivel(), cliente.getFaturamentoAnual(),
 				cliente.calcularFaixaFaturamento(), cliente.getCidade(), cliente.getUf());
 	}
 

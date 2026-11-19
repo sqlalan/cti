@@ -1,7 +1,7 @@
 """Entrada do trabalho do Python: processar_lote (chamado pela API em api.py).
 
-O Spring envia as linhas válidas; aqui elas são limpas (limpeza.py), calculadas (analise.py)
-e gravadas no Azure (banco.py).
+O Spring envia as linhas válidas; aqui o lote é criado, as linhas são limpas (limpeza.py),
+calculadas (analise.py) e gravadas no banco (banco.py).
 """
 from __future__ import annotations                                                  # recurso do Python para tipos mais flexíveis
 
@@ -15,21 +15,21 @@ from limpeza import tratar                                                      
 log = logging.getLogger("analytics")                                                # logger do programa
 
 
-def processar_lote(engine, lote_id: int, linhas: list[dict], recebidas: int) -> bool:  # processar_lote: trata, calcula e GRAVA no Azure um lote vindo do backend
-    import banco                                                                    # banco.py: funções que gravam no banco Azure
-    if not banco.reservar_lote(engine, lote_id, so_pendente=True):                  # marca PROCESSANDO (só se o lote ainda estava AGUARDANDO_ETL)
-        log.warning("Lote %s não está disponível para processamento.", lote_id)    # não deu: avisa
-        return False                                                                # devolve falso
+def processar_lote(engine, arquivo_nome: str, linhas: list[dict], recebidas: int,  # processar_lote: cria o lote, trata, calcula e GRAVA no banco
+                   invalidas: int = 0, com_aviso: int = 0) -> int:
+    """Devolve o id do lote. Se der erro, o lote fica com ERRO no banco e o erro sobe para a API."""
+    import banco                                                                    # banco.py: único arquivo que fala com o banco
+    lote_id = banco.criar_lote(engine, arquivo_nome, recebidas, len(linhas), invalidas, com_aviso)  # 1. cria o lote (PROCESSANDO)
     try:                                                                            # tenta processar
         if not linhas:                                                              # o backend não mandou nenhuma linha?
             raise ValueError("o backend não enviou linhas válidas")                 # erro explicando
         bruto = pd.DataFrame(linhas).astype(object)                                 # lista de dicionários vira tabela do pandas
-        res = tratar(bruto)                                                         # limpa os dados
-        payload = calcular(res, recebidas)                                          # calcula média, mediana, agrupamentos e frases
-        banco.gravar_resultado(engine, lote_id, res.tratado, payload, len(res.rejeitadas))  # GRAVA clientes, contratos e o JSON no Azure
+        res = tratar(bruto)                                                         # 2. limpa os dados
+        payload = calcular(res, recebidas)                                          # 3. calcula média, mediana, agrupamentos e frases
+        banco.gravar_resultado(engine, lote_id, res.tratado, payload, len(res.rejeitadas))  # 4. GRAVA clientes, contratos e o JSON; lote PROCESSADO
         log.info("Lote %s processado.", lote_id)                                    # registra no terminal
-        return True                                                                 # deu certo
-    except Exception as e:  # noqa: BLE001 - qualquer falha deve aparecer na tela do usuário
+        return lote_id                                                              # deu certo: devolve o id
+    except Exception as e:  # noqa: BLE001 - qualquer falha deve ficar registrada no lote
         log.exception("Falha no lote %s", lote_id)                                  # escreve o erro completo no terminal
         banco.marcar_erro(engine, lote_id, f"Falha no ETL: {e}")                    # grava ERRO no lote para a tela mostrar
-        return False                                                                # devolve falso
+        raise                                                                       # repassa o erro para a API responder 500

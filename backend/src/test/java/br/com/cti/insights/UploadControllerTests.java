@@ -3,7 +3,6 @@ package br.com.cti.insights;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -13,9 +12,7 @@ import br.com.cti.insights.model.StatusLote;
 import br.com.cti.insights.model.UploadLote;
 import br.com.cti.insights.repository.EstatisticaLoteRepository;
 import br.com.cti.insights.repository.TelemetriaRepository;
-import br.com.cti.insights.repository.UploadLinhaRepository;
 import br.com.cti.insights.repository.UploadLoteRepository;
-import com.jayway.jsonpath.JsonPath;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,9 +45,6 @@ class UploadControllerTests {
 	private UploadLoteRepository lotes;
 
 	@Autowired
-	private UploadLinhaRepository linhas;
-
-	@Autowired
 	private EstatisticaLoteRepository estatisticas;
 
 	@Autowired
@@ -60,60 +54,37 @@ class UploadControllerTests {
 	void limpar() {
 		telemetria.deleteAll();
 		estatisticas.deleteAll();
-		linhas.deleteAll();
 		lotes.deleteAll();
 	}
 
-	private long enviar() throws Exception {
-		String resposta = mockMvc
-			.perform(post("/api/uploads/validadas").param("arquivo", "dados.xlsx")
-				.param("recebidas", "38")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content(DUAS_LINHAS))
-			.andExpect(status().isCreated())
-			.andReturn()
-			.getResponse()
-			.getContentAsString();
-		return ((Number) JsonPath.read(resposta, "$.id")).longValue();
+	// O que o banco.py faz no criar_lote (o Java nao cria lotes).
+	private UploadLote loteDoPython(String arquivo) {
+		return lotes.save(new UploadLote(arquivo, 38, 2));
 	}
 
+	// Teste de falha: sem o Python no ar (porta 1, application.properties de teste) nada e gravado e a
+	// tela recebe 503 com uma mensagem sem nome de tecnologia. O motivo tecnico vai para a telemetria.
 	@Test
-	void enviarValidadasGravaOLoteAguardandoOEtl() throws Exception {
+	void pythonDesligadoDevolve503ENaoGravaLote() throws Exception {
 		mockMvc
 			.perform(post("/api/uploads/validadas").param("arquivo", "dados.xlsx")
 				.param("recebidas", "38")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(DUAS_LINHAS))
-			.andExpect(status().isCreated())
-			.andExpect(header().string("Location", org.hamcrest.Matchers.startsWith("/api/dashboard?loteId=")))
-			.andExpect(jsonPath("$.status").value("AGUARDANDO_ETL"))
-			.andExpect(jsonPath("$.arquivoNome").value("dados.xlsx"))
-			.andExpect(jsonPath("$.enviadoPor").value("user"))
-			.andExpect(jsonPath("$.totalLinhas").value(38))
-			.andExpect(jsonPath("$.linhasValidas").value(2))
-			.andExpect(jsonPath("$.linhasInvalidas").value(36));
+			.andExpect(status().isServiceUnavailable())
+			.andExpect(jsonPath("$.mensagem")
+				.value("O processamento está indisponível no momento. Tente enviar de novo em alguns minutos."));
+		assertThat(lotes.count()).isZero();
 
-		// As linhas ficam padronizadas pelo Service da aula 10.
-		var gravadas = linhas.findAll();
-		assertThat(gravadas).extracting("codigoCliente").containsExactlyInAnyOrder("CTI001", "CTI002");
-		assertThat(gravadas).extracting("consultor").containsExactlyInAnyOrder("Ana Souza", "Carlos Lima");
-		assertThat(gravadas).extracting("segmento").containsExactlyInAnyOrder("Indústria", "Comércio");
-
-		// Plano PI: a Telemetria registra cada envio de planilha.
+		assertThat(telemetria.findAll()).anySatisfy(t -> {
+			assertThat(t.getEvento()).isEqualTo(Telemetria.EXECUCAO_SCRIPT);
+			assertThat(t.isSucesso()).isFalse();
+			assertThat(t.getMensagem()).startsWith("Não foi possível falar com o serviço Python em");
+		});
 		assertThat(telemetria.findAll()).anySatisfy(t -> {
 			assertThat(t.getEvento()).isEqualTo(Telemetria.UPLOAD_PLANILHA);
-			assertThat(t.isSucesso()).isTrue();
-			assertThat(t.getRegistrosProcessados()).isEqualTo(2);
+			assertThat(t.isSucesso()).isFalse();
 		});
-	}
-
-	// Teste de falha do PASSO 12: sem o Python no ar o lote fica com ERRO e a mensagem explica.
-	@Test
-	void pythonDesligadoDeixaOLoteComErro() throws Exception {
-		long id = enviar();
-
-		UploadLote lote = PythonEtlServiceTests.esperarStatus(lotes, id, StatusLote.ERRO);
-		assertThat(lote.getMensagem()).startsWith("Não foi possível falar com o serviço Python em");
 	}
 
 	@Test
@@ -176,8 +147,8 @@ class UploadControllerTests {
 
 	@Test
 	void listarTrazOMaisRecentePrimeiro() throws Exception {
-		long primeiro = enviar();
-		long segundo = enviar();
+		long primeiro = loteDoPython("a.xlsx").getId();
+		long segundo = loteDoPython("b.xlsx").getId();
 
 		mockMvc.perform(get("/api/uploads"))
 			.andExpect(status().isOk())
@@ -187,13 +158,29 @@ class UploadControllerTests {
 
 	@Test
 	void dashboardSemLoteDevolve404() throws Exception {
-		mockMvc.perform(get("/api/dashboard")).andExpect(status().isNotFound());
+		mockMvc.perform(get("/api/dashboard"))
+			.andExpect(status().isNotFound())
+			.andExpect(jsonPath("$.mensagem")
+				.value("Nenhuma planilha foi processada ainda. Envie uma planilha para ver os gráficos."));
+	}
+
+	@Test
+	void dashboardLotesTrazOs20MaisRecentes() throws Exception {
+		long ultimo = 0;
+		for (int i = 1; i <= 21; i++) {
+			ultimo = loteDoPython("planilha" + i + ".xlsx").getId();
+		}
+		mockMvc.perform(get("/api/dashboard/lotes"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.length()").value(20))
+			.andExpect(jsonPath("$[0].id").value(ultimo))
+			.andExpect(jsonPath("$[0].arquivoNome").value("planilha21.xlsx"));
 	}
 
 	@Test
 	void dashboardDevolveOJsonQueOPythonGravou() throws Exception {
-		long id = enviar();
-		UploadLote lote = lotes.findById(id).orElseThrow();
+		UploadLote lote = loteDoPython("dados.xlsx");
+		long id = lote.getId();
 
 		// Antes do Python terminar: o lote vem, as estatisticas ainda nao.
 		mockMvc.perform(get("/api/dashboard").param("loteId", String.valueOf(id)))

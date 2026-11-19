@@ -5,17 +5,11 @@ import br.com.cti.insights.dto.UploadLoteDTO;
 import br.com.cti.insights.exception.ColunaObrigatoriaException;
 import br.com.cti.insights.exception.ExcelInvalidoException;
 import br.com.cti.insights.exception.LinhaInvalidaException;
-import br.com.cti.insights.model.LoteValidadoEvent;
+import br.com.cti.insights.exception.RecursoNaoEncontradoException;
 import br.com.cti.insights.model.Telemetria;
-import br.com.cti.insights.model.UploadLinha;
-import br.com.cti.insights.model.UploadLote;
-import br.com.cti.insights.repository.UploadLinhaRepository;
 import br.com.cti.insights.repository.UploadLoteRepository;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -25,15 +19,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 /**
  * Recebe as linhas que o Pinia aprovou e revalida como uma planilha: o arquivo, as colunas
- * obrigatorias, cada linha (regras do ClienteDTO) e os codigos repetidos (aula 10). Grava o lote em
- * AGUARDANDO_ETL; depois do commit, o PythonEtlService envia as linhas ao Python.
+ * obrigatorias, cada linha (regras do ClienteDTO) e os codigos repetidos (aula 10). Depois manda as
+ * linhas ao Python (PythonEtlService), que cria o lote e grava tudo no banco (aula 12): o Java nao
+ * grava a planilha.
  */
 @Service
 public class UploadService {
@@ -65,27 +59,24 @@ public class UploadService {
 
 	private final UploadLoteRepository lotes;
 
-	private final UploadLinhaRepository linhas;
-
-	private final ApplicationEventPublisher eventos;
+	private final PythonEtlService etl;
 
 	private final TelemetriaService telemetria;
 
 	public UploadService(ClienteValidacaoService validacao, Validator validador, UploadLoteRepository lotes,
-			UploadLinhaRepository linhas, ApplicationEventPublisher eventos, TelemetriaService telemetria) {
+			PythonEtlService etl, TelemetriaService telemetria) {
 		this.validacao = validacao;
 		this.validador = validador;
 		this.lotes = lotes;
-		this.linhas = linhas;
-		this.eventos = eventos;
+		this.etl = etl;
 		this.telemetria = telemetria;
 	}
 
 	/**
 	 * recebidas = linhas da planilha, boas e ruins; as ruins ficaram no navegador e entram so na conta.
+	 * comAviso = linhas boas com algum aviso (o Pinia sabe quais).
 	 */
-	@Transactional
-	public UploadLoteDTO registrar(String arquivo, Integer recebidas, List<ClienteDTO> clientes, String enviadoPor) {
+	public UploadLoteDTO registrar(String arquivo, Integer recebidas, Integer comAviso, List<ClienteDTO> clientes) {
 		long inicio = System.nanoTime();
 		String nome = StringUtils.hasText(arquivo) ? StringUtils.getFilename(arquivo.trim()) : "planilha";
 		try {
@@ -94,18 +85,14 @@ public class UploadService {
 			validarLinhas(clientes);
 			List<ClienteDTO> prontos = validacao.validarEPreparar(clientes);
 			int total = recebidas == null ? prontos.size() : Math.max(recebidas, prontos.size());
+			int avisos = comAviso == null ? 0 : Math.min(Math.max(comAviso, 0), prontos.size());
 
-			UploadLote lote = lotes.save(new UploadLote(nome, enviadoPor, total, prontos.size()));
-			List<UploadLinha> novas = new ArrayList<>();
-			for (int i = 0; i < prontos.size(); i++) {
-				novas.add(linha(lote, i + 1, prontos.get(i)));
-			}
-			linhas.saveAll(novas);
-
-			eventos.publishEvent(new LoteValidadoEvent(lote.getId()));
+			Long loteId = etl.enviar(nome, total, total - prontos.size(), avisos, prontos);
 			telemetria.registrar(Telemetria.UPLOAD_PLANILHA, true, prontos.size(), inicio,
-					nome + ": lote " + lote.getId() + " gravado com " + prontos.size() + " linha(s) válida(s)");
-			return UploadLoteDTO.de(lote);
+					nome + ": " + prontos.size() + " linha(s) válida(s) enviada(s); lote " + loteId);
+			return lotes.findById(loteId)
+				.map(UploadLoteDTO::de)
+				.orElseThrow(() -> new RecursoNaoEncontradoException("lote", loteId));
 		}
 		catch (RuntimeException ex) {
 			telemetria.registrar(Telemetria.UPLOAD_PLANILHA, false, null, inicio, nome + ": " + ex.getMessage());
@@ -158,21 +145,6 @@ public class UploadService {
 
 	private static boolean vazio(Object valor) {
 		return valor == null || (valor instanceof String texto && !StringUtils.hasText(texto));
-	}
-
-	private static UploadLinha linha(UploadLote lote, int numero, ClienteDTO c) {
-		UploadLinha linha = new UploadLinha(lote, numero);
-		linha.setCodigoCliente(c.codigoCliente());
-		linha.setNomeCliente(c.nomeCliente());
-		linha.setConsultor(c.consultor());
-		linha.setSegmento(c.segmento());
-		linha.setNivelCliente(c.nivelCliente());
-		linha.setFaturamentoAnual(BigDecimal.valueOf(c.faturamentoAnual()).setScale(2, RoundingMode.HALF_UP));
-		linha.setServicosContratados(c.servicosContratados());
-		linha.setDataContratacao(c.dataContratacao());
-		linha.setCidade(StringUtils.hasText(c.cidade()) ? c.cidade() : null);
-		linha.setUf(StringUtils.hasText(c.uf()) ? c.uf() : null);
-		return linha;
 	}
 
 }

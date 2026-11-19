@@ -268,8 +268,8 @@ function exportarXlsx() {
     ['Lote', lote.id],
     ['Arquivo', lote.arquivoNome],
     ['Enviado em', dataHora(lote.enviadoEm)],
-    ['Enviado por', lote.enviadoPor],
     ['Linhas recebidas', est.qualidade.linhasRecebidas],
+    ['Linhas com aviso', lote.linhasComAviso ?? 0],
     ['Clientes gravados', r.totalClientes],
     ['Linhas inválidas', est.qualidade.linhasInvalidas],
     ['Aproveitamento (%)', arredondar(aproveitamento(est))],
@@ -499,12 +499,6 @@ const classeBotao =
             <dd class="mt-1 text-sm font-semibold tabular-nums text-ink-900 dark:text-mist-100">{{ dataHora(detalhe.lote.enviadoEm) }}</dd>
           </div>
           <div class="bg-white px-4 py-3 dark:bg-night-900">
-            <dt class="text-xs text-ink-600 dark:text-mist-300">Enviado por</dt>
-            <dd class="mt-1 truncate text-sm font-semibold text-ink-900 dark:text-mist-100" :title="detalhe.lote.enviadoPor">
-              {{ detalhe.lote.enviadoPor }}
-            </dd>
-          </div>
-          <div class="bg-white px-4 py-3 dark:bg-night-900">
             <dt class="text-xs text-ink-600 dark:text-mist-300">Status</dt>
             <dd class="mt-1"><StatusBadge :status="detalhe.lote.status" /></dd>
           </div>
@@ -526,6 +520,10 @@ const classeBotao =
             </dd>
           </div>
           <div class="bg-white px-4 py-3 dark:bg-night-900">
+            <dt class="text-xs text-ink-600 dark:text-mist-300">Com aviso</dt>
+            <dd class="mt-1 text-sm font-semibold tabular-nums text-ink-900 dark:text-mist-100">{{ inteiro(detalhe.lote.linhasComAviso ?? 0) }}</dd>
+          </div>
+          <div class="bg-white px-4 py-3 dark:bg-night-900">
             <dt class="text-xs text-ink-600 dark:text-mist-300">Aproveitamento</dt>
             <dd class="mt-1 text-sm font-semibold tabular-nums text-ink-900 dark:text-mist-100">
               {{ porcento(detalhe.lote.totalLinhas ? (detalhe.lote.linhasValidas / detalhe.lote.totalLinhas) * 100 : 0) }}
@@ -536,7 +534,7 @@ const classeBotao =
         <!-- Lote sem resultado: a mensagem do upload_lote diz o porquê. -->
         <p
           class="mt-4 rounded border px-4 py-3 text-sm text-ink-900 dark:text-mist-100"
-          :class="detalhe.lote.status === 'ERRO' || detalhe.lote.status === 'REJEITADO'
+          :class="detalhe.lote.status === 'ERRO'
             ? 'border-erro-600 bg-erro-600/5 dark:border-erro-400 dark:bg-erro-400/10'
             : 'border-brand-500/40 bg-brand-500/10'"
           v-if="!detalhe.est"

@@ -12,7 +12,7 @@ const menuAberto = ref(false)
 
 // "Usuários" só aparece para ADMIN, com o número de contas aguardando aprovação.
 const itens = computed(() => [
-  { nome: 'dashboard', rotulo: 'Dashboard' },
+  { nome: 'dashboard', rotulo: 'Gráficos' },
   { nome: 'upload', rotulo: 'Upload' },
   { nome: 'relatorio', rotulo: 'Relatórios' },
   ...(auth.ehAdmin ? [{ nome: 'usuarios', rotulo: 'Usuários', contador: admin.pendentes }] : []),

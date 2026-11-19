@@ -111,7 +111,7 @@ public class ClienteService {
 	}
 
 	private void preencher(Cliente cliente, ClienteRequest request) {
-		cliente.setSegmento(request.segmento());
+		cliente.setSegmento(catalogo.segmentoPorNome(request.segmento()));
 		cliente.setNivel(request.nivel());
 		cliente.setFaturamentoAnual(request.faturamentoAnual());
 		cliente.setCidade(request.cidade());

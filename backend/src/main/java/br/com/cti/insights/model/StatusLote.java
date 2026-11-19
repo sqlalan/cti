@@ -1,11 +1,11 @@
 package br.com.cti.insights.model;
 
 /**
- * Situacao de um envio de planilha. O Spring cria o lote em AGUARDANDO_ETL; o Python passa para
- * PROCESSANDO e depois PROCESSADO ou ERRO.
+ * Situação de um envio de planilha. O Python cria o lote em PROCESSANDO e termina em PROCESSADO
+ * ou ERRO (aula 12).
  */
 public enum StatusLote {
 
-	AGUARDANDO_ETL, PROCESSANDO, PROCESSADO, ERRO, REJEITADO
+	PROCESSANDO, PROCESSADO, ERRO
 
 }

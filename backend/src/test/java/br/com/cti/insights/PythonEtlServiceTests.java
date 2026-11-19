@@ -2,6 +2,8 @@ package br.com.cti.insights;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import br.com.cti.insights.model.StatusLote;
@@ -16,8 +18,8 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,7 +31,8 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
- * Um servidor HTTP falso faz o papel da API do Python (POST /etl) e guarda o que o Spring enviou.
+ * Um servidor HTTP falso faz o papel da API do Python (POST /etl, aula 12): guarda o que o Spring
+ * enviou e, como o banco.py, cria o lote e devolve {"ok": true, "loteId": ...}.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -40,6 +43,9 @@ class PythonEtlServiceTests {
 
 	// Status que o "Python" responde no proximo pedido.
 	private static volatile int resposta = 200;
+
+	// Repositorio que o "Python" usa para criar o lote (preenchido antes de cada teste).
+	private static volatile UploadLoteRepository banco;
 
 	private static final HttpServer PYTHON = iniciarPython();
 
@@ -61,10 +67,20 @@ class PythonEtlServiceTests {
 			servidor.createContext("/etl", troca -> {
 				String corpo = new String(troca.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
 				PEDIDOS.add(new Pedido(troca.getRequestHeaders().getFirst("X-ETL-Key"), corpo));
-				byte[] saida = (resposta == 200 ? "{\"ok\":true}" : "{\"detail\":\"Falha no ETL (veja o terminal do Python).\"}")
-					.getBytes(StandardCharsets.UTF_8);
-				troca.sendResponseHeaders(resposta, saida.length);
-				troca.getResponseBody().write(saida);
+				String saida;
+				if (resposta == 200) {
+					UploadLote lote = new UploadLote(JsonPath.read(corpo, "$.arquivoNome"),
+							JsonPath.<Integer>read(corpo, "$.recebidas"), JsonPath.<Integer>read(corpo, "$.linhas.length()"));
+					lote.setStatus(StatusLote.PROCESSADO);
+					lote.setMensagem("ETL concluído: 2 clientes tratados.");
+					saida = "{\"ok\":true,\"loteId\":" + banco.save(lote).getId() + "}";
+				}
+				else {
+					saida = "{\"detail\":\"Falha no ETL: coluna inesperada\"}";
+				}
+				byte[] bytes = saida.getBytes(StandardCharsets.UTF_8);
+				troca.sendResponseHeaders(resposta, bytes.length);
+				troca.getResponseBody().write(bytes);
 				troca.close();
 			});
 			servidor.start();
@@ -86,32 +102,45 @@ class PythonEtlServiceTests {
 		PYTHON.stop(0);
 	}
 
-	private long enviar() throws Exception {
-		String corpo = mockMvc
-			.perform(post("/api/uploads/validadas").param("arquivo", "dados.xlsx")
-				.param("recebidas", "38")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content(UploadControllerTests.DUAS_LINHAS))
-			.andExpect(status().isCreated())
-			.andReturn()
-			.getResponse()
-			.getContentAsString();
-		return ((Number) JsonPath.read(corpo, "$.id")).longValue();
+	@BeforeEach
+	void preparar() {
+		banco = lotes;
+		PEDIDOS.clear();
+		telemetria.deleteAll();
 	}
 
 	@Test
-	void enviaAsLinhasValidasComAChave() throws Exception {
-		PEDIDOS.clear();
+	void enviaAsLinhasValidasComAChaveEDevolveOLoteDoPython() throws Exception {
 		resposta = 200;
-		long id = enviar();
+		String corpo = mockMvc
+			.perform(post("/api/uploads/validadas").param("arquivo", "dados.xlsx")
+				.param("recebidas", "38")
+				.param("comAviso", "1")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(UploadControllerTests.DUAS_LINHAS))
+			.andExpect(status().isCreated())
+			.andExpect(header().string("Location", org.hamcrest.Matchers.startsWith("/api/dashboard?loteId=")))
+			.andExpect(jsonPath("$.status").value("PROCESSADO"))
+			.andExpect(jsonPath("$.arquivoNome").value("dados.xlsx"))
+			.andExpect(jsonPath("$.totalLinhas").value(38))
+			.andExpect(jsonPath("$.linhasValidas").value(2))
+			.andExpect(jsonPath("$.linhasInvalidas").value(36))
+			.andReturn()
+			.getResponse()
+			.getContentAsString();
+		long id = ((Number) JsonPath.read(corpo, "$.id")).longValue();
+		assertThat(lotes.findById(id)).isPresent();
 
-		Pedido pedido = PEDIDOS.poll(10, TimeUnit.SECONDS);
+		Pedido pedido = PEDIDOS.poll();
 		assertThat(pedido).as("o Spring nao chamou o POST /etl").isNotNull();
 		assertThat(pedido.chave()).isEqualTo("segredo");
 
+		// Os campos do Pedido da aula 12, com as linhas padronizadas pelo Service da aula 10.
 		String json = pedido.corpo();
-		assertThat(((Number) JsonPath.read(json, "$.loteId")).longValue()).isEqualTo(id);
+		assertThat((String) JsonPath.read(json, "$.arquivoNome")).isEqualTo("dados.xlsx");
 		assertThat((Integer) JsonPath.read(json, "$.recebidas")).isEqualTo(38);
+		assertThat((Integer) JsonPath.read(json, "$.invalidas")).isEqualTo(36);
+		assertThat((Integer) JsonPath.read(json, "$.comAviso")).isEqualTo(1);
 		assertThat((Integer) JsonPath.read(json, "$.linhas.length()")).isEqualTo(2);
 		assertThat((String) JsonPath.read(json, "$.linhas[0].codigo_cliente")).isEqualTo("CTI001");
 		assertThat((String) JsonPath.read(json, "$.linhas[0].consultor")).isEqualTo("Ana Souza");
@@ -123,49 +152,36 @@ class PythonEtlServiceTests {
 		assertThat((String) JsonPath.read(json, "$.linhas[0].data_contratacao")).isEqualTo("2025-01-15");
 		assertThat((Object) JsonPath.read(json, "$.linhas[1].cidade")).isNull();
 
-		// Quem muda o status para PROCESSADO e o Python; com 200 o Spring nao mexe no lote.
-		assertThat(lotes.findById(id).orElseThrow().getStatus()).isEqualTo(StatusLote.AGUARDANDO_ETL);
-
-		// Plano PI: a Telemetria registra a execucao do Python.
-		esperarTelemetria("Lote " + id + " processado pelo Python", true);
+		// Plano PI: a Telemetria registra o envio da planilha e a execucao do Python.
+		assertThat(telemetria.findAll()).anySatisfy(t -> {
+			assertThat(t.getEvento()).isEqualTo(Telemetria.EXECUCAO_SCRIPT);
+			assertThat(t.isSucesso()).isTrue();
+			assertThat(t.getMensagem()).isEqualTo("Lote " + id + " processado pelo Python");
+		});
+		assertThat(telemetria.findAll()).anySatisfy(t -> {
+			assertThat(t.getEvento()).isEqualTo(Telemetria.UPLOAD_PLANILHA);
+			assertThat(t.isSucesso()).isTrue();
+			assertThat(t.getRegistrosProcessados()).isEqualTo(2);
+		});
 	}
 
 	@Test
-	void respostaDeErroDoPythonDeixaOLoteComErro() throws Exception {
-		PEDIDOS.clear();
+	void respostaDeErroDoPythonDevolve502ComMensagemParaATela() throws Exception {
 		resposta = 500;
-		long id = enviar();
+		mockMvc
+			.perform(post("/api/uploads/validadas").param("arquivo", "dados.xlsx")
+				.param("recebidas", "38")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(UploadControllerTests.DUAS_LINHAS))
+			.andExpect(status().isBadGateway())
+			.andExpect(jsonPath("$.mensagem").value(
+					"Não foi possível processar esta planilha. Tente enviar de novo em alguns minutos; se continuar, avise o suporte."));
 
-		UploadLote lote = esperarStatus(lotes, id, StatusLote.ERRO);
-		assertThat(lote.getMensagem()).startsWith("O serviço Python respondeu 500:");
-		esperarTelemetria("Lote " + id + ": O serviço Python respondeu 500", false);
-	}
-
-	private void esperarTelemetria(String inicioMensagem, boolean sucesso) throws InterruptedException {
-		long limite = System.currentTimeMillis() + 10_000;
-		while (System.currentTimeMillis() < limite) {
-			boolean achou = telemetria.findAll()
-				.stream()
-				.anyMatch(t -> t.getEvento().equals(Telemetria.EXECUCAO_SCRIPT) && t.isSucesso() == sucesso
-						&& t.getMensagem().startsWith(inicioMensagem));
-			if (achou) {
-				return;
-			}
-			Thread.sleep(100);
-		}
-		throw new AssertionError("Telemetria de EXECUCAO_SCRIPT nao registrada: " + inicioMensagem);
-	}
-
-	static UploadLote esperarStatus(UploadLoteRepository lotes, long id, StatusLote esperado)
-			throws InterruptedException {
-		long limite = System.currentTimeMillis() + 10_000;
-		UploadLote lote = lotes.findById(id).orElseThrow();
-		while (lote.getStatus() != esperado && System.currentTimeMillis() < limite) {
-			Thread.sleep(100);
-			lote = lotes.findById(id).orElseThrow();
-		}
-		assertThat(lote.getStatus()).isEqualTo(esperado);
-		return lote;
+		assertThat(telemetria.findAll()).anySatisfy(t -> {
+			assertThat(t.getEvento()).isEqualTo(Telemetria.EXECUCAO_SCRIPT);
+			assertThat(t.isSucesso()).isFalse();
+			assertThat(t.getMensagem()).startsWith("O serviço Python respondeu 500:");
+		});
 	}
 
 }

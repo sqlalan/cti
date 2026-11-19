@@ -25,8 +25,10 @@ public class Cliente {
 	@Column(nullable = false, length = 255)
 	private String nome;
 
-	@Column(nullable = false, length = 60)
-	private String segmento;
+	// Segmento 1 -- N Cliente (tabela segmento, sem repetir)
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	@JoinColumn(name = "segmento_id", nullable = false)
+	private Segmento segmento;
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false, length = 1)
@@ -115,12 +117,12 @@ public class Cliente {
 		this.nome = nome.trim();
 	}
 
-	public String getSegmento() {
+	public Segmento getSegmento() {
 		return segmento;
 	}
 
-	public void setSegmento(String segmento) {
-		this.segmento = segmento.trim();
+	public void setSegmento(Segmento segmento) {
+		this.segmento = segmento;
 	}
 
 	public NivelCliente getNivel() {
