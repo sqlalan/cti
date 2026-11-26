@@ -217,7 +217,7 @@ Abra `/cadastro`, crie a conta de consultor e envie a planilha de exemplo [`fron
 
 | Variável | Onde | Para quê | Padrão |
 | --- | --- | --- | --- |
-| `DB_URL` | Back-end | Endereço JDBC completo, como no Azure: `jdbc:postgresql://SERVIDOR.postgres.database.azure.com:5432/ctiinsights?sslmode=require`. Quando definido, vale no lugar de `DB_HOST`/`DB_PORT`/`DB_NAME`/`DB_SSLMODE` | vazio |
+| `DB_URL` | Back-end | Endereço JDBC completo, como no Azure: `jdbc:postgresql://synthetix.postgres.database.azure.com:5432/synthetix?sslmode=require`. Quando definido, vale no lugar de `DB_HOST`/`DB_PORT`/`DB_NAME`/`DB_SSLMODE` | vazio |
 | `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Back-end | Conexão com o PostgreSQL (`DB_USER` e `DB_PASSWORD` valem também com `DB_URL`) | `localhost`, `5432`, `cti`, `postgres`, `postgres` |
 | `DB_SSLMODE` | Back-end | Use `require` no Azure e em qualquer banco na nuvem | `prefer` |
 | `JWT_SECRET` | Back-end | Chave que assina o token de login. **Obrigatória em produção**, com 32 caracteres ou mais. (`JWT_SEGREDO` também é aceito.) | Aleatória a cada inicialização |
